@@ -34,33 +34,39 @@ function monthsLabel(months) {
 function renderBookings() {
   if (!lastBookings) return;
 
-  const links = (booking) => [
-    booking.invoice_url && `<a href="${booking.invoice_url}" target="_blank" rel="noopener">${t("bookings.invoice")}</a>`,
-    booking.invoice_pdf && `<a href="${booking.invoice_pdf}" target="_blank" rel="noopener" download>${t("bookings.pdf")}</a>`,
-    booking.receipt_url && `<a href="${booking.receipt_url}" target="_blank" rel="noopener">${t("bookings.receipt")}</a>`
-  ].filter(Boolean).join(" ");
-
-  const propertyTitle = (id, name) =>
-    id ? `<a class="property-title-link" href="property.html?id=${id}">${name}</a>` : name;
+  const cover = (url) => `<span class="booking-card-cover"${url ? ` style="background-image: url('${url}')"` : ""}></span>`;
+  const addressLine = (address) => address ? `<span>${address}, Zaragoza</span>` : "";
 
   const paidItems = lastBookings.paid.map((booking) => `
-    <li>
-      <div class="booking-row-head">
-        <strong>${propertyTitle(booking.property_id, booking.property_name)}</strong>
-        <span class="booking-paid">${t("bookings.paidLabel")}</span>
-      </div>
-      <span>${formatBookingDate(booking.start_date)} &ndash; ${formatBookingDate(booking.end_date)}${booking.months ? ` &middot; ${monthsLabel(booking.months)}` : ""}</span>
-      <span>${interpolate("cond.eur", { amount: booking.amount_eur })}</span>
-      ${links(booking) ? `<span class="booking-links">${links(booking)}</span>` : ""}
+    <li class="booking-card">
+      <a class="booking-card-link" href="booking.html?id=${booking.id}">
+        ${cover(booking.cover)}
+        <span class="booking-card-body">
+          <span class="booking-row-head">
+            <strong>${booking.property_name}</strong>
+            <span class="booking-paid">${t("bookings.paidLabel")}</span>
+          </span>
+          ${addressLine(booking.address)}
+          <span>${formatBookingDate(booking.start_date)} &ndash; ${formatBookingDate(booking.end_date)}${booking.months ? ` &middot; ${monthsLabel(booking.months)}` : ""}</span>
+          <span>${interpolate("cond.eur", { amount: booking.amount_eur })}</span>
+          <span class="booking-card-cta">${t("bookings.viewDetails")} &rarr;</span>
+        </span>
+      </a>
     </li>
   `);
   const assignedItems = lastBookings.assigned.map((booking) => `
-    <li>
-      <div class="booking-row-head">
-        <strong>${booking.propertyName}</strong>
-        <span class="booking-paid">${t("bookings.assignedLabel")}</span>
-      </div>
-      <span>${formatBookingDate(booking.startDate)} &ndash; ${formatBookingDate(booking.endDate)}</span>
+    <li class="booking-card">
+      <span class="booking-card-link">
+        ${cover(booking.cover)}
+        <span class="booking-card-body">
+          <span class="booking-row-head">
+            <strong>${booking.propertyName}</strong>
+            <span class="booking-paid">${t("bookings.assignedLabel")}</span>
+          </span>
+          ${addressLine(booking.address)}
+          <span>${formatBookingDate(booking.startDate)} &ndash; ${formatBookingDate(booking.endDate)}</span>
+        </span>
+      </span>
     </li>
   `);
   const items = [...paidItems, ...assignedItems];

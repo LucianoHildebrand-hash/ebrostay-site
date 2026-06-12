@@ -49,6 +49,7 @@ const EbrostayBackend = (() => {
       id: row.id,
       city: row.city,
       type: row.type,
+      address: row.address || null,
       addressKey: row.address_key,
       nameKey: `${key}.name`,
       areaKey: `${key}.area`,
@@ -199,28 +200,65 @@ const EbrostayBackend = (() => {
     return error;
   }
 
+  function coverUrl(property) {
+    const photos = (property?.property_photos || [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1));
+    return photos.length ? photoUrl(photos[0].storage_path) : "";
+  }
+
   async function loadMyBookings() {
     if (!user) return null;
     const sb = getClient();
     const [paidResult, assignedResult] = await Promise.all([
       sb.from("bookings")
-        .select("property_id, property_name, start_date, end_date, months, amount_eur, status, invoice_url, invoice_pdf, receipt_url")
+        .select("id, property_id, property_name, start_date, end_date, months, amount_eur, status, invoice_url, invoice_pdf, receipt_url, properties(address, property_photos(storage_path, sort_order))")
         .eq("user_id", user.id)
         .order("start_date"),
       sb.from("availability_blocks")
-        .select("start_date, end_date, properties(name)")
+        .select("start_date, end_date, properties(id, name, address, property_photos(storage_path, sort_order))")
         .eq("user_id", user.id)
         .order("start_date")
     ]);
     if (paidResult.error && assignedResult.error) return null;
     return {
-      paid: paidResult.data || [],
+      paid: (paidResult.data || []).map((row) => ({
+        ...row,
+        cover: coverUrl(row.properties),
+        address: row.properties?.address || null
+      })),
       assigned: (assignedResult.data || []).map((row) => ({
         startDate: row.start_date,
         endDate: row.end_date,
-        propertyName: row.properties?.name || ""
+        propertyId: row.properties?.id || null,
+        propertyName: row.properties?.name || "",
+        address: row.properties?.address || null,
+        cover: coverUrl(row.properties)
       }))
     };
+  }
+
+  // Full detail for one of the signed-in user's bookings (RLS scoped),
+  // including the tenant-only stay info when the admin has filled it in.
+  async function loadBookingDetail(bookingId) {
+    if (!user || !bookingId) return null;
+    const sb = getClient();
+    const { data, error } = await sb
+      .from("bookings")
+      .select("*, properties(id, name, address, lat, lng, property_photos(storage_path, sort_order))")
+      .eq("id", bookingId)
+      .maybeSingle();
+    if (error || !data) return null;
+    let guestInfo = null;
+    if (data.property_id) {
+      const { data: info } = await sb
+        .from("property_guest_info")
+        .select("wifi_name, wifi_password, key_pickup, checkin_time, checkout_time, emergency_phone, notes")
+        .eq("property_id", data.property_id)
+        .maybeSingle();
+      guestInfo = info || null;
+    }
+    return { ...data, cover: coverUrl(data.properties), guestInfo };
   }
 
   async function createBookingCheckout(propertyId, startDate, endDate) {
@@ -293,6 +331,7 @@ const EbrostayBackend = (() => {
     getEnabledProviders,
     signInWithProvider,
     loadMyBookings,
+    loadBookingDetail,
     createBookingCheckout,
     deactivateAccount,
     loadFavorites,

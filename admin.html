@@ -6,7 +6,7 @@
     <title>Ebrostay | Administración</title>
     <meta name="robots" content="noindex,nofollow">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=admin-10">
+    <link rel="stylesheet" href="styles.css?v=admin-11">
   </head>
   <body>
     <header class="site-header">
@@ -48,17 +48,38 @@
         <button class="logout-button" id="adminLogout" type="button" data-i18n="auth.logout">Salir</button>
       </div>
 
-      <div class="admin-properties" id="adminProperties"></div>
+      <div id="adminPanel" hidden>
+        <nav class="admin-tabs admin-main-tabs" aria-label="Admin sections" id="adminMainTabs">
+          <button class="admin-tab is-active" type="button" data-main-tab="properties" data-i18n="admin.tabProperties">Propiedades</button>
+          <button class="admin-tab" type="button" data-main-tab="bookings" data-i18n="admin.tabBookings">Reservas</button>
+          <button class="admin-tab" type="button" data-main-tab="users" data-i18n="admin.users">Usuarios</button>
+        </nav>
 
-      <section class="admin-card admin-users" id="adminUsers" hidden>
-        <header class="admin-card-head">
-          <div>
-            <h2 data-i18n="admin.users">Usuarios</h2>
-            <p class="admin-card-meta" data-i18n="admin.usersCopy">Cuentas registradas.</p>
+        <section data-main-panel="properties">
+          <p class="admin-card-meta" data-i18n="admin.propListCopy">Pulsa una vivienda para editar sus textos, fotos, dirección y disponibilidad.</p>
+          <ul class="admin-prop-list" id="adminPropList"></ul>
+        </section>
+
+        <section data-main-panel="bookings" hidden>
+          <h2 data-i18n="admin.confirmedBookings">Reservas confirmadas</h2>
+          <p class="admin-card-meta" data-i18n="admin.confirmedCopy">Reservas pagadas a través de Stripe, con fecha de confirmación, datos del huésped y factura.</p>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminBookingsTable"></table>
           </div>
-        </header>
-        <ul class="admin-user-list" id="adminUserList"></ul>
-      </section>
+
+          <h2 style="margin-top: 30px;" data-i18n="admin.assignedStays">Estancias asignadas</h2>
+          <p class="admin-card-meta" data-i18n="admin.assignedCopy">Estancias asignadas manualmente a un huésped desde el editor de cada vivienda.</p>
+          <div class="admin-table-wrap">
+            <table class="admin-table" id="adminAssignedTable"></table>
+          </div>
+        </section>
+
+        <section data-main-panel="users" hidden>
+          <h2 data-i18n="admin.users">Usuarios</h2>
+          <p class="admin-card-meta" data-i18n="admin.usersCopy">Cuentas registradas.</p>
+          <ul class="admin-user-list" id="adminUserList"></ul>
+        </section>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -70,9 +91,9 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=admin-10"></script>
-    <script src="data.js?v=admin-10"></script>
-    <script src="backend.js?v=admin-10"></script>
-    <script src="admin.js?v=admin-10"></script>
+    <script src="supabase-config.js?v=admin-11"></script>
+    <script src="data.js?v=admin-11"></script>
+    <script src="backend.js?v=admin-11"></script>
+    <script src="admin.js?v=admin-11"></script>
   </body>
 </html>

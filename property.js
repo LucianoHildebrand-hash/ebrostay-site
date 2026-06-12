@@ -67,6 +67,12 @@ function renderDetail() {
     date: formatDate(dateValue(property.availableFrom))
   });
 
+  const addressElement = document.querySelector("#detailAddress");
+  if (addressElement) {
+    addressElement.hidden = !property.address;
+    addressElement.textContent = property.address ? `${property.address}, Zaragoza` : "";
+  }
+
   const subject = encodeURIComponent(`${t("email.subject")} - ${t(property.nameKey)}`);
   const body = encodeURIComponent(`${t("email.defaultMessage")}\n\n${t(property.nameKey)}: ${t(property.copyKey)}`);
   document.querySelector("#detailEmailButton").href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
@@ -261,11 +267,31 @@ function initBookingWidget() {
       updateBookingSummary();
     }
   });
+  preselectSearchDates(minStart, minEndFor);
   updateBookingSummary();
 
   if (new URLSearchParams(window.location.search).get("booking") === "cancelled") {
     bookingMessage("book.cancelled");
   }
+}
+
+// Carry the dates from the visitor's last search into the booking widget,
+// as long as they are still bookable for this property.
+function preselectSearchDates(minStart, minEndFor) {
+  if (document.querySelector("#bookingStart")?.value) return;
+  let stored = null;
+  try {
+    stored = JSON.parse(localStorage.getItem("ebrostay-search-dates") || "null");
+  } catch {
+    return;
+  }
+  if (!stored?.checkIn || stored.checkIn < minStart) return;
+  const start = stored.checkIn;
+  const end = stored.checkOut && stored.checkOut > start ? stored.checkOut : minEndFor(start);
+  const conflict = property.unavailable.some(([from, to]) => start <= to && from <= end);
+  if (conflict) return;
+  bookingPicker?.setDate(start, true);
+  bookingEndPicker?.setDate(end, false);
 }
 
 const BOOKING_ERROR_KEYS = {

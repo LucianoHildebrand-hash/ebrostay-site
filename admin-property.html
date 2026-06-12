@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ebrostay | Editar vivienda</title>
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css?v=admin-11">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Ebrostay home">
+        <img class="brand-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+      </a>
+      <div class="header-actions">
+        <div class="language-switch" aria-label="Language selector">
+          <button class="language-option is-active" type="button" data-lang="es">ES</button>
+          <button class="language-option" type="button" data-lang="en">EN</button>
+        </div>
+        <a class="nav-cta" href="admin.html" data-i18n="admin.backToPanel">Volver al panel</a>
+      </div>
+    </header>
+
+    <main class="detail-page admin-page">
+      <a class="admin-back-link" href="admin.html">&larr; <span data-i18n="admin.backToPanel">Volver al panel</span></a>
+
+      <p class="admin-status" id="adminStatus" role="status" hidden></p>
+
+      <div class="admin-toolbar" id="adminToolbar" hidden>
+        <span class="user-email" id="adminUserEmail"></span>
+        <button class="logout-button" id="adminLogout" type="button" data-i18n="auth.logout">Salir</button>
+      </div>
+
+      <div class="admin-properties" id="propertyEditor"></div>
+    </main>
+
+    <footer class="site-footer">
+      <span class="footer-brand">
+        <img class="footer-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+        <span>&copy; <span id="year"></span> Ebrostay</span>
+      </span>
+      <a href="mailto:info@ebrostay.com">info@ebrostay.com</a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=admin-11"></script>
+    <script src="data.js?v=admin-11"></script>
+    <script src="backend.js?v=admin-11"></script>
+    <script src="admin-property.js?v=admin-11"></script>
+  </body>
+</html>

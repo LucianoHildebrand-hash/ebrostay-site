@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ebrostay | Tu reserva</title>
+    <meta name="description" content="Detalles de tu reserva en Ebrostay.">
+    <meta name="robots" content="noindex,nofollow">
+    <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css?v=admin-11">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Ebrostay home">
+        <img class="brand-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+      </a>
+      <div class="header-actions">
+        <div class="language-switch" aria-label="Language selector">
+          <button class="language-option is-active" type="button" data-lang="es">ES</button>
+          <button class="language-option" type="button" data-lang="en">EN</button>
+        </div>
+        <a class="nav-cta" href="account.html" data-i18n="bookings.button">Mi cuenta</a>
+      </div>
+    </header>
+
+    <main class="detail-page booking-page">
+      <a class="detail-back" href="account.html">&larr; <span data-i18n="booking.back">Volver a mis reservas</span></a>
+
+      <p class="account-loading" id="bookingLoading" data-i18n="account.loading">Cargando tu cuenta…</p>
+
+      <section id="bookingNotFound" hidden>
+        <h1 data-i18n="booking.notFoundTitle">No encontramos esta reserva.</h1>
+        <p data-i18n="booking.notFoundCopy">Inicia sesión con la cuenta que hizo la reserva y vuelve a intentarlo.</p>
+        <a class="button primary" href="account.html" data-i18n="bookings.button">Mi cuenta</a>
+      </section>
+
+      <section id="bookingDetail" hidden>
+        <div class="booking-detail-cover" id="bookingCover"></div>
+        <p class="section-kicker" data-i18n="booking.kicker">Tu reserva</p>
+        <h1 id="bookingTitle"></h1>
+        <p id="bookingAddress" class="detail-address"></p>
+
+        <div class="booking-detail-grid">
+          <div>
+            <ul class="booking-facts" id="bookingFacts"></ul>
+            <p class="booking-links" id="bookingLinks" style="margin-top: 14px;"></p>
+            <p style="margin-top: 18px;">
+              <a class="details-button" id="bookingPropertyLink" href="#" data-i18n="booking.viewProperty">Ver anuncio de la vivienda</a>
+            </p>
+          </div>
+
+          <aside>
+            <div class="guest-info-card" id="guestInfoCard">
+              <h3 data-i18n="booking.guestInfoTitle">Información para tu estancia</h3>
+              <ul class="booking-facts" id="guestInfoFacts" style="margin: 0; max-width: none;"></ul>
+              <p class="guest-info-pending" id="guestInfoPending" hidden data-i18n="booking.guestInfoPending">Te enviaremos los detalles de entrada (wifi, llaves y contacto) antes de tu llegada.</p>
+              <p class="guest-info-pending"><span data-i18n="booking.guestInfoHelp">¿Dudas? Escríbenos a</span> <a href="mailto:info@ebrostay.com">info@ebrostay.com</a></p>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span class="footer-brand">
+        <img class="footer-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+        <span>&copy; <span id="year"></span> Ebrostay</span>
+      </span>
+      <a href="mailto:info@ebrostay.com">info@ebrostay.com</a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js?v=admin-11"></script>
+    <script src="data.js?v=admin-11"></script>
+    <script src="backend.js?v=admin-11"></script>
+    <script src="booking.js?v=admin-11"></script>
+  </body>
+</html>
