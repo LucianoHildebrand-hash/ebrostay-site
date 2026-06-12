@@ -22,7 +22,7 @@
       crossorigin=""
     >
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="styles.css?v=admin-7">
+    <link rel="stylesheet" href="styles.css?v=admin-8">
   </head>
   <body>
     <header class="site-header">
@@ -265,17 +265,22 @@
 
     <dialog class="auth-dialog" id="authDialog">
       <form class="auth-form" id="authForm">
-        <h3 data-i18n="auth.title">Accede a tu cuenta</h3>
-        <p data-i18n="auth.copy">Guarda viviendas para verlas más tarde desde cualquier dispositivo.</p>
-        <label>
+        <div class="auth-tabs" id="authTabs">
+          <button type="button" data-auth-mode="signin" class="is-active" data-i18n="auth.signin">Iniciar sesión</button>
+          <button type="button" data-auth-mode="signup" data-i18n="auth.signup">Crear cuenta</button>
+        </div>
+        <h3 id="authTitle">Accede a tu cuenta</h3>
+        <p id="authCopy">Guarda viviendas para verlas más tarde desde cualquier dispositivo.</p>
+        <label id="authEmailField">
           <span data-i18n="auth.email">Email</span>
           <input name="email" type="email" autocomplete="email" required>
         </label>
-        <label>
+        <label id="authPasswordField">
           <span data-i18n="auth.password">Contraseña</span>
           <input name="password" type="password" minlength="6" autocomplete="current-password" required>
         </label>
         <p class="auth-message" id="authMessage" role="status"></p>
+        <button class="button primary" id="authSubmit" type="submit">Iniciar sesión</button>
         <div class="auth-sso" id="authProviders" hidden>
           <span class="auth-or"><span data-i18n="auth.or">o</span></span>
           <button class="button ghost sso-button" type="button" data-provider="google" hidden>
@@ -287,12 +292,15 @@
             <span data-i18n="auth.microsoft">Continuar con Outlook</span>
           </button>
         </div>
-        <div class="auth-actions">
-          <button class="button primary" type="submit" data-auth-action="signin" data-i18n="auth.signin">Iniciar sesión</button>
-          <button class="button ghost" type="submit" data-auth-action="signup" data-i18n="auth.signup">Crear cuenta</button>
-        </div>
+        <button class="auth-link" id="authForgot" type="button" data-i18n="auth.forgot">¿Has olvidado tu contraseña?</button>
         <button class="auth-close" id="authClose" type="button" data-i18n="auth.close">Cerrar</button>
       </form>
+      <div class="auth-form auth-success" id="authSuccess" hidden>
+        <span class="auth-success-icon" aria-hidden="true">&#10003;</span>
+        <h3 id="authSuccessTitle"></h3>
+        <p id="authSuccessCopy"></p>
+        <button class="button primary" id="authSuccessClose" type="button" data-i18n="account.close">Cerrar</button>
+      </div>
     </dialog>
 
     <dialog class="auth-dialog" id="accountDialog">
@@ -315,9 +323,9 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=admin-7"></script>
-    <script src="data.js?v=admin-7"></script>
-    <script src="backend.js?v=admin-7"></script>
-    <script src="site.js?v=admin-7"></script>
+    <script src="supabase-config.js?v=admin-8"></script>
+    <script src="data.js?v=admin-8"></script>
+    <script src="backend.js?v=admin-8"></script>
+    <script src="site.js?v=admin-8"></script>
   </body>
 </html>

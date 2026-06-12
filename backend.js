@@ -140,7 +140,8 @@ const EbrostayBackend = (() => {
     if (!isConfigured()) return;
     const sb = getClient();
 
-    sb.auth.onAuthStateChange(() => {
+    sb.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") callbacks.onPasswordRecovery?.();
       refreshAuth();
     });
 
@@ -161,6 +162,18 @@ const EbrostayBackend = (() => {
 
   async function signOut() {
     await getClient().auth.signOut();
+  }
+
+  async function resetPassword(email) {
+    const { error } = await getClient().auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    return error;
+  }
+
+  async function updatePassword(password) {
+    const { error } = await getClient().auth.updateUser({ password });
+    return error;
   }
 
   // Which OAuth providers are enabled in the Supabase project (so the
@@ -249,6 +262,8 @@ const EbrostayBackend = (() => {
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updatePassword,
     getEnabledProviders,
     signInWithProvider,
     loadMyBookings,
