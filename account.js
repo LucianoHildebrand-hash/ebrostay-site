@@ -141,6 +141,9 @@ applyLanguage(currentLanguage);
 
 // Stripe success_url lands here after a paid checkout
 if (new URLSearchParams(window.location.search).get("booking") === "success") {
+  window.addEventListener("load", () => {
+    window.umami?.track("booking-paid");
+  });
   const toast = document.createElement("p");
   toast.className = "admin-status is-toast";
   toast.setAttribute("role", "status");

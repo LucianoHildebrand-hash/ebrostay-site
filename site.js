@@ -410,6 +410,11 @@ function rememberSearchDates(checkIn, checkOut) {
   localStorage.setItem("ebrostay-search-dates", JSON.stringify({ checkIn, checkOut: checkOut || "" }));
 }
 
+// Umami funnel events; no personal data, only ids and dates
+function trackEvent(name, data) {
+  window.umami?.track(name, data);
+}
+
 if (heroSearch && availabilityFilter) {
   heroSearch.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -418,6 +423,7 @@ if (heroSearch && availabilityFilter) {
     const heroDate = data.get("checkIn")?.toString() || "";
     const heroOutDate = data.get("checkOut")?.toString() || "";
     rememberSearchDates(heroDate, heroOutDate);
+    trackEvent("search", { source: "hero", checkIn: heroDate, checkOut: heroOutDate });
     if (datePickers.checkIn) {
       heroDate ? datePickers.checkIn.setDate(heroDate, true) : datePickers.checkIn.clear();
     } else {
@@ -444,6 +450,7 @@ if (availabilityFilter) {
     activeFilter = getFilterFromForm(availabilityFilter, true);
     const filterData = new FormData(availabilityFilter);
     rememberSearchDates(filterData.get("checkIn")?.toString() || "", filterData.get("checkOut")?.toString() || "");
+    trackEvent("search", { source: "filters", checkIn: filterData.get("checkIn")?.toString() || "", checkOut: filterData.get("checkOut")?.toString() || "" });
     mapNeedsFit = true;
     renderProperties();
     // on mobile the panel is a toggle; collapse it so results are visible
@@ -536,7 +543,10 @@ if (inquiryForm) {
         formNote.classList.toggle("is-success", ok);
         formNote.classList.toggle("is-error", !ok);
       }
-      if (ok) inquiryForm.reset();
+      if (ok) {
+        trackEvent("inquiry-sent");
+        inquiryForm.reset();
+      }
       return;
     }
 
