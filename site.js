@@ -1,190 +1,186 @@
 const translations = {
   es: {
-    "meta.title": "Ebrostay | Gestión de propiedades en Zaragoza",
-    "meta.description": "Ebrostay gestiona viviendas turísticas y alquileres de media estancia en Zaragoza con atención local, comunicación clara y cuidado operativo.",
+    "meta.title": "Ebrostay | Alquileres verificados en Zaragoza",
+    "meta.description": "Busca viviendas amuebladas y gestionadas por Ebrostay en Zaragoza. Filtra por fechas, presupuesto, capacidad y tipo de propiedad.",
+    "nav.search": "Buscar",
+    "nav.how": "Como funciona",
     "nav.owners": "Propietarios",
-    "nav.services": "Servicios",
-    "nav.availability": "Disponibilidad",
-    "nav.guests": "Huéspedes",
     "nav.contact": "Contacto",
-    "nav.cta": "Hablar",
-    "hero.imageAlt": "Propiedad residencial elegante en Zaragoza",
-    "hero.kicker": "Gestión de propiedades en Zaragoza",
-    "hero.title": "Gestión local para alquileres en Zaragoza",
-    "hero.copy": "Cuidamos viviendas turísticas y alquileres de media estancia con atención local, procesos claros y una experiencia fiable para propietarios y huéspedes.",
-    "hero.primary": "Quiero gestionar mi vivienda",
-    "hero.secondary": "Ver disponibilidad",
+    "nav.cta": "Publicar vivienda",
+    "hero.imageAlt": "Apartamento amueblado en Zaragoza",
+    "hero.kicker": "Alquileres de media estancia en Zaragoza",
+    "hero.title": "Encuentra una vivienda lista para entrar.",
+    "hero.copy": "Apartamentos, habitaciones y casas amuebladas con gestion local, disponibilidad clara y soporte antes de llegar.",
+    "hero.trust1": "Viviendas verificadas",
+    "hero.trust2": "Gestion local",
+    "hero.trust3": "Solicitud online",
     "search.city": "Ciudad",
     "search.cityPlaceholder": "Zaragoza",
     "search.moveIn": "Entrada",
-    "search.guests": "Huéspedes",
+    "search.guests": "Personas",
     "search.button": "Buscar",
-    "owners.kicker": "Para propietarios",
-    "owners.title": "Más tranquilidad, menos gestión diaria.",
-    "owners.copy": "Ebrostay ayuda a propietarios en Zaragoza a preparar, publicar y operar sus viviendas con criterio profesional. Nos ocupamos de la coordinación diaria para que el inmueble trabaje mejor sin convertirse en una carga.",
-    "services.card1.title": "Optimización del anuncio",
-    "services.card1.copy": "Presentación, precios, textos y mejoras prácticas para aumentar la confianza desde el primer vistazo.",
-    "services.card2.title": "Operativa local",
-    "services.card2.copy": "Coordinación de entradas, limpiezas, incidencias, reposición y comunicación con huéspedes.",
-    "services.card3.title": "Seguimiento claro",
-    "services.card3.copy": "Información ordenada sobre reservas, estado de la vivienda y próximos pasos importantes.",
-    "availability.kicker": "Marketplace",
-    "availability.title": "Busca propiedades disponibles en Zaragoza.",
-    "availability.copy": "Filtra por fechas, capacidad, tipo de vivienda y presupuesto mensual. Este MVP usa datos de ejemplo y está listo para conectarse a calendarios reales.",
-    "availability.city": "Ciudad",
-    "availability.checkIn": "Entrada",
-    "availability.checkOut": "Salida",
-    "availability.guests": "Huéspedes",
-    "availability.type": "Tipo",
-    "availability.typeAll": "Todos",
-    "availability.typeApartment": "Apartamento",
-    "availability.typeRoom": "Habitación",
-    "availability.typeHome": "Casa",
-    "availability.maxBudget": "Presupuesto máximo",
-    "availability.anyBudget": "Sin límite",
-    "availability.sort": "Ordenar",
-    "availability.sortBest": "Mejor opción",
-    "availability.sortPrice": "Precio",
-    "availability.sortNew": "Novedades",
-    "availability.filter": "Filtrar",
-    "availability.reset": "Reiniciar",
-    "availability.all": "Mostrando todas las propiedades gestionadas.",
-    "availability.matches": "{count} propiedades encontradas.",
-    "availability.oneMatch": "1 propiedad encontrada.",
-    "availability.none": "No hay propiedades para esos filtros.",
-    "availability.invalid": "Selecciona una fecha de salida posterior a la entrada.",
-    "availability.open": "Disponible",
-    "availability.blocked": "No disponible",
-    "availability.capacity": "Hasta {guests} huéspedes",
-    "availability.from": "{price}/mes",
-    "availability.availableFrom": "Desde {date}",
-    "availability.rating": "Valoración {rating}",
-    "availability.details": "Ver más",
-    "availability.hideDetails": "Ocultar",
-    "availability.favorite": "Guardar favorito",
-    "availability.saved": "Favorito guardado",
+    "market.kicker": "Busqueda",
+    "market.title": "Viviendas disponibles en Zaragoza",
+    "filters.city": "Ciudad",
+    "filters.checkIn": "Entrada",
+    "filters.checkOut": "Salida",
+    "filters.guests": "Personas",
+    "filters.type": "Tipo de vivienda",
+    "filters.typeAll": "Todos",
+    "filters.typeApartment": "Apartamento",
+    "filters.typeRoom": "Habitacion",
+    "filters.typeHome": "Casa",
+    "filters.budget": "Presupuesto mensual maximo",
+    "filters.anyBudget": "Sin limite",
+    "filters.mustHave": "Imprescindible",
+    "filters.sort": "Ordenar",
+    "filters.sortBest": "Mejor opcion",
+    "filters.sortPrice": "Precio mas bajo",
+    "filters.sortNew": "Novedades",
+    "filters.apply": "Aplicar filtros",
+    "filters.reset": "Reiniciar",
+    "quick.verified": "Verificadas",
+    "quick.bills": "Gastos incluidos",
+    "quick.deposit": "Deposito protegido",
+    "status.all": "Mostrando {count} viviendas gestionadas.",
+    "status.matches": "{count} viviendas encontradas.",
+    "status.one": "1 vivienda encontrada.",
+    "status.none": "No hay viviendas para esos filtros.",
+    "status.invalid": "La fecha de salida debe ser posterior a la entrada.",
+    "listing.available": "Disponible",
+    "listing.unavailable": "No disponible",
+    "listing.capacity": "Hasta {guests} personas",
+    "listing.price": "{price}/mes",
+    "listing.from": "Disponible desde {date}",
+    "listing.rating": "{rating} valoracion",
+    "listing.details": "Ver detalles",
+    "listing.hide": "Ocultar detalles",
+    "listing.favorite": "Guardar",
+    "listing.saved": "Guardado",
+    "listing.request": "Solicitar",
     "badge.checked": "Verificada",
-    "badge.deposit": "Depósito protegido",
+    "badge.deposit": "Deposito protegido",
     "badge.bills": "Gastos incluidos",
     "type.apartment": "Apartamento",
-    "type.room": "Habitación",
+    "type.room": "Habitacion",
     "type.home": "Casa",
     "amenity.wifi": "wifi",
     "amenity.desk": "mesa de trabajo",
-    "amenity.balcony": "balcón",
+    "amenity.balcony": "balcon",
     "amenity.lift": "ascensor",
     "amenity.ac": "aire acondicionado",
-    "amenity.heating": "calefacción",
+    "amenity.heating": "calefaccion",
     "amenity.kitchen": "cocina equipada",
+    "amenity.terrace": "terraza",
     "properties.pilar.name": "Apartamento Pilar",
-    "properties.pilar.area": "Casco Histórico",
-    "properties.pilar.copy": "Apartamento céntrico para estancias urbanas, escapadas y viajes de trabajo cerca del Ebro.",
-    "properties.pilar.details": "Ideal para profesionales, parejas o estancias temporales que necesitan estar cerca del centro histórico, transporte y servicios.",
+    "properties.pilar.area": "Casco Historico",
+    "properties.pilar.copy": "Apartamento centrico para estancias urbanas, escapadas y viajes de trabajo cerca del Ebro.",
+    "properties.pilar.details": "Vivienda luminosa con cocina equipada, balcon y acceso rapido al tranvia, Basilica del Pilar y zona historica.",
     "properties.actur.name": "Loft Actur",
     "properties.actur.area": "Actur - Expo",
-    "properties.actur.copy": "Espacio práctico para media estancia, con buena conexión y ritmo tranquilo.",
-    "properties.actur.details": "Pensado para una o dos personas que quieren buena conectividad, escritorio cómodo y acceso rápido a zonas empresariales.",
+    "properties.actur.copy": "Espacio practico para media estancia, con buena conexion y ritmo tranquilo.",
+    "properties.actur.details": "Pensado para una o dos personas que quieren escritorio comodo, internet estable y acceso rapido a zonas empresariales.",
     "properties.romareda.name": "Casa Romareda",
     "properties.romareda.area": "Romareda",
-    "properties.romareda.copy": "Vivienda amplia para familias o grupos pequeños que quieren comodidad y barrio residencial.",
-    "properties.romareda.details": "Opción flexible para traslados familiares, reformas, estancias médicas o proyectos temporales en Zaragoza.",
-    "guests.kicker": "Para huéspedes",
-    "guests.title": "Estancias cómodas, bien comunicadas y sin fricción.",
-    "guests.copy": "Una buena gestión también se nota en la experiencia del huésped: instrucciones claras, respuesta ágil y viviendas preparadas para llegar, instalarse y disfrutar Zaragoza.",
-    "guests.item1.title": "Llegada",
-    "guests.item1.copy": "Información práctica antes del viaje y procesos de check-in bien coordinados.",
-    "guests.item2.title": "Estancia",
-    "guests.item2.copy": "Soporte local, vivienda cuidada y detalles esenciales revisados.",
-    "guests.item3.title": "Zaragoza",
-    "guests.item3.copy": "Recomendaciones útiles para moverse, comer y aprovechar la ciudad.",
-    "location.kicker": "Base local",
-    "location.title": "Conocimiento de Zaragoza, atención cercana.",
-    "location.copy": "Trabajamos con propiedades urbanas y estancias flexibles en Zaragoza, combinando enfoque comercial, cuidado del inmueble y comunicación humana.",
+    "properties.romareda.copy": "Vivienda amplia para familias o grupos pequenos que quieren comodidad y barrio residencial.",
+    "properties.romareda.details": "Opcion flexible para traslados familiares, reformas, estancias medicas o proyectos temporales en Zaragoza.",
+    "properties.university.name": "Estudio Universidad",
+    "properties.university.area": "Universidad",
+    "properties.university.copy": "Estudio compacto con todo lo necesario para estudiantes, investigadores o profesionales.",
+    "properties.university.details": "Ubicado cerca de campus, hospitales y transporte publico, con escritorio, calefaccion y gastos incluidos.",
+    "map.title": "Mapa de barrios",
+    "map.copy": "Vista orientativa para comparar zonas antes de solicitar una vivienda.",
+    "how.kicker": "Como funciona",
+    "how.title": "Busca, solicita y llega con todo claro.",
+    "how.step1.title": "Filtra",
+    "how.step1.copy": "Elige fechas, presupuesto, capacidad y comodidades para reducir la busqueda.",
+    "how.step2.title": "Revisa",
+    "how.step2.copy": "Compara viviendas verificadas, detalles, ubicacion, precio mensual y disponibilidad.",
+    "how.step3.title": "Solicita",
+    "how.step3.copy": "Envia una solicitud y Ebrostay confirma disponibilidad, condiciones y siguiente paso.",
+    "owners.kicker": "Para propietarios",
+    "owners.title": "Publica y opera tu vivienda con ayuda local.",
+    "owners.copy": "Ebrostay prepara anuncios, coordina entradas, limpiezas, incidencias y comunicacion con huespedes para que tu propiedad funcione mejor sin absorber tu dia.",
     "contact.kicker": "Contacto",
-    "contact.title": "Cuéntanos qué propiedad quieres gestionar.",
-    "contact.copy": "Este primer formulario prepara un correo directo. Podemos adaptar la web después con tarifas, fotos reales, calendarios o una página específica para huéspedes.",
+    "contact.title": "Cuantanos que necesitas.",
+    "contact.copy": "El formulario prepara un correo directo con la vivienda o consulta seleccionada.",
     "form.name": "Nombre",
     "form.email": "Email",
-    "form.property": "Propiedad",
-    "form.propertyPlaceholder": "Barrio, tipo de vivienda o situación actual",
+    "form.property": "Propiedad o zona",
+    "form.propertyPlaceholder": "Pilar, Actur, Romareda...",
     "form.message": "Mensaje",
-    "form.messagePlaceholder": "Cuéntanos qué necesitas: gestión completa, mejora del anuncio, coordinación local, etc.",
+    "form.messagePlaceholder": "Fechas, personas, presupuesto o gestion de propiedad...",
     "form.button": "Preparar correo",
-    "form.note": "Se abrirá tu app de correo con el mensaje listo para enviar.",
+    "form.note": "Se abrira tu app de correo con el mensaje listo para enviar.",
     "email.subject": "Consulta Ebrostay de",
-    "email.defaultMessage": "Quiero saber más sobre la gestión de mi propiedad con Ebrostay.",
+    "email.defaultMessage": "Quiero saber mas sobre una vivienda o gestion de propiedad con Ebrostay.",
     "email.propertyFallback": "Sin especificar"
   },
   en: {
-    "meta.title": "Ebrostay | Property Management in Zaragoza",
-    "meta.description": "Ebrostay manages holiday rentals and medium-stay homes in Zaragoza with local care, clear communication, and reliable operations.",
+    "meta.title": "Ebrostay | Verified rentals in Zaragoza",
+    "meta.description": "Search furnished homes managed by Ebrostay in Zaragoza. Filter by dates, budget, capacity, and property type.",
+    "nav.search": "Search",
+    "nav.how": "How it works",
     "nav.owners": "Owners",
-    "nav.services": "Services",
-    "nav.availability": "Availability",
-    "nav.guests": "Guests",
     "nav.contact": "Contact",
-    "nav.cta": "Talk",
-    "hero.imageAlt": "Elegant residential property in Zaragoza",
-    "hero.kicker": "Property management in Zaragoza",
-    "hero.title": "Local rental management in Zaragoza",
-    "hero.copy": "We care for holiday rentals and medium-stay homes with local attention, clear processes, and a reliable experience for owners and guests.",
-    "hero.primary": "Manage my property",
-    "hero.secondary": "View availability",
+    "nav.cta": "List a home",
+    "hero.imageAlt": "Furnished apartment in Zaragoza",
+    "hero.kicker": "Medium-stay rentals in Zaragoza",
+    "hero.title": "Find a home ready to move into.",
+    "hero.copy": "Furnished apartments, rooms, and homes with local management, clear availability, and support before arrival.",
+    "hero.trust1": "Verified homes",
+    "hero.trust2": "Local management",
+    "hero.trust3": "Online request",
     "search.city": "City",
     "search.cityPlaceholder": "Zaragoza",
     "search.moveIn": "Move-in",
-    "search.guests": "Guests",
+    "search.guests": "People",
     "search.button": "Search",
-    "owners.kicker": "For owners",
-    "owners.title": "More peace of mind, less daily admin.",
-    "owners.copy": "Ebrostay helps property owners in Zaragoza prepare, publish, and operate their homes with a professional approach. We coordinate the daily work so the property performs better without becoming a burden.",
-    "services.card1.title": "Listing optimization",
-    "services.card1.copy": "Presentation, pricing, copy, and practical improvements that build trust from the first look.",
-    "services.card2.title": "Local operations",
-    "services.card2.copy": "Coordination of arrivals, cleaning, issues, replenishment, and guest communication.",
-    "services.card3.title": "Clear follow-up",
-    "services.card3.copy": "Organized updates on bookings, property status, and the next important actions.",
-    "availability.kicker": "Marketplace",
-    "availability.title": "Find available properties in Zaragoza.",
-    "availability.copy": "Filter by dates, capacity, home type, and monthly budget. This MVP uses sample data and is ready to connect to real calendars.",
-    "availability.city": "City",
-    "availability.checkIn": "Check-in",
-    "availability.checkOut": "Check-out",
-    "availability.guests": "Guests",
-    "availability.type": "Type",
-    "availability.typeAll": "All",
-    "availability.typeApartment": "Apartment",
-    "availability.typeRoom": "Room",
-    "availability.typeHome": "Home",
-    "availability.maxBudget": "Maximum budget",
-    "availability.anyBudget": "No limit",
-    "availability.sort": "Sort",
-    "availability.sortBest": "Best match",
-    "availability.sortPrice": "Price",
-    "availability.sortNew": "New arrivals",
-    "availability.filter": "Filter",
-    "availability.reset": "Reset",
-    "availability.all": "Showing all managed properties.",
-    "availability.matches": "{count} properties found.",
-    "availability.oneMatch": "1 property found.",
-    "availability.none": "No properties match those filters.",
-    "availability.invalid": "Choose a check-out date after check-in.",
-    "availability.open": "Available",
-    "availability.blocked": "Unavailable",
-    "availability.capacity": "Up to {guests} guests",
-    "availability.from": "{price}/month",
-    "availability.availableFrom": "From {date}",
-    "availability.rating": "Rating {rating}",
-    "availability.details": "View more",
-    "availability.hideDetails": "Hide",
-    "availability.favorite": "Save favorite",
-    "availability.saved": "Favorite saved",
+    "market.kicker": "Search",
+    "market.title": "Available homes in Zaragoza",
+    "filters.city": "City",
+    "filters.checkIn": "Move-in",
+    "filters.checkOut": "Move-out",
+    "filters.guests": "People",
+    "filters.type": "Home type",
+    "filters.typeAll": "All",
+    "filters.typeApartment": "Apartment",
+    "filters.typeRoom": "Room",
+    "filters.typeHome": "House",
+    "filters.budget": "Maximum monthly budget",
+    "filters.anyBudget": "No limit",
+    "filters.mustHave": "Must-have",
+    "filters.sort": "Sort",
+    "filters.sortBest": "Best match",
+    "filters.sortPrice": "Lowest price",
+    "filters.sortNew": "New arrivals",
+    "filters.apply": "Apply filters",
+    "filters.reset": "Reset",
+    "quick.verified": "Verified",
+    "quick.bills": "Bills included",
+    "quick.deposit": "Deposit protected",
+    "status.all": "Showing {count} managed homes.",
+    "status.matches": "{count} homes found.",
+    "status.one": "1 home found.",
+    "status.none": "No homes match those filters.",
+    "status.invalid": "Move-out must be after move-in.",
+    "listing.available": "Available",
+    "listing.unavailable": "Unavailable",
+    "listing.capacity": "Up to {guests} people",
+    "listing.price": "{price}/month",
+    "listing.from": "Available from {date}",
+    "listing.rating": "{rating} rating",
+    "listing.details": "View details",
+    "listing.hide": "Hide details",
+    "listing.favorite": "Save",
+    "listing.saved": "Saved",
+    "listing.request": "Request",
     "badge.checked": "Verified",
     "badge.deposit": "Deposit protected",
     "badge.bills": "Bills included",
     "type.apartment": "Apartment",
     "type.room": "Room",
-    "type.home": "Home",
+    "type.home": "House",
     "amenity.wifi": "wifi",
     "amenity.desk": "desk",
     "amenity.balcony": "balcony",
@@ -192,43 +188,49 @@ const translations = {
     "amenity.ac": "air conditioning",
     "amenity.heating": "heating",
     "amenity.kitchen": "equipped kitchen",
+    "amenity.terrace": "terrace",
     "properties.pilar.name": "Pilar Apartment",
     "properties.pilar.area": "Old Town",
-    "properties.pilar.copy": "Central apartment for city breaks, work trips, and stays near the Ebro.",
-    "properties.pilar.details": "Ideal for professionals, couples, or temporary stays near the historic center, transport, and services.",
+    "properties.pilar.copy": "Central apartment for city stays, weekend breaks, and work trips near the Ebro.",
+    "properties.pilar.details": "Bright home with equipped kitchen, balcony, and fast access to tram, Basilica del Pilar, and the historic center.",
     "properties.actur.name": "Actur Loft",
     "properties.actur.area": "Actur - Expo",
     "properties.actur.copy": "Practical medium-stay space with good connections and a quieter rhythm.",
-    "properties.actur.details": "Designed for one or two guests who need connectivity, a comfortable desk, and quick access to business areas.",
+    "properties.actur.details": "Designed for one or two people who need a comfortable desk, stable internet, and quick access to business areas.",
     "properties.romareda.name": "Romareda Home",
     "properties.romareda.area": "Romareda",
     "properties.romareda.copy": "Spacious home for families or small groups who want comfort in a residential area.",
-    "properties.romareda.details": "A flexible option for family moves, renovations, medical stays, or temporary projects in Zaragoza.",
-    "guests.kicker": "For guests",
-    "guests.title": "Comfortable stays, clear communication, no friction.",
-    "guests.copy": "Good management also shows in the guest experience: clear instructions, quick responses, and homes prepared for arriving, settling in, and enjoying Zaragoza.",
-    "guests.item1.title": "Arrival",
-    "guests.item1.copy": "Useful pre-trip information and well-coordinated check-in processes.",
-    "guests.item2.title": "Stay",
-    "guests.item2.copy": "Local support, cared-for homes, and essential details checked.",
-    "guests.item3.title": "Zaragoza",
-    "guests.item3.copy": "Practical recommendations for getting around, eating well, and enjoying the city.",
-    "location.kicker": "Local base",
-    "location.title": "Zaragoza knowledge, close attention.",
-    "location.copy": "We work with urban properties and flexible stays in Zaragoza, combining commercial focus, property care, and human communication.",
+    "properties.romareda.details": "Flexible option for family moves, renovations, medical stays, or temporary projects in Zaragoza.",
+    "properties.university.name": "University Studio",
+    "properties.university.area": "University",
+    "properties.university.copy": "Compact studio with everything needed for students, researchers, or professionals.",
+    "properties.university.details": "Near campus, hospitals, and public transport, with desk, heating, and bills included.",
+    "map.title": "Neighborhood map",
+    "map.copy": "Orientation view to compare areas before requesting a home.",
+    "how.kicker": "How it works",
+    "how.title": "Search, request, and arrive with clarity.",
+    "how.step1.title": "Filter",
+    "how.step1.copy": "Choose dates, budget, capacity, and amenities to narrow the search.",
+    "how.step2.title": "Review",
+    "how.step2.copy": "Compare verified homes, details, location, monthly price, and availability.",
+    "how.step3.title": "Request",
+    "how.step3.copy": "Send a request and Ebrostay confirms availability, terms, and next step.",
+    "owners.kicker": "For owners",
+    "owners.title": "List and operate your home with local help.",
+    "owners.copy": "Ebrostay prepares listings, coordinates arrivals, cleaning, issues, and guest communication so your property works better without taking over your day.",
     "contact.kicker": "Contact",
-    "contact.title": "Tell us which property you want to manage.",
-    "contact.copy": "This first form prepares a direct email. We can later adapt the site with rates, real photos, calendars, or a guest-specific page.",
+    "contact.title": "Tell us what you need.",
+    "contact.copy": "The form prepares a direct email with the selected home or inquiry.",
     "form.name": "Name",
     "form.email": "Email",
-    "form.property": "Property",
-    "form.propertyPlaceholder": "Neighbourhood, property type, or current situation",
+    "form.property": "Property or area",
+    "form.propertyPlaceholder": "Pilar, Actur, Romareda...",
     "form.message": "Message",
-    "form.messagePlaceholder": "Tell us what you need: full management, listing improvement, local coordination, etc.",
+    "form.messagePlaceholder": "Dates, people, budget, or property management...",
     "form.button": "Prepare email",
     "form.note": "Your email app will open with the message ready to send.",
     "email.subject": "Ebrostay inquiry from",
-    "email.defaultMessage": "I would like to know more about managing my property with Ebrostay.",
+    "email.defaultMessage": "I would like to know more about a home or property management with Ebrostay.",
     "email.propertyFallback": "Not specified"
   }
 };
@@ -291,8 +293,28 @@ const properties = [
     checked: true,
     depositProtected: true,
     billsIncluded: false,
-    amenities: ["wifi", "balcony", "ac", "heating", "kitchen"],
+    amenities: ["wifi", "balcony", "ac", "heating", "kitchen", "terrace"],
     unavailable: [["2026-06-15", "2026-06-21"], ["2026-07-26", "2026-08-02"]]
+  },
+  {
+    id: "university",
+    city: "zaragoza",
+    type: "apartment",
+    nameKey: "properties.university.name",
+    areaKey: "properties.university.area",
+    copyKey: "properties.university.copy",
+    detailsKey: "properties.university.details",
+    guests: 2,
+    price: "690 EUR",
+    priceNumber: 690,
+    rating: 4.7,
+    availableFrom: "2026-07-15",
+    isNew: true,
+    checked: true,
+    depositProtected: false,
+    billsIncluded: true,
+    amenities: ["wifi", "desk", "lift", "heating", "kitchen"],
+    unavailable: [["2026-06-22", "2026-06-29"], ["2026-08-01", "2026-08-16"]]
   }
 ];
 
@@ -304,15 +326,17 @@ const propertyGrid = document.querySelector("#propertyGrid");
 const availabilityStatus = document.querySelector("#availabilityStatus");
 const resetAvailability = document.querySelector("#resetAvailability");
 const languageButtons = document.querySelectorAll("[data-lang]");
+const quickButtons = document.querySelectorAll("[data-quick]");
+const sortBy = document.querySelector("#sortBy");
 
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let activeFilter = null;
-let availabilityMessageOverride = null;
+let statusOverride = null;
+let quickFilters = new Set();
 let favorites = new Set(JSON.parse(localStorage.getItem("ebrostay-favorites") || "[]"));
 let expanded = new Set();
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
-const formatDate = (date) => new Intl.DateTimeFormat(currentLanguage === "es" ? "es-ES" : "en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 
 function interpolate(key, values) {
   return Object.entries(values).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), t(key));
@@ -322,41 +346,59 @@ function dateValue(value) {
   return value ? new Date(`${value}T00:00:00`) : null;
 }
 
+function formatDate(date) {
+  return new Intl.DateTimeFormat(currentLanguage === "es" ? "es-ES" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(date);
+}
+
 function rangesOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
 
-function getFilterFromForm(form, requireCheckOut = true) {
+function getAmenities(formData) {
+  return formData.getAll("amenities").map((value) => value.toString());
+}
+
+function getFilterFromForm(form, requireValidRange = false) {
   const formData = new FormData(form);
   const checkIn = dateValue(formData.get("checkIn"));
   const checkOut = dateValue(formData.get("checkOut"));
-  const city = formData.get("city")?.toString().trim().toLowerCase() || "";
 
-  if (requireCheckOut && checkIn && checkOut && checkOut <= checkIn) {
-    availabilityMessageOverride = t("availability.invalid");
+  if (requireValidRange && checkIn && checkOut && checkOut <= checkIn) {
+    statusOverride = t("status.invalid");
     return null;
   }
 
   return {
-    city,
+    city: formData.get("city")?.toString().trim().toLowerCase() || "",
     checkIn,
     checkOut,
     guests: Number(formData.get("guestCount")) || 1,
     propertyType: formData.get("propertyType") || "all",
     maxBudget: Number(formData.get("maxBudget")) || null,
-    sortBy: formData.get("sortBy") || "best"
+    amenities: getAmenities(formData),
+    sortBy: formData.get("sortBy") || sortBy?.value || "best"
   };
 }
 
-function isAvailable(property, filter) {
-  if (!filter) {
-    return true;
-  }
+function passesQuickFilters(property) {
+  if (quickFilters.has("checked") && !property.checked) return false;
+  if (quickFilters.has("bills") && !property.billsIncluded) return false;
+  if (quickFilters.has("deposit") && !property.depositProtected) return false;
+  return true;
+}
 
+function isAvailable(property, filter) {
+  if (!passesQuickFilters(property)) return false;
+  if (!filter) return true;
   if (filter.city && !property.city.includes(filter.city)) return false;
   if (filter.propertyType !== "all" && property.type !== filter.propertyType) return false;
   if (filter.maxBudget && property.priceNumber > filter.maxBudget) return false;
   if (property.guests < filter.guests) return false;
+  if (filter.amenities.some((amenity) => !property.amenities.includes(amenity))) return false;
 
   if (filter.checkIn && filter.checkOut) {
     return !property.unavailable.some(([start, end]) => rangesOverlap(filter.checkIn, filter.checkOut, dateValue(start), dateValue(end)));
@@ -365,11 +407,11 @@ function isAvailable(property, filter) {
   return true;
 }
 
-function sortProperties(list, sortBy) {
+function sortProperties(list, selectedSort) {
   return [...list].sort((a, b) => {
-    if (sortBy === "price") return a.priceNumber - b.priceNumber;
-    if (sortBy === "new") return Number(b.isNew) - Number(a.isNew);
-    return b.rating - a.rating;
+    if (selectedSort === "price") return a.priceNumber - b.priceNumber;
+    if (selectedSort === "new") return Number(b.isNew) - Number(a.isNew) || a.priceNumber - b.priceNumber;
+    return b.rating - a.rating || a.priceNumber - b.priceNumber;
   });
 }
 
@@ -381,17 +423,26 @@ function badgeList(property) {
   ].filter(Boolean);
 }
 
+function requestProperty(propertyId) {
+  const property = properties.find((item) => item.id === propertyId);
+  if (!property) return;
+  document.querySelector("[name='property']").value = `${t(property.nameKey)} - ${t(property.areaKey)}`;
+  document.querySelector("[name='message']").value = `${t("email.defaultMessage")}\n\n${t(property.nameKey)}: ${t(property.copyKey)}`;
+  document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
+}
+
 function renderProperties() {
   if (!propertyGrid || !availabilityStatus) return;
 
-  const filtered = sortProperties(properties.filter((property) => isAvailable(property, activeFilter)), activeFilter?.sortBy || "best");
+  const selectedSort = sortBy?.value || activeFilter?.sortBy || "best";
+  const filtered = sortProperties(properties.filter((property) => isAvailable(property, activeFilter)), selectedSort);
   const count = filtered.length;
 
-  if (availabilityMessageOverride) availabilityStatus.textContent = availabilityMessageOverride;
-  else if (!activeFilter) availabilityStatus.textContent = t("availability.all");
-  else if (count === 0) availabilityStatus.textContent = t("availability.none");
-  else if (count === 1) availabilityStatus.textContent = t("availability.oneMatch");
-  else availabilityStatus.textContent = interpolate("availability.matches", { count });
+  if (statusOverride) availabilityStatus.textContent = statusOverride;
+  else if (!activeFilter && quickFilters.size === 0) availabilityStatus.textContent = interpolate("status.all", { count: properties.length });
+  else if (count === 0) availabilityStatus.textContent = t("status.none");
+  else if (count === 1) availabilityStatus.textContent = t("status.one");
+  else availabilityStatus.textContent = interpolate("status.matches", { count });
 
   propertyGrid.innerHTML = filtered.map((property) => {
     const isFavorite = favorites.has(property.id);
@@ -401,25 +452,32 @@ function renderProperties() {
 
     return `
       <article class="property-card">
-        <div class="property-card-header">
-          <span class="availability-pill is-open">${t("availability.open")}</span>
-          <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("availability.saved") : t("availability.favorite")}">♥</button>
+        <div class="property-media property-${property.id}">
+          <span class="availability-pill">${t("listing.available")}</span>
+          <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("listing.saved") : t("listing.favorite")}">${isFavorite ? "Saved" : "Save"}</button>
         </div>
-        <div>
-          <p class="section-kicker">${t(`type.${property.type}`)} • ${interpolate("availability.availableFrom", { date: formatDate(dateValue(property.availableFrom)) })}</p>
-          <h3>${t(property.nameKey)}</h3>
+        <div class="property-body">
+          <div class="property-title-row">
+            <div>
+              <p class="section-kicker">${t(`type.${property.type}`)} · ${t(property.areaKey)}</p>
+              <h3>${t(property.nameKey)}</h3>
+            </div>
+            <strong>${interpolate("listing.price", { price: property.price })}</strong>
+          </div>
           <p>${t(property.copyKey)}</p>
+          <div class="property-badges">${badges}</div>
+          <div class="property-meta">
+            <span>${interpolate("listing.capacity", { guests: property.guests })}</span>
+            <span>${interpolate("listing.rating", { rating: property.rating })}</span>
+            <span>${interpolate("listing.from", { date: formatDate(dateValue(property.availableFrom)) })}</span>
+          </div>
+          <div class="amenity-list">${amenities}</div>
+          ${isExpanded ? `<p class="property-details">${t(property.detailsKey)}</p>` : ""}
+          <div class="property-actions">
+            <button class="details-button" type="button" data-details="${property.id}">${isExpanded ? t("listing.hide") : t("listing.details")}</button>
+            <button class="button primary request-button" type="button" data-request="${property.id}">${t("listing.request")}</button>
+          </div>
         </div>
-        <div class="property-badges">${badges}</div>
-        <div class="property-meta">
-          <span>${t(property.areaKey)}</span>
-          <span>${interpolate("availability.capacity", { guests: property.guests })}</span>
-          <span>${interpolate("availability.rating", { rating: property.rating })}</span>
-          <span>${interpolate("availability.from", { price: property.price })}</span>
-        </div>
-        <div class="amenity-list">${amenities}</div>
-        ${isExpanded ? `<p class="property-details">${t(property.detailsKey)}</p>` : ""}
-        <button class="details-button" type="button" data-details="${property.id}">${isExpanded ? t("availability.hideDetails") : t("availability.details")}</button>
       </article>
     `;
   }).join("");
@@ -456,6 +514,15 @@ languageButtons.forEach((button) => {
   button.addEventListener("click", () => applyLanguage(button.dataset.lang));
 });
 
+quickButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const value = button.dataset.quick;
+    quickFilters.has(value) ? quickFilters.delete(value) : quickFilters.add(value);
+    button.classList.toggle("is-active", quickFilters.has(value));
+    renderProperties();
+  });
+});
+
 if (heroSearch && availabilityFilter) {
   heroSearch.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -463,9 +530,9 @@ if (heroSearch && availabilityFilter) {
     availabilityFilter.elements.city.value = data.get("city") || "Zaragoza";
     availabilityFilter.elements.checkIn.value = data.get("checkIn") || "";
     availabilityFilter.elements.guestCount.value = data.get("guestCount") || "2";
-    document.querySelector("#availability")?.scrollIntoView({ behavior: "smooth" });
-    availabilityMessageOverride = null;
-    activeFilter = getFilterFromForm(availabilityFilter, false);
+    statusOverride = null;
+    activeFilter = getFilterFromForm(availabilityFilter);
+    document.querySelector("#search")?.scrollIntoView({ behavior: "smooth" });
     renderProperties();
   });
 }
@@ -473,18 +540,27 @@ if (heroSearch && availabilityFilter) {
 if (availabilityFilter) {
   availabilityFilter.addEventListener("submit", (event) => {
     event.preventDefault();
-    availabilityMessageOverride = null;
-    activeFilter = getFilterFromForm(availabilityFilter);
-    if (activeFilter) renderProperties();
-    else renderProperties();
+    statusOverride = null;
+    activeFilter = getFilterFromForm(availabilityFilter, true);
+    renderProperties();
   });
+}
+
+if (sortBy) {
+  sortBy.addEventListener("change", renderProperties);
 }
 
 if (resetAvailability) {
   resetAvailability.addEventListener("click", () => {
     activeFilter = null;
-    availabilityMessageOverride = null;
+    statusOverride = null;
+    quickFilters.clear();
+    quickButtons.forEach((button) => button.classList.remove("is-active"));
     availabilityFilter?.reset();
+    if (availabilityFilter) {
+      availabilityFilter.elements.city.value = "Zaragoza";
+      availabilityFilter.elements.guestCount.value = "2";
+    }
     renderProperties();
   });
 }
@@ -493,6 +569,7 @@ if (propertyGrid) {
   propertyGrid.addEventListener("click", (event) => {
     const favoriteId = event.target.closest("[data-favorite]")?.dataset.favorite;
     const detailId = event.target.closest("[data-details]")?.dataset.details;
+    const requestId = event.target.closest("[data-request]")?.dataset.request;
 
     if (favoriteId) {
       favorites.has(favoriteId) ? favorites.delete(favoriteId) : favorites.add(favoriteId);
@@ -504,6 +581,8 @@ if (propertyGrid) {
       expanded.has(detailId) ? expanded.delete(detailId) : expanded.add(detailId);
       renderProperties();
     }
+
+    if (requestId) requestProperty(requestId);
   });
 }
 

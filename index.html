@@ -3,33 +3,29 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title data-i18n="meta.title">Ebrostay | Gestión de propiedades en Zaragoza</title>
+    <title data-i18n="meta.title">Ebrostay | Alquileres verificados en Zaragoza</title>
     <meta
       name="description"
       data-i18n-attr="content:meta.description"
-      content="Ebrostay gestiona viviendas turísticas y alquileres de media estancia en Zaragoza con atención local, comunicación clara y cuidado operativo."
+      content="Busca viviendas amuebladas y gestionadas por Ebrostay en Zaragoza. Filtra por fechas, presupuesto, capacidad y tipo de propiedad."
     >
-    <meta property="og:title" content="Ebrostay | Gestión de propiedades en Zaragoza">
-    <meta
-      property="og:description"
-      content="Gestión local de propiedades en Zaragoza para propietarios que quieren ingresos estables y huéspedes bien atendidos."
-    >
+    <meta property="og:title" content="Ebrostay | Alquileres verificados en Zaragoza">
+    <meta property="og:description" content="Viviendas amuebladas de media estancia en Zaragoza con gestion local y soporte claro.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="assets/ebrostay-zaragoza-hero.png">
     <link rel="canonical" href="https://ebrostay.com/">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=marketplace-1">
+    <link rel="stylesheet" href="styles.css?v=marketplace-2">
   </head>
   <body>
-    <header class="site-header" aria-label="Main navigation">
+    <header class="site-header">
       <a class="brand" href="#top" aria-label="Ebrostay home">
         <img class="brand-logo" src="assets/ebrostay-logo.png" alt="Ebrostay">
       </a>
-      <nav class="nav-links" aria-label="Primary">
+      <nav class="nav-links" aria-label="Primary navigation">
+        <a href="#search" data-i18n="nav.search">Buscar</a>
+        <a href="#how" data-i18n="nav.how">Como funciona</a>
         <a href="#owners" data-i18n="nav.owners">Propietarios</a>
-        <a href="#services" data-i18n="nav.services">Servicios</a>
-        <a href="#availability" data-i18n="nav.availability">Disponibilidad</a>
-        <a href="#guests" data-i18n="nav.guests">Huéspedes</a>
         <a href="#contact" data-i18n="nav.contact">Contacto</a>
       </nav>
       <div class="header-actions">
@@ -37,170 +33,173 @@
           <button class="language-option is-active" type="button" data-lang="es">ES</button>
           <button class="language-option" type="button" data-lang="en">EN</button>
         </div>
-        <a class="nav-cta" href="#contact" data-i18n="nav.cta">Hablar</a>
+        <a class="nav-cta" href="#contact" data-i18n="nav.cta">Publicar vivienda</a>
       </div>
     </header>
 
     <main id="top">
-      <section class="hero" aria-label="Ebrostay introduction">
-        <img class="hero-image" src="assets/ebrostay-zaragoza-hero.png" alt="Elegant residential property in Zaragoza" data-i18n-attr="alt:hero.imageAlt">
+      <section class="hero">
+        <img class="hero-image" src="assets/ebrostay-zaragoza-hero.png" alt="Apartamento amueblado en Zaragoza" data-i18n-attr="alt:hero.imageAlt">
         <div class="hero-overlay"></div>
         <div class="hero-content">
-          <p class="eyebrow" data-i18n="hero.kicker">Gestión de propiedades en Zaragoza</p>
-          <h1 data-i18n="hero.title">Gestión local para alquileres en Zaragoza</h1>
+          <p class="eyebrow" data-i18n="hero.kicker">Alquileres de media estancia en Zaragoza</p>
+          <h1 data-i18n="hero.title">Encuentra una vivienda lista para entrar.</h1>
           <p class="hero-copy" data-i18n="hero.copy">
-            Cuidamos viviendas turísticas y alquileres de media estancia con atención local, procesos claros y una experiencia fiable para propietarios y huéspedes.
+            Apartamentos, habitaciones y casas amuebladas con gestion local, disponibilidad clara y soporte antes de llegar.
           </p>
-          <div class="hero-actions" aria-label="Main actions">
-            <a class="button primary" href="#contact" data-i18n="hero.primary">Quiero gestionar mi vivienda</a>
-            <a class="button secondary" href="#availability" data-i18n="hero.secondary">Ver disponibilidad</a>
-          </div>
           <form class="hero-search" id="heroSearch">
             <label>
               <span data-i18n="search.city">Ciudad</span>
-              <input name="city" value="Zaragoza" data-i18n-attr="placeholder:search.cityPlaceholder" placeholder="Zaragoza">
+              <input name="city" value="Zaragoza" placeholder="Zaragoza" data-i18n-attr="placeholder:search.cityPlaceholder">
             </label>
             <label>
               <span data-i18n="search.moveIn">Entrada</span>
               <input name="checkIn" type="date">
             </label>
             <label>
-              <span data-i18n="search.guests">Huéspedes</span>
+              <span data-i18n="search.guests">Personas</span>
               <input name="guestCount" type="number" min="1" max="8" value="2">
             </label>
             <button class="button primary" type="submit" data-i18n="search.button">Buscar</button>
           </form>
+          <div class="trust-row" aria-label="Trust signals">
+            <span data-i18n="hero.trust1">Viviendas verificadas</span>
+            <span data-i18n="hero.trust2">Gestion local</span>
+            <span data-i18n="hero.trust3">Solicitud online</span>
+          </div>
         </div>
       </section>
 
-      <section class="section intro" id="owners">
+      <section class="marketplace" id="search">
+        <div class="marketplace-toolbar">
+          <div>
+            <p class="section-kicker" data-i18n="market.kicker">Busqueda</p>
+            <h2 data-i18n="market.title">Viviendas disponibles en Zaragoza</h2>
+          </div>
+          <div class="result-tools">
+            <span id="availabilityStatus" role="status"></span>
+            <label class="sort-control">
+              <span data-i18n="filters.sort">Ordenar</span>
+              <select id="sortBy" name="sortBy" form="availabilityFilter">
+                <option value="best" data-i18n="filters.sortBest">Mejor opcion</option>
+                <option value="price" data-i18n="filters.sortPrice">Precio mas bajo</option>
+                <option value="new" data-i18n="filters.sortNew">Novedades</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="marketplace-layout">
+          <aside class="filter-panel" aria-label="Search filters">
+            <form class="availability-filter" id="availabilityFilter">
+              <label>
+                <span data-i18n="filters.city">Ciudad</span>
+                <input id="cityFilter" name="city" value="Zaragoza" placeholder="Zaragoza" data-i18n-attr="placeholder:search.cityPlaceholder">
+              </label>
+              <div class="date-pair">
+                <label>
+                  <span data-i18n="filters.checkIn">Entrada</span>
+                  <input id="checkIn" name="checkIn" type="date">
+                </label>
+                <label>
+                  <span data-i18n="filters.checkOut">Salida</span>
+                  <input id="checkOut" name="checkOut" type="date">
+                </label>
+              </div>
+              <label>
+                <span data-i18n="filters.guests">Personas</span>
+                <input id="guestCount" name="guestCount" type="number" min="1" max="8" value="2">
+              </label>
+              <label>
+                <span data-i18n="filters.type">Tipo de vivienda</span>
+                <select id="propertyType" name="propertyType">
+                  <option value="all" data-i18n="filters.typeAll">Todos</option>
+                  <option value="apartment" data-i18n="filters.typeApartment">Apartamento</option>
+                  <option value="room" data-i18n="filters.typeRoom">Habitacion</option>
+                  <option value="home" data-i18n="filters.typeHome">Casa</option>
+                </select>
+              </label>
+              <label>
+                <span data-i18n="filters.budget">Presupuesto mensual maximo</span>
+                <input id="maxBudget" name="maxBudget" type="number" min="0" step="25" placeholder="Sin limite" data-i18n-attr="placeholder:filters.anyBudget">
+              </label>
+              <fieldset class="checkbox-group">
+                <legend data-i18n="filters.mustHave">Imprescindible</legend>
+                <label><input type="checkbox" name="amenities" value="wifi"> <span data-i18n="amenity.wifi">wifi</span></label>
+                <label><input type="checkbox" name="amenities" value="desk"> <span data-i18n="amenity.desk">mesa de trabajo</span></label>
+                <label><input type="checkbox" name="amenities" value="lift"> <span data-i18n="amenity.lift">ascensor</span></label>
+                <label><input type="checkbox" name="amenities" value="ac"> <span data-i18n="amenity.ac">aire acondicionado</span></label>
+              </fieldset>
+              <button class="button primary" type="submit" data-i18n="filters.apply">Aplicar filtros</button>
+              <button class="button ghost" id="resetAvailability" type="button" data-i18n="filters.reset">Reiniciar</button>
+            </form>
+          </aside>
+
+          <section class="results-column" aria-label="Property results">
+            <div class="quick-filters" aria-label="Quick filters">
+              <button type="button" data-quick="checked" data-i18n="quick.verified">Verificadas</button>
+              <button type="button" data-quick="bills" data-i18n="quick.bills">Gastos incluidos</button>
+              <button type="button" data-quick="deposit" data-i18n="quick.deposit">Deposito protegido</button>
+            </div>
+            <div class="property-list" id="propertyGrid" aria-live="polite"></div>
+          </section>
+
+          <aside class="map-panel" aria-label="Zaragoza map preview">
+            <div class="map-card">
+              <div class="map-grid" aria-hidden="true">
+                <span class="pin pin-one">Pilar</span>
+                <span class="pin pin-two">Actur</span>
+                <span class="pin pin-three">Romareda</span>
+                <span class="river-line"></span>
+              </div>
+              <div class="map-copy">
+                <strong data-i18n="map.title">Mapa de barrios</strong>
+                <span data-i18n="map.copy">Vista orientativa para comparar zonas antes de solicitar una vivienda.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="how-section" id="how">
+        <div>
+          <p class="section-kicker" data-i18n="how.kicker">Como funciona</p>
+          <h2 data-i18n="how.title">Busca, solicita y llega con todo claro.</h2>
+        </div>
+        <div class="steps">
+          <article>
+            <span>01</span>
+            <h3 data-i18n="how.step1.title">Filtra</h3>
+            <p data-i18n="how.step1.copy">Elige fechas, presupuesto, capacidad y comodidades para reducir la busqueda.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3 data-i18n="how.step2.title">Revisa</h3>
+            <p data-i18n="how.step2.copy">Compara viviendas verificadas, detalles, ubicacion, precio mensual y disponibilidad.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3 data-i18n="how.step3.title">Solicita</h3>
+            <p data-i18n="how.step3.copy">Envia una solicitud y Ebrostay confirma disponibilidad, condiciones y siguiente paso.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="owner-band" id="owners">
         <div>
           <p class="section-kicker" data-i18n="owners.kicker">Para propietarios</p>
-          <h2 data-i18n="owners.title">Más tranquilidad, menos gestión diaria.</h2>
+          <h2 data-i18n="owners.title">Publica y opera tu vivienda con ayuda local.</h2>
         </div>
         <p data-i18n="owners.copy">
-          Ebrostay ayuda a propietarios en Zaragoza a preparar, publicar y operar sus viviendas con criterio profesional. Nos ocupamos de la coordinación diaria para que el inmueble trabaje mejor sin convertirse en una carga.
-        </p>
-      </section>
-
-      <section class="feature-grid" id="services" aria-label="Property management services">
-        <article class="feature-card">
-          <span class="feature-icon" aria-hidden="true">01</span>
-          <h3 data-i18n="services.card1.title">Optimización del anuncio</h3>
-          <p data-i18n="services.card1.copy">Presentación, precios, textos y mejoras prácticas para aumentar la confianza desde el primer vistazo.</p>
-        </article>
-        <article class="feature-card">
-          <span class="feature-icon" aria-hidden="true">02</span>
-          <h3 data-i18n="services.card2.title">Operativa local</h3>
-          <p data-i18n="services.card2.copy">Coordinación de entradas, limpiezas, incidencias, reposición y comunicación con huéspedes.</p>
-        </article>
-        <article class="feature-card">
-          <span class="feature-icon" aria-hidden="true">03</span>
-          <h3 data-i18n="services.card3.title">Seguimiento claro</h3>
-          <p data-i18n="services.card3.copy">Información ordenada sobre reservas, estado de la vivienda y próximos pasos importantes.</p>
-        </article>
-      </section>
-
-      <section class="availability-section" id="availability">
-        <div class="availability-heading">
-          <div>
-            <p class="section-kicker" data-i18n="availability.kicker">Disponibilidad</p>
-            <h2 data-i18n="availability.title">Filtra propiedades por fechas.</h2>
-          </div>
-          <p data-i18n="availability.copy">
-            Selecciona entrada, salida y número de huéspedes para ver qué propiedades de ejemplo están disponibles. Las fechas se pueden conectar más adelante a calendarios reales.
-          </p>
-        </div>
-
-        <form class="availability-filter" id="availabilityFilter">
-          <label>
-            <span data-i18n="availability.city">Ciudad</span>
-            <input id="cityFilter" name="city" value="Zaragoza" data-i18n-attr="placeholder:search.cityPlaceholder" placeholder="Zaragoza">
-          </label>
-          <label>
-            <span data-i18n="availability.checkIn">Entrada</span>
-            <input id="checkIn" name="checkIn" type="date" required>
-          </label>
-          <label>
-            <span data-i18n="availability.checkOut">Salida</span>
-            <input id="checkOut" name="checkOut" type="date" required>
-          </label>
-          <label>
-            <span data-i18n="availability.guests">Huéspedes</span>
-            <input id="guestCount" name="guestCount" type="number" min="1" max="8" value="2">
-          </label>
-          <label>
-            <span data-i18n="availability.type">Tipo</span>
-            <select id="propertyType" name="propertyType">
-              <option value="all" data-i18n="availability.typeAll">Todos</option>
-              <option value="apartment" data-i18n="availability.typeApartment">Apartamento</option>
-              <option value="room" data-i18n="availability.typeRoom">Habitación</option>
-              <option value="home" data-i18n="availability.typeHome">Casa</option>
-            </select>
-          </label>
-          <label>
-            <span data-i18n="availability.maxBudget">Presupuesto máximo</span>
-            <input id="maxBudget" name="maxBudget" type="number" min="0" step="25" data-i18n-attr="placeholder:availability.anyBudget" placeholder="Sin límite">
-          </label>
-          <label>
-            <span data-i18n="availability.sort">Ordenar</span>
-            <select id="sortBy" name="sortBy">
-              <option value="best" data-i18n="availability.sortBest">Mejor opción</option>
-              <option value="price" data-i18n="availability.sortPrice">Precio</option>
-              <option value="new" data-i18n="availability.sortNew">Novedades</option>
-            </select>
-          </label>
-          <div class="filter-actions">
-            <button class="button primary" type="submit" data-i18n="availability.filter">Filtrar</button>
-            <button class="button ghost" id="resetAvailability" type="button" data-i18n="availability.reset">Reiniciar</button>
-          </div>
-        </form>
-
-        <p class="availability-status" id="availabilityStatus" role="status"></p>
-        <div class="property-grid" id="propertyGrid" aria-live="polite"></div>
-      </section>
-
-      <section class="split-section" id="guests">
-        <div class="split-copy">
-          <p class="section-kicker" data-i18n="guests.kicker">Para huéspedes</p>
-          <h2 data-i18n="guests.title">Estancias cómodas, bien comunicadas y sin fricción.</h2>
-          <p data-i18n="guests.copy">
-            Una buena gestión también se nota en la experiencia del huésped: instrucciones claras, respuesta ágil y viviendas preparadas para llegar, instalarse y disfrutar Zaragoza.
-          </p>
-        </div>
-        <div class="experience-list" aria-label="Guest experience">
-          <div>
-            <strong data-i18n="guests.item1.title">Llegada</strong>
-            <span data-i18n="guests.item1.copy">Información práctica antes del viaje y procesos de check-in bien coordinados.</span>
-          </div>
-          <div>
-            <strong data-i18n="guests.item2.title">Estancia</strong>
-            <span data-i18n="guests.item2.copy">Soporte local, vivienda cuidada y detalles esenciales revisados.</span>
-          </div>
-          <div>
-            <strong data-i18n="guests.item3.title">Zaragoza</strong>
-            <span data-i18n="guests.item3.copy">Recomendaciones útiles para moverse, comer y aprovechar la ciudad.</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="location-band" id="location">
-        <div>
-          <p class="section-kicker" data-i18n="location.kicker">Base local</p>
-          <h2 data-i18n="location.title">Conocimiento de Zaragoza, atención cercana.</h2>
-        </div>
-        <p data-i18n="location.copy">
-          Trabajamos con propiedades urbanas y estancias flexibles en Zaragoza, combinando enfoque comercial, cuidado del inmueble y comunicación humana.
+          Ebrostay prepara anuncios, coordina entradas, limpiezas, incidencias y comunicacion con huespedes para que tu propiedad funcione mejor sin absorber tu dia.
         </p>
       </section>
 
       <section class="contact-section" id="contact">
         <div class="contact-copy">
           <p class="section-kicker" data-i18n="contact.kicker">Contacto</p>
-          <h2 data-i18n="contact.title">Cuéntanos qué propiedad quieres gestionar.</h2>
-          <p data-i18n="contact.copy">
-            Este primer formulario prepara un correo directo. Podemos adaptar la web después con tarifas, fotos reales, calendarios o una página específica para huéspedes.
-          </p>
+          <h2 data-i18n="contact.title">Cuantanos que necesitas.</h2>
+          <p data-i18n="contact.copy">El formulario prepara un correo directo con la vivienda o consulta seleccionada.</p>
         </div>
         <form class="inquiry-form" id="inquiryForm">
           <label>
@@ -212,15 +211,15 @@
             <input name="email" type="email" autocomplete="email" required>
           </label>
           <label>
-            <span data-i18n="form.property">Propiedad</span>
-            <input name="property" data-i18n-attr="placeholder:form.propertyPlaceholder" placeholder="Barrio, tipo de vivienda o situación actual">
+            <span data-i18n="form.property">Propiedad o zona</span>
+            <input name="property" placeholder="Pilar, Actur, Romareda..." data-i18n-attr="placeholder:form.propertyPlaceholder">
           </label>
           <label>
             <span data-i18n="form.message">Mensaje</span>
-            <textarea name="message" rows="5" data-i18n-attr="placeholder:form.messagePlaceholder" placeholder="Cuéntanos qué necesitas: gestión completa, mejora del anuncio, coordinación local, etc."></textarea>
+            <textarea name="message" rows="5" placeholder="Fechas, personas, presupuesto o gestion de propiedad..." data-i18n-attr="placeholder:form.messagePlaceholder"></textarea>
           </label>
           <button class="button primary form-button" type="submit" data-i18n="form.button">Preparar correo</button>
-          <p class="form-note" data-i18n="form.note">Se abrirá tu app de correo con el mensaje listo para enviar.</p>
+          <p class="form-note" data-i18n="form.note">Se abrira tu app de correo con el mensaje listo para enviar.</p>
         </form>
       </section>
     </main>
@@ -228,11 +227,11 @@
     <footer class="site-footer">
       <span class="footer-brand">
         <img class="footer-logo" src="assets/ebrostay-logo.png" alt="Ebrostay">
-        <span>© <span id="year"></span> Ebrostay</span>
+        <span>&copy; <span id="year"></span> Ebrostay</span>
       </span>
       <a href="mailto:hello@ebrostay.com">hello@ebrostay.com</a>
     </footer>
 
-    <script src="site.js?v=marketplace-1"></script>
+    <script src="site.js?v=marketplace-2"></script>
   </body>
 </html>
