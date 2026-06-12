@@ -52,7 +52,7 @@ async function loadAdminData() {
   const sb = EbrostayBackend.getClient();
   const { data, error } = await sb
     .from("properties")
-    .select("id, name, available_from, is_published, availability_blocks(id, start_date, end_date)")
+    .select("*, availability_blocks(id, start_date, end_date), property_photos(id, storage_path, sort_order)")
     .order("id");
   if (error) {
     showStatus("admin.error");
@@ -62,7 +62,112 @@ async function loadAdminData() {
   renderAdmin();
 }
 
+const AMENITY_KEYS = ["wifi", "desk", "balcony", "lift", "ac", "heating", "kitchen", "terrace"];
+const TYPE_KEYS = ["apartment", "room", "home"];
+
+function escapeValue(value) {
+  return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+}
+
+function renderPhotos(row) {
+  const photos = (row.property_photos || [])
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1));
+
+  const items = photos.length
+    ? photos.map((photo, index) => `
+        <figure class="admin-photo">
+          <img src="${EbrostayBackend.photoUrl(photo.storage_path)}" alt="" loading="lazy">
+          ${index === 0 ? `<span class="admin-photo-cover">${t("admin.cover")}</span>` : ""}
+          <div class="admin-photo-actions">
+            ${index === 0 ? "" : `<button class="details-button" type="button" data-cover-photo="${photo.id}" data-property="${row.id}">${t("admin.makeCover")}</button>`}
+            <button class="details-button" type="button" data-delete-photo="${photo.id}" data-path="${escapeValue(photo.storage_path)}">${t("admin.delete")}</button>
+          </div>
+        </figure>
+      `).join("")
+    : `<p class="admin-empty-note">${t("admin.noPhotos")}</p>`;
+
+  return `
+    <h3>${t("admin.photos")}</h3>
+    <div class="admin-photo-grid">${items}</div>
+    <label class="admin-upload">
+      <span class="button ghost">${t("admin.addPhotos")}</span>
+      <input type="file" accept="image/*" multiple hidden data-photo-input="${row.id}">
+    </label>
+  `;
+}
+
+function renderEditForm(row) {
+  const text = (labelKey, name, value, type = "text") => `
+    <label>
+      <span>${t(labelKey)}</span>
+      <input name="${name}" type="${type}" value="${escapeValue(value)}" ${type === "number" ? 'step="any"' : ""}>
+    </label>
+  `;
+  const area = (labelKey, name, value) => `
+    <label class="admin-wide">
+      <span>${t(labelKey)}</span>
+      <textarea name="${name}" rows="3">${escapeValue(value)}</textarea>
+    </label>
+  `;
+  const flag = (labelKey, name, checked) => `
+    <label class="admin-flag"><input type="checkbox" name="${name}" ${checked ? "checked" : ""}> <span>${t(labelKey)}</span></label>
+  `;
+
+  return `
+    <details class="admin-edit">
+      <summary>${t("admin.editDetails")}</summary>
+      <form class="admin-form" data-edit-form="${row.id}">
+        ${text("admin.field.name", "name", row.name)}
+        ${text("admin.field.priceLabel", "price_label", row.price_label)}
+        ${text("admin.field.priceNumber", "price_number", row.price_number, "number")}
+        ${text("admin.field.guests", "guests", row.guests, "number")}
+        ${text("admin.field.areaEs", "area_es", row.area_es)}
+        ${text("admin.field.areaEn", "area_en", row.area_en)}
+        ${area("admin.field.copyEs", "copy_es", row.copy_es)}
+        ${area("admin.field.copyEn", "copy_en", row.copy_en)}
+        ${area("admin.field.detailsEs", "details_es", row.details_es)}
+        ${area("admin.field.detailsEn", "details_en", row.details_en)}
+        ${text("admin.field.priceNoteEs", "price_note_es", row.price_note_es)}
+        ${text("admin.field.priceNoteEn", "price_note_en", row.price_note_en)}
+        ${text("admin.field.rating", "rating", row.rating, "number")}
+        <label>
+          <span>${t("admin.field.type")}</span>
+          <select name="type">
+            ${TYPE_KEYS.map((key) => `<option value="${key}" ${row.type === key ? "selected" : ""}>${t(`type.${key}`)}</option>`).join("")}
+          </select>
+        </label>
+        ${text("admin.field.addressKey", "address_key", row.address_key)}
+        ${text("admin.field.city", "city", row.city)}
+        ${text("admin.field.lat", "lat", row.lat, "number")}
+        ${text("admin.field.lng", "lng", row.lng, "number")}
+        <fieldset class="admin-amenities admin-wide">
+          <legend>${t("admin.field.amenities")}</legend>
+          ${AMENITY_KEYS.map((key) => `
+            <label class="admin-flag"><input type="checkbox" name="amenities" value="${key}" ${(row.amenities || []).includes(key) ? "checked" : ""}> <span>${t(`amenity.${key}`)}</span></label>
+          `).join("")}
+        </fieldset>
+        <fieldset class="admin-amenities admin-wide">
+          <legend>&nbsp;</legend>
+          ${flag("admin.flag.isNew", "is_new", row.is_new)}
+          ${flag("admin.flag.checked", "checked", row.checked)}
+          ${flag("admin.flag.deposit", "deposit_protected", row.deposit_protected)}
+          ${flag("admin.flag.bills", "bills_included", row.bills_included)}
+          ${flag("admin.flag.published", "is_published", row.is_published)}
+        </fieldset>
+        <button class="button primary admin-wide" type="submit">${t("admin.save")}</button>
+      </form>
+    </details>
+  `;
+}
+
 function renderAdmin() {
+  const openEditors = new Set(
+    [...adminProperties.querySelectorAll(".admin-edit[open]")]
+      .map((details) => details.closest("[data-property]")?.dataset.property)
+      .filter(Boolean)
+  );
+
   adminProperties.innerHTML = adminRows.map((row) => {
     const blocks = (row.availability_blocks || [])
       .slice()
@@ -79,6 +184,8 @@ function renderAdmin() {
     return `
       <section class="admin-card" data-property="${row.id}">
         <h2>${row.name}</h2>
+        ${renderPhotos(row)}
+        ${renderEditForm(row)}
         <form class="admin-available" data-available-form="${row.id}">
           <label>
             <span>${t("admin.availableFrom")}</span>
@@ -102,6 +209,12 @@ function renderAdmin() {
       </section>
     `;
   }).join("");
+
+  openEditors.forEach((propertyId) => {
+    adminProperties
+      .querySelector(`[data-property="${propertyId}"] .admin-edit`)
+      ?.setAttribute("open", "");
+  });
 }
 
 async function routeUI(user, isAdmin) {
@@ -159,16 +272,103 @@ if (adminLogout) {
   adminLogout.addEventListener("click", () => EbrostayBackend.signOut());
 }
 
+async function uploadPhotos(propertyId, files) {
+  const sb = EbrostayBackend.getClient();
+  const row = adminRows.find((item) => item.id === propertyId);
+  let maxOrder = Math.max(0, ...(row?.property_photos || []).map((photo) => photo.sort_order));
+  showStatus("admin.uploading");
+
+  for (const file of files) {
+    const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").slice(-60);
+    const path = `${propertyId}/${Date.now()}-${cleanName}`;
+    const { error: uploadError } = await sb.storage.from("property-photos").upload(path, file);
+    if (uploadError) {
+      showStatus("admin.error");
+      return;
+    }
+    maxOrder += 10;
+    const { error: insertError } = await sb.from("property_photos").insert({
+      property_id: propertyId,
+      storage_path: path,
+      sort_order: maxOrder
+    });
+    if (insertError) {
+      showStatus("admin.error");
+      return;
+    }
+  }
+
+  showStatus("admin.saved");
+  await loadAdminData();
+}
+
+function editPayloadFromForm(form) {
+  const formData = new FormData(form);
+  const textOrNull = (name) => formData.get(name)?.toString().trim() || null;
+  return {
+    name: formData.get("name")?.toString().trim() || "",
+    price_label: formData.get("price_label")?.toString().trim() || "",
+    price_number: Number(formData.get("price_number")) || 0,
+    guests: Number(formData.get("guests")) || 1,
+    area_es: textOrNull("area_es"),
+    area_en: textOrNull("area_en"),
+    copy_es: textOrNull("copy_es"),
+    copy_en: textOrNull("copy_en"),
+    details_es: textOrNull("details_es"),
+    details_en: textOrNull("details_en"),
+    price_note_es: textOrNull("price_note_es"),
+    price_note_en: textOrNull("price_note_en"),
+    rating: formData.get("rating") ? Number(formData.get("rating")) : null,
+    type: formData.get("type")?.toString() || "apartment",
+    address_key: formData.get("address_key")?.toString().trim() || "pedro",
+    city: formData.get("city")?.toString().trim().toLowerCase() || "zaragoza",
+    lat: Number(formData.get("lat")) || 0,
+    lng: Number(formData.get("lng")) || 0,
+    amenities: formData.getAll("amenities").map((value) => value.toString()),
+    is_new: formData.has("is_new"),
+    checked: formData.has("checked"),
+    deposit_protected: formData.has("deposit_protected"),
+    bills_included: formData.has("bills_included"),
+    is_published: formData.has("is_published")
+  };
+}
+
 if (adminProperties) {
   adminProperties.addEventListener("click", async (event) => {
+    const sb = EbrostayBackend.getClient();
     const blockId = event.target.closest("[data-delete-block]")?.dataset.deleteBlock;
-    if (!blockId) return;
-    const { error } = await EbrostayBackend.getClient()
-      .from("availability_blocks")
-      .delete()
-      .eq("id", blockId);
-    if (error) showStatus("admin.error");
-    else await loadAdminData();
+    const deletePhoto = event.target.closest("[data-delete-photo]");
+    const coverPhoto = event.target.closest("[data-cover-photo]");
+
+    if (blockId) {
+      const { error } = await sb.from("availability_blocks").delete().eq("id", blockId);
+      if (error) showStatus("admin.error");
+      else await loadAdminData();
+    }
+
+    if (deletePhoto) {
+      await sb.storage.from("property-photos").remove([deletePhoto.dataset.path]);
+      const { error } = await sb.from("property_photos").delete().eq("id", deletePhoto.dataset.deletePhoto);
+      if (error) showStatus("admin.error");
+      else await loadAdminData();
+    }
+
+    if (coverPhoto) {
+      const row = adminRows.find((item) => item.id === coverPhoto.dataset.property);
+      const minOrder = Math.min(0, ...(row?.property_photos || []).map((photo) => photo.sort_order));
+      const { error } = await sb
+        .from("property_photos")
+        .update({ sort_order: minOrder - 10 })
+        .eq("id", coverPhoto.dataset.coverPhoto);
+      if (error) showStatus("admin.error");
+      else await loadAdminData();
+    }
+  });
+
+  adminProperties.addEventListener("change", async (event) => {
+    const propertyId = event.target.closest("[data-photo-input]")?.dataset.photoInput;
+    if (!propertyId || !event.target.files?.length) return;
+    await uploadPhotos(propertyId, [...event.target.files]);
   });
 
   adminProperties.addEventListener("submit", async (event) => {
@@ -176,7 +376,21 @@ if (adminProperties) {
     const sb = EbrostayBackend.getClient();
     const blockPropertyId = event.target.dataset.blockForm;
     const availablePropertyId = event.target.dataset.availableForm;
+    const editPropertyId = event.target.dataset.editForm;
     const formData = new FormData(event.target);
+
+    if (editPropertyId) {
+      const { error } = await sb
+        .from("properties")
+        .update(editPayloadFromForm(event.target))
+        .eq("id", editPropertyId);
+      if (error) showStatus("admin.error");
+      else {
+        showStatus("admin.saved");
+        await loadAdminData();
+      }
+      return;
+    }
 
     if (blockPropertyId) {
       const startDate = formData.get("startDate");

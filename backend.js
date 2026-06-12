@@ -26,6 +26,12 @@ const EbrostayBackend = (() => {
     return client;
   }
 
+  function photoUrl(storagePath) {
+    const sb = getClient();
+    if (!sb) return "";
+    return sb.storage.from("property-photos").getPublicUrl(storagePath).data.publicUrl;
+  }
+
   function mapRowToProperty(row) {
     const key = `db.${row.id}`;
     const set = (suffix, es, en) => {
@@ -60,6 +66,10 @@ const EbrostayBackend = (() => {
       depositProtected: row.deposit_protected,
       billsIncluded: row.bills_included,
       amenities: row.amenities || [],
+      photos: (row.property_photos || [])
+        .slice()
+        .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1))
+        .map((photo) => photoUrl(photo.storage_path)),
       unavailable: (row.availability_blocks || [])
         .map((block) => [block.start_date, block.end_date])
         .sort((a, b) => (a[0] < b[0] ? -1 : 1))
@@ -69,11 +79,19 @@ const EbrostayBackend = (() => {
   async function loadProperties() {
     const sb = getClient();
     if (!sb) return false;
-    const { data, error } = await sb
+    let { data, error } = await sb
       .from("properties")
-      .select("*, availability_blocks(start_date, end_date)")
+      .select("*, availability_blocks(start_date, end_date), property_photos(storage_path, sort_order)")
       .eq("is_published", true)
       .order("price_number", { ascending: true });
+    if (error) {
+      // The photos table may not exist yet (upgrade SQL not run); retry without it.
+      ({ data, error } = await sb
+        .from("properties")
+        .select("*, availability_blocks(start_date, end_date)")
+        .eq("is_published", true)
+        .order("price_number", { ascending: true }));
+    }
     if (error || !data || data.length === 0) {
       if (error) console.warn("Supabase properties load failed, using built-in data:", error.message);
       return false;
@@ -171,6 +189,7 @@ const EbrostayBackend = (() => {
     loadFavorites,
     saveFavorite,
     sendInquiry,
+    photoUrl,
     getUser: () => user,
     getIsAdmin: () => isAdmin
   };
