@@ -317,6 +317,7 @@ document.querySelector("#bookingButton")?.addEventListener("click", async () => 
   }
   const button = document.querySelector("#bookingButton");
   button.disabled = true;
+  window.umami?.track("booking-start", { property: property.id, checkIn: startDate, checkOut: endDate });
   bookingMessage("book.redirecting", false);
   const { url, code } = await EbrostayBackend.createBookingCheckout(property.id, startDate, endDate);
   if (url) {
@@ -427,6 +428,11 @@ async function boot() {
 
   initDetailMap();
   applyLanguage(currentLanguage);
+
+  // the umami script is deferred, so wait for it before sending the event
+  window.addEventListener("load", () => {
+    window.umami?.track("view-property", { property: property.id });
+  });
 
   // "Reservar" buttons on the listing cards land here with #book
   if (window.location.hash === "#book") {
