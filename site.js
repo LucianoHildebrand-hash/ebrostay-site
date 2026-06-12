@@ -256,10 +256,13 @@ function renderProperties() {
     const detailUrl = `property.html?id=${property.id}`;
     const badges = badgeList(property).map((key) => `<span>${t(key)}</span>`).join("");
     const amenities = property.amenities.map((key) => `<span>${t(`amenity.${key}`)}</span>`).join("");
+    const mediaStyle = property.photos?.length
+      ? ` style="background-image: linear-gradient(135deg, rgba(24, 33, 29, 0.18), rgba(24, 33, 29, 0.02)), url('${property.photos[0]}')"`
+      : "";
 
     return `
       <article class="property-card" data-property-id="${property.id}">
-        <a class="property-media property-${property.addressKey}" href="${detailUrl}" aria-label="${t(property.nameKey)}">
+        <a class="property-media property-${property.addressKey}" href="${detailUrl}" aria-label="${t(property.nameKey)}"${mediaStyle}>
           <span class="availability-pill">${t("listing.available")}</span>
           <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("listing.saved") : t("listing.favorite")}">${isFavorite ? "Saved" : "Save"}</button>
         </a>
