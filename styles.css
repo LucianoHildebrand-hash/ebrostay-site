@@ -1039,6 +1039,66 @@ a.property-media {
   gap: 10px;
 }
 
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--mist);
+}
+
+.auth-tabs button {
+  border: 0;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.auth-tabs button.is-active {
+  background: var(--green);
+  color: #fff;
+}
+
+.auth-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--green);
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  justify-self: start;
+}
+
+.auth-success {
+  text-align: center;
+  align-items: center;
+}
+
+.auth-success-icon {
+  width: 54px;
+  height: 54px;
+  margin: 6px auto 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(47, 107, 85, 0.12);
+  color: var(--green);
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.auth-success h3 {
+  margin: 4px 0 0;
+}
+
+.auth-success p {
+  margin: 0;
+}
+
 .auth-sso {
   display: grid;
   gap: 8px;

@@ -26,6 +26,17 @@ const accountEmail = document.querySelector("#accountEmail");
 const bookingsList = document.querySelector("#bookingsList");
 const deleteAccountButton = document.querySelector("#deleteAccountButton");
 const authProviders = document.querySelector("#authProviders");
+const authTabs = document.querySelector("#authTabs");
+const authTitle = document.querySelector("#authTitle");
+const authCopy = document.querySelector("#authCopy");
+const authEmailField = document.querySelector("#authEmailField");
+const authPasswordField = document.querySelector("#authPasswordField");
+const authSubmit = document.querySelector("#authSubmit");
+const authForgot = document.querySelector("#authForgot");
+const authSuccess = document.querySelector("#authSuccess");
+const authSuccessTitle = document.querySelector("#authSuccessTitle");
+const authSuccessCopy = document.querySelector("#authSuccessCopy");
+const authSuccessClose = document.querySelector("#authSuccessClose");
 const formNote = document.querySelector(".form-note");
 
 const mapSources = {
@@ -360,6 +371,8 @@ function applyLanguage(language) {
 
   Object.values(datePickers).forEach((picker) => picker.set("locale", flatpickrLocale()));
 
+  setAuthMode(authMode);
+
   document.querySelectorAll("[data-whatsapp]").forEach((link) => {
     link.href = whatsappLink(t("whatsapp.general"));
   });
@@ -537,37 +550,104 @@ async function syncFavorites() {
   renderProperties();
 }
 
+// Auth dialog modes: signin / signup (tabs), reset (forgot password),
+// recover (arrived from a password-reset email link)
+const AUTH_MODES = {
+  signin: { title: "auth.title", copy: "auth.copy", submit: "auth.signin", email: true, password: true, tabs: true, forgot: true, sso: true, passwordAutocomplete: "current-password" },
+  signup: { title: "auth.signupTitle", copy: "auth.signupCopy", submit: "auth.signup", email: true, password: true, tabs: true, forgot: false, sso: true, passwordAutocomplete: "new-password" },
+  reset: { title: "auth.resetTitle", copy: "auth.resetCopy", submit: "auth.resetSend", email: true, password: false, tabs: true, forgot: false, sso: false, passwordAutocomplete: "current-password" },
+  recover: { title: "auth.recoverTitle", copy: "auth.recoverCopy", submit: "auth.recoverSave", email: false, password: true, tabs: false, forgot: false, sso: false, passwordAutocomplete: "new-password" }
+};
+let authMode = "signin";
+
+function setAuthMode(mode) {
+  authMode = AUTH_MODES[mode] ? mode : "signin";
+  const config = AUTH_MODES[authMode];
+  if (!authForm) return;
+
+  authTitle.textContent = t(config.title);
+  authCopy.textContent = t(config.copy);
+  authSubmit.textContent = t(config.submit);
+  authEmailField.hidden = !config.email;
+  authEmailField.querySelector("input").required = config.email;
+  authPasswordField.hidden = !config.password;
+  const passwordInput = authPasswordField.querySelector("input");
+  passwordInput.required = config.password;
+  passwordInput.setAttribute("autocomplete", config.passwordAutocomplete);
+  authTabs.hidden = !config.tabs;
+  authForgot.hidden = !config.forgot;
+  if (authProviders) authProviders.style.display = config.sso ? "" : "none";
+  authTabs.querySelectorAll("[data-auth-mode]").forEach((tab) => {
+    tab.classList.toggle("is-active", tab.dataset.authMode === authMode);
+  });
+  if (authMessage) {
+    authMessage.textContent = "";
+    authMessage.className = "auth-message";
+  }
+}
+
+function showAuthForm() {
+  authSuccess.hidden = true;
+  authForm.hidden = false;
+}
+
+function showAuthSuccess(titleKey, copyKey, email) {
+  authSuccessTitle.textContent = t(titleKey);
+  authSuccessCopy.textContent = email ? interpolate(copyKey, { email }) : t(copyKey);
+  authForm.hidden = true;
+  authSuccess.hidden = false;
+}
+
+function showAuthError(key) {
+  authMessage.textContent = t(key);
+  authMessage.classList.add("is-error");
+}
+
 if (authButton && authDialog) {
   authButton.addEventListener("click", () => {
-    if (authMessage) {
-      authMessage.textContent = "";
-      authMessage.className = "auth-message";
-    }
+    showAuthForm();
+    setAuthMode("signin");
+    authForm.reset();
     authDialog.showModal();
   });
+}
+
+if (authTabs) {
+  authTabs.addEventListener("click", (event) => {
+    const mode = event.target.closest("[data-auth-mode]")?.dataset.authMode;
+    if (mode) setAuthMode(mode);
+  });
+}
+
+if (authForgot) {
+  authForgot.addEventListener("click", () => setAuthMode("reset"));
 }
 
 if (authClose) {
   authClose.addEventListener("click", () => authDialog?.close());
 }
 
+if (authSuccessClose) {
+  authSuccessClose.addEventListener("click", () => {
+    authDialog?.close();
+    showAuthForm();
+  });
+}
+
 if (authForm) {
   authForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const action = event.submitter?.dataset.authAction || "signin";
     const formData = new FormData(authForm);
     const email = formData.get("email")?.toString().trim() || "";
     const password = formData.get("password")?.toString() || "";
     authMessage.className = "auth-message";
 
-    if (action === "signup") {
+    if (authMode === "signup") {
       const { needsConfirmation, error } = await EbrostayBackend.signUp(email, password);
-      if (error) {
-        authMessage.textContent = t("auth.signupError");
-        authMessage.classList.add("is-error");
-      } else if (needsConfirmation) {
-        authMessage.textContent = t("auth.checkEmail");
-        authMessage.classList.add("is-success");
+      if (error) showAuthError("auth.signupError");
+      else if (needsConfirmation) {
+        showAuthSuccess("auth.successEmailTitle", "auth.successConfirmCopy", email);
+        authForm.reset();
       } else {
         authDialog?.close();
         authForm.reset();
@@ -575,11 +655,29 @@ if (authForm) {
       return;
     }
 
+    if (authMode === "reset") {
+      const error = await EbrostayBackend.resetPassword(email);
+      if (error) showAuthError("auth.resetError");
+      else {
+        showAuthSuccess("auth.successEmailTitle", "auth.successResetCopy", email);
+        authForm.reset();
+      }
+      return;
+    }
+
+    if (authMode === "recover") {
+      const error = await EbrostayBackend.updatePassword(password);
+      if (error) showAuthError("auth.recoverError");
+      else {
+        showAuthSuccess("auth.successRecoverTitle", "auth.successRecoverCopy");
+        authForm.reset();
+      }
+      return;
+    }
+
     const error = await EbrostayBackend.signIn(email, password);
-    if (error) {
-      authMessage.textContent = t("auth.error");
-      authMessage.classList.add("is-error");
-    } else {
+    if (error) showAuthError("auth.error");
+    else {
       authDialog?.close();
       authForm.reset();
     }
@@ -599,6 +697,11 @@ if (window.EbrostayBackend) {
     onPropertiesLoaded: () => {
       mapNeedsFit = true;
       renderProperties();
+    },
+    onPasswordRecovery: () => {
+      showAuthForm();
+      setAuthMode("recover");
+      if (!authDialog.open) authDialog.showModal();
     },
     onAuthChanged: (user) => {
       updateAuthUI(user);
