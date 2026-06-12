@@ -79,6 +79,63 @@ function renderDetail() {
   document.querySelector("#detailWhatsappButton").href = whatsappLink(
     interpolate("whatsapp.message", { property: t(property.nameKey) })
   );
+
+  updateSeoTags();
+}
+
+// Per-property title, description, canonical, og tags, and structured data
+// so rendered crawls index each listing with its real content.
+function updateSeoTags() {
+  const url = `https://ebrostay.com/property.html?id=${property.id}`;
+  const description = `${t(property.copyKey)} ${property.address ? `${property.address}, ` : ""}Zaragoza. ${interpolate("listing.price", { price: property.price })}.`;
+
+  document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+  document.querySelector('meta[property="og:title"]')?.setAttribute("content", `${t(property.nameKey)} | Ebrostay`);
+  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+  if (property.photos?.length) {
+    document.querySelector('meta[property="og:image"]')?.setAttribute("content", property.photos[0]);
+  }
+  document.querySelector("#canonicalLink")?.setAttribute("href", url);
+
+  const SCHEMA_TYPES = { apartment: "Apartment", room: "Room", home: "House" };
+  document.querySelector("#propertyJsonLd")?.remove();
+  const script = document.createElement("script");
+  script.type = "application/ld+json";
+  script.id = "propertyJsonLd";
+  script.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": SCHEMA_TYPES[property.type] || "Accommodation",
+    name: t(property.nameKey),
+    description: t(property.copyKey),
+    url,
+    image: (property.photos || []).slice(0, 6),
+    address: {
+      "@type": "PostalAddress",
+      ...(property.address ? { streetAddress: property.address } : {}),
+      addressLocality: "Zaragoza",
+      addressRegion: "Aragón",
+      addressCountry: "ES"
+    },
+    geo: { "@type": "GeoCoordinates", latitude: property.lat, longitude: property.lng },
+    ...(property.bedrooms != null ? { numberOfBedrooms: property.bedrooms } : {}),
+    ...(property.bathrooms != null ? { numberOfBathroomsTotal: property.bathrooms } : {}),
+    ...(property.sizeM2 != null ? { floorSize: { "@type": "QuantitativeValue", value: property.sizeM2, unitCode: "MTK" } } : {}),
+    occupancy: { "@type": "QuantitativeValue", maxValue: property.guests },
+    offers: {
+      "@type": "Offer",
+      price: property.priceNumber,
+      priceCurrency: "EUR",
+      availability: "https://schema.org/InStock",
+      priceSpecification: {
+        "@type": "UnitPriceSpecification",
+        price: property.priceNumber,
+        priceCurrency: "EUR",
+        unitText: "MONTH"
+      }
+    },
+    provider: { "@type": "RealEstateAgent", name: "Ebrostay", url: "https://ebrostay.com/", email: "info@ebrostay.com" }
+  });
+  document.head.appendChild(script);
 }
 
 let availabilityCalendar = null;
