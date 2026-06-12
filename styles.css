@@ -1039,6 +1039,77 @@ a.property-media {
   gap: 10px;
 }
 
+.auth-sso {
+  display: grid;
+  gap: 8px;
+}
+
+.auth-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.auth-or::before,
+.auth-or::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--line);
+}
+
+.sso-button {
+  gap: 9px;
+}
+
+.account-panel h4 {
+  margin: 10px 0 0;
+}
+
+.account-panel .user-email {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.bookings-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.bookings-list li {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.bookings-list li span {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.bookings-list .bookings-empty {
+  border-style: dashed;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.admin-guest {
+  display: block;
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
 .auth-close {
   border: 0;
   background: none;
@@ -1276,6 +1347,23 @@ a.property-media {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: none;
+  padding: 8px 6px 10px;
+}
+
+.detail-calendar-wrap .flatpickr-current-month,
+.detail-calendar-wrap .flatpickr-monthDropdown-months {
+  font-weight: 850;
+  color: var(--ink);
+}
+
+.detail-calendar-wrap span.flatpickr-weekday {
+  color: var(--green);
+  font-weight: 850;
+}
+
+.detail-calendar-wrap .flatpickr-day:not(.flatpickr-disabled):not(.is-booked):hover {
+  background: var(--mist);
+  border-color: var(--mist);
 }
 
 .flatpickr-day.is-booked,

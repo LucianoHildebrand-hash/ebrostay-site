@@ -32,9 +32,10 @@ function showStatus(key) {
   adminStatus.dataset.statusKey = key;
   adminStatus.textContent = t(key);
   adminStatus.classList.toggle("is-toast", !PAGE_STATUS_KEYS.has(key));
-  adminStatus.classList.toggle("is-error", key === "admin.error");
+  const isError = key === "admin.error" || key === "admin.guestNotFound";
+  adminStatus.classList.toggle("is-error", isError);
   if (key === "admin.saved") statusTimer = setTimeout(hideStatus, 2600);
-  if (key === "admin.error") statusTimer = setTimeout(hideStatus, 5000);
+  if (isError) statusTimer = setTimeout(hideStatus, 5000);
 }
 
 function hideStatus() {
@@ -64,7 +65,7 @@ async function loadAdminData() {
   const sb = EbrostayBackend.getClient();
   const { data, error } = await sb
     .from("properties")
-    .select("*, availability_blocks(id, start_date, end_date), property_photos(id, storage_path, sort_order)")
+    .select("*, availability_blocks(id, start_date, end_date, profiles(email)), property_photos(id, storage_path, sort_order)")
     .order("id");
   if (error) {
     showStatus("admin.error");
@@ -255,7 +256,7 @@ function renderAdmin() {
     const blockItems = blocks.length
       ? blocks.map((block) => `
           <li>
-            <span>${formatDate(block.start_date)} &ndash; ${formatDate(block.end_date)}</span>
+            <span>${formatDate(block.start_date)} &ndash; ${formatDate(block.end_date)}${block.profiles?.email ? `<small class="admin-guest">${t("admin.guest")}: ${block.profiles.email}</small>` : ""}</span>
             <button class="details-button danger" type="button" data-delete-block="${block.id}">${t("admin.delete")}</button>
           </li>
         `).join("")
@@ -291,6 +292,10 @@ function renderAdmin() {
             <label>
               <span>${t("admin.to")}</span>
               <input name="endDate" type="date" required>
+            </label>
+            <label class="admin-guest-email">
+              <span>${t("admin.field.guestEmail")}</span>
+              <input name="guestEmail" type="email">
             </label>
             <button class="button primary" type="submit">${t("admin.add")}</button>
           </form>
@@ -573,10 +578,25 @@ if (adminProperties) {
         showStatus("admin.error");
         return;
       }
+      let guestId = null;
+      const guestEmail = formData.get("guestEmail")?.toString().trim().toLowerCase();
+      if (guestEmail) {
+        const { data: guestProfile } = await sb
+          .from("profiles")
+          .select("id")
+          .ilike("email", guestEmail)
+          .maybeSingle();
+        if (!guestProfile) {
+          showStatus("admin.guestNotFound");
+          return;
+        }
+        guestId = guestProfile.id;
+      }
       const { error } = await sb.from("availability_blocks").insert({
         property_id: blockPropertyId,
         start_date: startDate,
-        end_date: endDate
+        end_date: endDate,
+        user_id: guestId
       });
       if (error) showStatus("admin.error");
       else {

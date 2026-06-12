@@ -19,6 +19,13 @@ const userChip = document.querySelector("#userChip");
 const userEmail = document.querySelector("#userEmail");
 const logoutButton = document.querySelector("#logoutButton");
 const adminLink = document.querySelector("#adminLink");
+const accountButton = document.querySelector("#accountButton");
+const accountDialog = document.querySelector("#accountDialog");
+const accountClose = document.querySelector("#accountClose");
+const accountEmail = document.querySelector("#accountEmail");
+const bookingsList = document.querySelector("#bookingsList");
+const deleteAccountButton = document.querySelector("#deleteAccountButton");
+const authProviders = document.querySelector("#authProviders");
 const formNote = document.querySelector(".form-note");
 
 const mapSources = {
@@ -602,5 +609,78 @@ if (window.EbrostayBackend) {
         renderProperties();
       }
     }
+  });
+
+  // Google / Outlook SSO buttons appear once the provider is enabled
+  // in the Supabase dashboard (Authentication -> Providers)
+  EbrostayBackend.getEnabledProviders().then((providers) => {
+    if (!authProviders) return;
+    let any = false;
+    authProviders.querySelectorAll("[data-provider]").forEach((button) => {
+      const enabled = Boolean(providers[button.dataset.provider]);
+      button.hidden = !enabled;
+      any = any || enabled;
+    });
+    authProviders.hidden = !any;
+  });
+
+  authProviders?.addEventListener("click", async (event) => {
+    const provider = event.target.closest("[data-provider]")?.dataset.provider;
+    if (!provider) return;
+    const error = await EbrostayBackend.signInWithProvider(provider);
+    if (error) {
+      authMessage.textContent = t("auth.error");
+      authMessage.classList.add("is-error");
+    }
+  });
+}
+
+function formatBookingDate(value) {
+  return new Intl.DateTimeFormat(currentLanguage === "es" ? "es-ES" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(dateValue(value));
+}
+
+async function openAccountDialog() {
+  if (!accountDialog) return;
+  accountEmail.textContent = EbrostayBackend.getUser()?.email || "";
+  deleteAccountButton.dataset.armed = "";
+  deleteAccountButton.textContent = t("account.delete");
+  bookingsList.innerHTML = "";
+  accountDialog.showModal();
+
+  const bookings = await EbrostayBackend.loadMyBookings();
+  if (bookings === null) {
+    bookingsList.innerHTML = `<li class="bookings-empty">${t("bookings.error")}</li>`;
+    return;
+  }
+  bookingsList.innerHTML = bookings.length
+    ? bookings.map((booking) => `
+        <li>
+          <strong>${booking.propertyName}</strong>
+          <span>${formatBookingDate(booking.startDate)} &ndash; ${formatBookingDate(booking.endDate)}</span>
+        </li>
+      `).join("")
+    : `<li class="bookings-empty">${t("bookings.empty")}</li>`;
+}
+
+if (accountButton) {
+  accountButton.addEventListener("click", openAccountDialog);
+  accountClose?.addEventListener("click", () => accountDialog.close());
+  deleteAccountButton?.addEventListener("click", async () => {
+    if (deleteAccountButton.dataset.armed !== "yes") {
+      deleteAccountButton.dataset.armed = "yes";
+      deleteAccountButton.textContent = t("account.deleteConfirm");
+      return;
+    }
+    const error = await EbrostayBackend.deleteAccount();
+    if (error) {
+      deleteAccountButton.dataset.armed = "";
+      deleteAccountButton.textContent = t("account.deleteError");
+      return;
+    }
+    accountDialog.close();
   });
 }

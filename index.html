@@ -22,7 +22,7 @@
       crossorigin=""
     >
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
-    <link rel="stylesheet" href="styles.css?v=admin-6">
+    <link rel="stylesheet" href="styles.css?v=admin-7">
   </head>
   <body>
     <header class="site-header">
@@ -34,6 +34,7 @@
         <a href="#how" data-i18n="nav.how">Cómo funciona</a>
         <a href="#owners" data-i18n="nav.owners">Propietarios</a>
         <a href="#contact" data-i18n="nav.contact">Contacto</a>
+        <a href="about.html" data-i18n="nav.about">Nosotros</a>
       </nav>
       <div class="header-actions">
         <div class="language-switch" aria-label="Language selector">
@@ -42,6 +43,7 @@
         </div>
         <button class="auth-button" id="authButton" type="button" hidden data-i18n="auth.login">Entrar</button>
         <div class="user-chip" id="userChip" hidden>
+          <button class="admin-link" id="accountButton" type="button" data-i18n="bookings.button">Mi cuenta</button>
           <a class="admin-link" id="adminLink" href="admin.html" hidden data-i18n="auth.admin">Administración</a>
           <span class="user-email" id="userEmail"></span>
           <button class="logout-button" id="logoutButton" type="button" data-i18n="auth.logout">Salir</button>
@@ -257,6 +259,7 @@
         <img class="footer-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
         <span>&copy; <span id="year"></span> Ebrostay</span>
       </span>
+      <a href="about.html" data-i18n="nav.about">Nosotros</a>
       <a href="mailto:info@ebrostay.com">info@ebrostay.com</a>
     </footer>
 
@@ -273,12 +276,35 @@
           <input name="password" type="password" minlength="6" autocomplete="current-password" required>
         </label>
         <p class="auth-message" id="authMessage" role="status"></p>
+        <div class="auth-sso" id="authProviders" hidden>
+          <span class="auth-or"><span data-i18n="auth.or">o</span></span>
+          <button class="button ghost sso-button" type="button" data-provider="google" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.66-.22-2.45H12v4.64h6.45a5.52 5.52 0 0 1-2.39 3.62v3h3.86c2.26-2.08 3.58-5.15 3.58-8.81z"/><path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.91l-3.86-3c-1.07.72-2.44 1.14-4.08 1.14-3.13 0-5.78-2.11-6.73-4.96H1.3v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.27 14.27a7.2 7.2 0 0 1 0-4.54v-3.1H1.3a12 12 0 0 0 0 10.74l3.97-3.1z"/><path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.59 1.79l3.43-3.43A11.97 11.97 0 0 0 12 0 12 12 0 0 0 1.3 6.63l3.97 3.1C6.22 6.88 8.87 4.77 12 4.77z"/></svg>
+            <span data-i18n="auth.google">Continuar con Google</span>
+          </button>
+          <button class="button ghost sso-button" type="button" data-provider="azure" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect width="11" height="11" x="0.5" y="0.5" fill="#F25022"/><rect width="11" height="11" x="12.5" y="0.5" fill="#7FBA00"/><rect width="11" height="11" x="0.5" y="12.5" fill="#00A4EF"/><rect width="11" height="11" x="12.5" y="12.5" fill="#FFB900"/></svg>
+            <span data-i18n="auth.microsoft">Continuar con Outlook</span>
+          </button>
+        </div>
         <div class="auth-actions">
           <button class="button primary" type="submit" data-auth-action="signin" data-i18n="auth.signin">Iniciar sesión</button>
           <button class="button ghost" type="submit" data-auth-action="signup" data-i18n="auth.signup">Crear cuenta</button>
         </div>
         <button class="auth-close" id="authClose" type="button" data-i18n="auth.close">Cerrar</button>
       </form>
+    </dialog>
+
+    <dialog class="auth-dialog" id="accountDialog">
+      <div class="auth-form account-panel">
+        <h3 data-i18n="account.title">Mi cuenta</h3>
+        <span class="user-email" id="accountEmail"></span>
+        <h4 data-i18n="bookings.title">Mis reservas</h4>
+        <p data-i18n="bookings.copy">Las estancias confirmadas con tu cuenta aparecen aquí.</p>
+        <ul class="bookings-list" id="bookingsList"></ul>
+        <button class="details-button danger" id="deleteAccountButton" type="button" data-i18n="account.delete">Eliminar mi cuenta</button>
+        <button class="auth-close" id="accountClose" type="button" data-i18n="account.close">Cerrar</button>
+      </div>
     </dialog>
 
     <script
@@ -289,9 +315,9 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=admin-6"></script>
-    <script src="data.js?v=admin-6"></script>
-    <script src="backend.js?v=admin-6"></script>
-    <script src="site.js?v=admin-6"></script>
+    <script src="supabase-config.js?v=admin-7"></script>
+    <script src="data.js?v=admin-7"></script>
+    <script src="backend.js?v=admin-7"></script>
+    <script src="site.js?v=admin-7"></script>
   </body>
 </html>
