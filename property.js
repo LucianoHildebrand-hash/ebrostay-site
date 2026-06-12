@@ -57,10 +57,6 @@ function renderDetail() {
     .map((key) => `<span>${t(`amenity.${key}`)}</span>`)
     .join("");
 
-  document.querySelector("#detailBlocked").innerHTML = property.unavailable
-    .map(([start, end]) => `<li>${formatDate(dateValue(start))} &ndash; ${formatDate(dateValue(end))}</li>`)
-    .join("");
-
   document.querySelector("#detailPrice").textContent = interpolate("listing.price", { price: property.price });
   const priceNote = document.querySelector("#detailPriceNote");
   if (property.priceNoteKey) {

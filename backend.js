@@ -163,6 +163,52 @@ const EbrostayBackend = (() => {
     await getClient().auth.signOut();
   }
 
+  // Which OAuth providers are enabled in the Supabase project (so the
+  // buttons only appear once Google/Azure are configured in the dashboard)
+  async function getEnabledProviders() {
+    if (!isConfigured()) return {};
+    try {
+      const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+        headers: { apikey: SUPABASE_ANON_KEY }
+      });
+      const settings = await response.json();
+      return settings?.external || {};
+    } catch {
+      return {};
+    }
+  }
+
+  async function signInWithProvider(provider) {
+    const { error } = await getClient().auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: window.location.origin + window.location.pathname }
+    });
+    return error;
+  }
+
+  async function loadMyBookings() {
+    if (!user) return null;
+    const { data, error } = await getClient()
+      .from("availability_blocks")
+      .select("start_date, end_date, properties(name)")
+      .eq("user_id", user.id)
+      .order("start_date");
+    if (error) return null;
+    return data.map((row) => ({
+      startDate: row.start_date,
+      endDate: row.end_date,
+      propertyName: row.properties?.name || ""
+    }));
+  }
+
+  async function deleteAccount() {
+    const sb = getClient();
+    const { error } = await sb.rpc("delete_my_account");
+    if (error) return error;
+    await sb.auth.signOut();
+    return null;
+  }
+
   async function loadFavorites() {
     if (!user) return null;
     const { data, error } = await getClient().from("favorites").select("property_id");
@@ -203,6 +249,10 @@ const EbrostayBackend = (() => {
     signIn,
     signUp,
     signOut,
+    getEnabledProviders,
+    signInWithProvider,
+    loadMyBookings,
+    deleteAccount,
     loadFavorites,
     saveFavorite,
     sendInquiry,
