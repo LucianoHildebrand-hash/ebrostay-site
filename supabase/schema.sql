@@ -67,6 +67,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text,
   is_admin boolean not null default false,
+  deactivated_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -80,6 +81,27 @@ create table if not exists public.favorites (
   property_id text not null references public.properties (id) on delete cascade,
   created_at timestamptz not null default now(),
   primary key (user_id, property_id)
+);
+
+-- Paid bookings (written only by the Stripe webhook via service role)
+create table if not exists public.bookings (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.profiles (id) on delete set null,
+  customer_email text,
+  property_id text references public.properties (id) on delete set null,
+  property_name text,
+  start_date date not null,
+  end_date date not null,
+  months integer,
+  amount_eur numeric(10, 2),
+  currency text not null default 'eur',
+  stripe_session_id text unique,
+  stripe_payment_intent text,
+  invoice_url text,
+  invoice_pdf text,
+  receipt_url text,
+  status text not null default 'paid',
+  created_at timestamptz not null default now()
 );
 
 create table if not exists public.inquiries (
@@ -115,18 +137,44 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Self-service account deletion: removes only the calling user
-create or replace function public.delete_my_account()
+-- Account deactivation (records kept; definitive deletion is admin-only)
+create or replace function public.deactivate_my_account()
 returns void
-language sql
+language plpgsql
 security definer set search_path = public
 as $$
-  delete from auth.users where id = auth.uid();
+begin
+  if auth.uid() is null then
+    raise exception 'not signed in';
+  end if;
+  update public.profiles set deactivated_at = now() where id = auth.uid();
+  update auth.users set banned_until = now() + interval '100 years' where id = auth.uid();
+end;
 $$;
 
-revoke execute on function public.delete_my_account() from public;
-revoke execute on function public.delete_my_account() from anon;
-grant execute on function public.delete_my_account() to authenticated;
+revoke execute on function public.deactivate_my_account() from public;
+revoke execute on function public.deactivate_my_account() from anon;
+grant execute on function public.deactivate_my_account() to authenticated;
+
+create or replace function public.admin_delete_user(target_user uuid)
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'not allowed';
+  end if;
+  if exists (select 1 from public.profiles where id = target_user and is_admin) then
+    raise exception 'cannot delete an admin account';
+  end if;
+  delete from auth.users where id = target_user;
+end;
+$$;
+
+revoke execute on function public.admin_delete_user(uuid) from public;
+revoke execute on function public.admin_delete_user(uuid) from anon;
+grant execute on function public.admin_delete_user(uuid) to authenticated;
 
 -- Admin check used by policies (security definer avoids RLS recursion)
 create or replace function public.is_admin()
@@ -198,6 +246,19 @@ drop policy if exists "Users remove own favorites" on public.favorites;
 create policy "Users remove own favorites"
   on public.favorites for delete
   using (auth.uid() = user_id);
+
+-- Bookings: users see their own; admins see all; only the webhook writes
+alter table public.bookings enable row level security;
+
+drop policy if exists "Users read own bookings" on public.bookings;
+create policy "Users read own bookings"
+  on public.bookings for select
+  using (auth.uid() = user_id);
+
+drop policy if exists "Admins read bookings" on public.bookings;
+create policy "Admins read bookings"
+  on public.bookings for select
+  using (public.is_admin());
 
 -- Inquiries: anyone (even logged out) can send one; only admins can read them
 drop policy if exists "Anyone can send an inquiry" on public.inquiries;

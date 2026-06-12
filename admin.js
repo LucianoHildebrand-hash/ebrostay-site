@@ -311,6 +311,39 @@ function renderAdmin() {
   });
 }
 
+const adminUsersSection = document.querySelector("#adminUsers");
+const adminUserList = document.querySelector("#adminUserList");
+
+async function loadUsers() {
+  if (!adminUsersSection) return;
+  const sb = EbrostayBackend.getClient();
+  const { data, error } = await sb
+    .from("profiles")
+    .select("id, email, is_admin, deactivated_at, created_at, bookings(count)")
+    .order("created_at");
+  if (error) {
+    adminUsersSection.hidden = true;
+    return;
+  }
+  adminUsersSection.hidden = false;
+  adminUserList.innerHTML = (data || []).map((row) => {
+    const bookingsCount = row.bookings?.[0]?.count || 0;
+    return `
+      <li>
+        <div>
+          <strong>${escapeValue(row.email || row.id)}</strong>
+          <span class="admin-user-meta">
+            ${row.is_admin ? `<span class="admin-chip is-live">${t("admin.adminChip")}</span>` : ""}
+            ${row.deactivated_at ? `<span class="admin-chip is-off">${t("admin.deactivatedChip")}</span>` : ""}
+            ${t("admin.bookingsCount").replace("{count}", bookingsCount)}
+          </span>
+        </div>
+        ${row.is_admin ? "" : `<button class="details-button danger" type="button" data-delete-user="${row.id}">${t("admin.deleteUser")}</button>`}
+      </li>
+    `;
+  }).join("");
+}
+
 async function routeUI(user, isAdmin) {
   if (!EbrostayBackend.isConfigured()) {
     showStatus("admin.notConfigured");
@@ -326,6 +359,7 @@ async function routeUI(user, isAdmin) {
     adminToolbar.hidden = true;
     adminProperties.innerHTML = "";
     adminRows = [];
+    if (adminUsersSection) adminUsersSection.hidden = true;
     return;
   }
 
@@ -337,11 +371,13 @@ async function routeUI(user, isAdmin) {
     showStatus("admin.notAdmin");
     adminProperties.innerHTML = "";
     adminRows = [];
+    if (adminUsersSection) adminUsersSection.hidden = true;
     return;
   }
 
   hideStatus();
   await loadAdminData();
+  await loadUsers();
 }
 
 if (adminLogin) {
@@ -489,6 +525,25 @@ function editPayloadFromForm(form) {
     bills_included: formData.has("bills_included"),
     is_published: formData.has("is_published")
   };
+}
+
+if (adminUserList) {
+  adminUserList.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-delete-user]");
+    if (!button) return;
+    if (button.dataset.armed !== "yes") {
+      button.dataset.armed = "yes";
+      button.textContent = t("admin.deleteUserConfirm");
+      return;
+    }
+    const sb = EbrostayBackend.getClient();
+    const { error } = await sb.rpc("admin_delete_user", { target_user: button.dataset.deleteUser });
+    if (error) showStatus("admin.error");
+    else {
+      showStatus("admin.saved");
+      await loadUsers();
+    }
+  });
 }
 
 if (adminProperties) {

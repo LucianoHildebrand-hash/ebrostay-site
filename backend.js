@@ -201,22 +201,48 @@ const EbrostayBackend = (() => {
 
   async function loadMyBookings() {
     if (!user) return null;
-    const { data, error } = await getClient()
-      .from("availability_blocks")
-      .select("start_date, end_date, properties(name)")
-      .eq("user_id", user.id)
-      .order("start_date");
-    if (error) return null;
-    return data.map((row) => ({
-      startDate: row.start_date,
-      endDate: row.end_date,
-      propertyName: row.properties?.name || ""
-    }));
+    const sb = getClient();
+    const [paidResult, assignedResult] = await Promise.all([
+      sb.from("bookings")
+        .select("property_name, start_date, end_date, months, amount_eur, status, invoice_url, invoice_pdf, receipt_url")
+        .eq("user_id", user.id)
+        .order("start_date"),
+      sb.from("availability_blocks")
+        .select("start_date, end_date, properties(name)")
+        .eq("user_id", user.id)
+        .order("start_date")
+    ]);
+    if (paidResult.error && assignedResult.error) return null;
+    return {
+      paid: paidResult.data || [],
+      assigned: (assignedResult.data || []).map((row) => ({
+        startDate: row.start_date,
+        endDate: row.end_date,
+        propertyName: row.properties?.name || ""
+      }))
+    };
   }
 
-  async function deleteAccount() {
+  async function createBookingCheckout(propertyId, startDate, months) {
     const sb = getClient();
-    const { error } = await sb.rpc("delete_my_account");
+    try {
+      const { data, error } = await sb.functions.invoke("create-booking-checkout", {
+        body: { propertyId, startDate, months }
+      });
+      if (error) {
+        let code = "server_error";
+        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
+        return { url: null, code };
+      }
+      return { url: data?.url || null, code: data?.url ? null : "server_error" };
+    } catch {
+      return { url: null, code: "server_error" };
+    }
+  }
+
+  async function deactivateAccount() {
+    const sb = getClient();
+    const { error } = await sb.rpc("deactivate_my_account");
     if (error) return error;
     await sb.auth.signOut();
     return null;
@@ -267,7 +293,8 @@ const EbrostayBackend = (() => {
     getEnabledProviders,
     signInWithProvider,
     loadMyBookings,
-    deleteAccount,
+    createBookingCheckout,
+    deactivateAccount,
     loadFavorites,
     saveFavorite,
     sendInquiry,
