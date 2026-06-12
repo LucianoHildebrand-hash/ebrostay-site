@@ -87,10 +87,11 @@ const translations = {
     "properties.movera0.details": "Opcion de planta baja con cocina equipada, buena capacidad y gestion cercana para incidencias o necesidades durante la estancia.",
     "properties.movera1.name": "Movera 7 - Primera Planta",
     "properties.movera1.area": "Movera",
-    "properties.movera1.copy": "Piso en primera planta en Movera 7, adecuado para familias pequenas o estancias de trabajo.",
-    "properties.movera1.details": "Vivienda amueblada en primera planta con terraza, wifi y equipamiento esencial para una estancia flexible en Zaragoza.",
-    "map.title": "Google Maps de Zaragoza",
-    "map.copy": "Selecciona una direccion para verla en Google Maps. Cada direccion contiene dos pisos gestionados por Ebrostay.",
+    "properties.movera1.copy": "Piso de 3 habitaciones privadas en Movera 7, ideal para equipos de empresa, tecnicos y estancias por proyecto.",
+    "properties.movera1.details": "Tres dormitorios privados con salon, comedor y cocina equipada compartidos, bano completo y terraza. Gastos incluidos con suministros limitados a 50 EUR por habitacion, autoentrada con lockbox y soporte 24/7. Piso completo o por habitaciones.",
+    "properties.movera1.priceNote": "o 450 EUR/habitacion",
+    "map.title": "Mapa de viviendas",
+    "map.copy": "Cada pin muestra el precio mensual de una vivienda. Toca un pin para resaltar la vivienda o usa los botones para ir a cada direccion.",
     "map.pedro": "Pedro II el Catolico 3",
     "map.movera": "Movera 7",
     "how.kicker": "Como funciona",
@@ -207,10 +208,11 @@ const translations = {
     "properties.movera0.details": "Ground-floor option with equipped kitchen, good capacity, and local management for issues or needs during the stay.",
     "properties.movera1.name": "Movera 7 - First Floor",
     "properties.movera1.area": "Movera",
-    "properties.movera1.copy": "First-floor flat at Movera 7, suitable for small families or work stays.",
-    "properties.movera1.details": "Furnished first-floor home with terrace, wifi, and essential equipment for a flexible stay in Zaragoza.",
-    "map.title": "Google Maps Zaragoza",
-    "map.copy": "Choose an address to view it in Google Maps. Each address contains two Ebrostay-managed flats.",
+    "properties.movera1.copy": "Three private bedrooms at Movera 7, ideal for company teams, technicians, and project stays.",
+    "properties.movera1.details": "Three private bedrooms with shared living, dining, and equipped kitchen, full bathroom, and terrace. Expenses included with utilities capped at 50 EUR per room, self check-in by lockbox, and 24/7 support. Whole flat or room by room.",
+    "properties.movera1.priceNote": "or 450 EUR/room",
+    "map.title": "Homes map",
+    "map.copy": "Each pin shows a home's monthly price. Tap a pin to highlight the home or use the buttons to jump to each address.",
     "map.pedro": "Pedro II el Catolico 3",
     "map.movera": "Movera 7",
     "how.kicker": "How it works",
@@ -251,6 +253,8 @@ const properties = [
     areaKey: "properties.pedro1.area",
     copyKey: "properties.pedro1.copy",
     detailsKey: "properties.pedro1.details",
+    lat: 41.65393,
+    lng: -0.90783,
     guests: 4,
     price: "950 EUR",
     priceNumber: 950,
@@ -272,6 +276,8 @@ const properties = [
     areaKey: "properties.pedro2.area",
     copyKey: "properties.pedro2.copy",
     detailsKey: "properties.pedro2.details",
+    lat: 41.65416,
+    lng: -0.90756,
     guests: 4,
     price: "980 EUR",
     priceNumber: 980,
@@ -293,6 +299,8 @@ const properties = [
     areaKey: "properties.movera0.area",
     copyKey: "properties.movera0.copy",
     detailsKey: "properties.movera0.details",
+    lat: 41.64929,
+    lng: -0.82209,
     guests: 5,
     price: "870 EUR",
     priceNumber: 870,
@@ -314,11 +322,14 @@ const properties = [
     areaKey: "properties.movera1.area",
     copyKey: "properties.movera1.copy",
     detailsKey: "properties.movera1.details",
-    guests: 5,
-    price: "910 EUR",
-    priceNumber: 910,
+    priceNoteKey: "properties.movera1.priceNote",
+    lat: 41.64952,
+    lng: -0.82182,
+    guests: 3,
+    price: "1.350 EUR",
+    priceNumber: 1350,
     rating: 4.7,
-    availableFrom: "2026-07-15",
+    availableFrom: "2026-07-01",
     isNew: true,
     checked: true,
     depositProtected: true,
@@ -345,6 +356,18 @@ const mapSources = {
   pedro: "https://www.google.com/maps?q=Pedro%20II%20El%20Catolico%203%2C%20Zaragoza%20Spain&output=embed",
   movera: "https://www.google.com/maps?q=Movera%207%2C%20Zaragoza%20Spain&output=embed"
 };
+
+const addressLocations = {
+  pedro: { lat: 41.65393, lng: -0.90783 },
+  movera: { lat: 41.64929, lng: -0.82209 }
+};
+
+const listingsMapElement = document.querySelector("#listingsMap");
+let leafletMap = null;
+let markerLayer = null;
+let markersById = new Map();
+let mapNeedsFit = true;
+let highlightTimer = null;
 
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let activeFilter = null;
@@ -448,12 +471,108 @@ function requestProperty(propertyId) {
   document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
 }
 
-function focusMap(addressKey) {
-  if (!googleMap || !mapSources[addressKey]) return;
-  googleMap.src = mapSources[addressKey];
+function initListingsMap() {
+  if (!listingsMapElement) return;
+
+  if (typeof L === "undefined") {
+    listingsMapElement.hidden = true;
+    if (googleMap) {
+      googleMap.hidden = false;
+      googleMap.src = mapSources.pedro;
+    }
+    return;
+  }
+
+  leafletMap = L.map(listingsMapElement, { scrollWheelZoom: false });
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(leafletMap);
+  markerLayer = L.layerGroup().addTo(leafletMap);
+  leafletMap.setView([41.6516, -0.865], 12);
+}
+
+function highlightCard(propertyId) {
+  const card = propertyGrid?.querySelector(`[data-property-id="${propertyId}"]`);
+  if (!card) return;
+  propertyGrid.querySelectorAll(".is-map-highlight").forEach((element) => element.classList.remove("is-map-highlight"));
+  card.classList.add("is-map-highlight");
+  card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  clearTimeout(highlightTimer);
+  highlightTimer = setTimeout(() => card.classList.remove("is-map-highlight"), 3200);
+}
+
+function setPinEmphasis(propertyId, emphasized) {
+  const marker = markersById.get(propertyId);
+  marker?.getElement()?.querySelector(".map-price-pin")?.classList.toggle("is-active", emphasized);
+}
+
+function updateMapMarkers(list) {
+  if (!leafletMap || !markerLayer) return;
+
+  markerLayer.clearLayers();
+  markersById = new Map();
+
+  const stackByAddress = {};
+
+  list.forEach((property) => {
+    const stackIndex = stackByAddress[property.addressKey] || 0;
+    stackByAddress[property.addressKey] = stackIndex + 1;
+    const pinLabel = property.price.replace("EUR", "€").trim();
+    const icon = L.divIcon({
+      className: "map-price-pin-wrap",
+      html: `<span class="map-price-pin" style="--pin-stack: ${stackIndex}">${pinLabel}</span>`,
+      iconSize: null
+    });
+    const marker = L.marker([property.lat, property.lng], { icon, title: t(property.nameKey) });
+    marker.bindPopup(
+      `<strong>${t(property.nameKey)}</strong><br>${t(property.areaKey)}<br>${interpolate("listing.price", { price: property.price })}`
+    );
+    marker.on("click", () => highlightCard(property.id));
+    marker.addTo(markerLayer);
+    markersById.set(property.id, marker);
+  });
+
+  if (list.length && mapNeedsFit) {
+    leafletMap.fitBounds(L.latLngBounds(list.map((property) => [property.lat, property.lng])), {
+      padding: [42, 42],
+      maxZoom: 15
+    });
+    mapNeedsFit = false;
+  }
+}
+
+function focusProperty(propertyId) {
+  const property = properties.find((item) => item.id === propertyId);
+  if (!property) return;
+
+  if (leafletMap) {
+    leafletMap.setView([property.lat, property.lng], 16);
+    markersById.get(propertyId)?.openPopup();
+  } else if (googleMap && mapSources[property.addressKey]) {
+    googleMap.src = mapSources[property.addressKey];
+  }
+
+  syncAddressButtons(property.addressKey);
+  document.querySelector(".map-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function syncAddressButtons(addressKey) {
   mapAddressButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.mapAddress === addressKey);
   });
+}
+
+function focusMap(addressKey) {
+  const location = addressLocations[addressKey];
+
+  if (leafletMap && location) {
+    leafletMap.setView([location.lat, location.lng], 16);
+  } else if (googleMap && mapSources[addressKey]) {
+    googleMap.src = mapSources[addressKey];
+  }
+
+  syncAddressButtons(addressKey);
 }
 
 function renderProperties() {
@@ -476,7 +595,7 @@ function renderProperties() {
     const amenities = property.amenities.map((key) => `<span>${t(`amenity.${key}`)}</span>`).join("");
 
     return `
-      <article class="property-card">
+      <article class="property-card" data-property-id="${property.id}">
         <div class="property-media property-${property.addressKey}">
           <span class="availability-pill">${t("listing.available")}</span>
           <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("listing.saved") : t("listing.favorite")}">${isFavorite ? "Saved" : "Save"}</button>
@@ -487,7 +606,10 @@ function renderProperties() {
               <p class="section-kicker">${t(`type.${property.type}`)} - ${t(property.areaKey)}</p>
               <h3>${t(property.nameKey)}</h3>
             </div>
-            <strong>${interpolate("listing.price", { price: property.price })}</strong>
+            <div class="property-price">
+              <strong>${interpolate("listing.price", { price: property.price })}</strong>
+              ${property.priceNoteKey ? `<span class="price-note">${t(property.priceNoteKey)}</span>` : ""}
+            </div>
           </div>
           <p>${t(property.copyKey)}</p>
           <div class="property-badges">${badges}</div>
@@ -500,13 +622,15 @@ function renderProperties() {
           ${isExpanded ? `<p class="property-details">${t(property.detailsKey)}</p>` : ""}
           <div class="property-actions">
             <button class="details-button" type="button" data-details="${property.id}">${isExpanded ? t("listing.hide") : t("listing.details")}</button>
-            <button class="details-button" type="button" data-map-focus="${property.addressKey}">${t("listing.map")}</button>
+            <button class="details-button" type="button" data-map-focus="${property.id}">${t("listing.map")}</button>
             <button class="button primary request-button" type="button" data-request="${property.id}">${t("listing.request")}</button>
           </div>
         </div>
       </article>
     `;
   }).join("");
+
+  updateMapMarkers(filtered);
 }
 
 function applyLanguage(language) {
@@ -545,6 +669,7 @@ quickButtons.forEach((button) => {
     const value = button.dataset.quick;
     quickFilters.has(value) ? quickFilters.delete(value) : quickFilters.add(value);
     button.classList.toggle("is-active", quickFilters.has(value));
+    mapNeedsFit = true;
     renderProperties();
   });
 });
@@ -562,6 +687,7 @@ if (heroSearch && availabilityFilter) {
     availabilityFilter.elements.guestCount.value = data.get("guestCount") || "2";
     statusOverride = null;
     activeFilter = getFilterFromForm(availabilityFilter);
+    mapNeedsFit = true;
     document.querySelector("#search")?.scrollIntoView({ behavior: "smooth" });
     renderProperties();
   });
@@ -572,6 +698,7 @@ if (availabilityFilter) {
     event.preventDefault();
     statusOverride = null;
     activeFilter = getFilterFromForm(availabilityFilter, true);
+    mapNeedsFit = true;
     renderProperties();
   });
 }
@@ -591,6 +718,7 @@ if (resetAvailability) {
       availabilityFilter.elements.city.value = "Zaragoza";
       availabilityFilter.elements.guestCount.value = "2";
     }
+    mapNeedsFit = true;
     renderProperties();
   });
 }
@@ -613,9 +741,19 @@ if (propertyGrid) {
       renderProperties();
     }
 
-    if (mapFocusId) focusMap(mapFocusId);
+    if (mapFocusId) focusProperty(mapFocusId);
 
     if (requestId) requestProperty(requestId);
+  });
+
+  propertyGrid.addEventListener("mouseover", (event) => {
+    const card = event.target.closest("[data-property-id]");
+    if (card) setPinEmphasis(card.dataset.propertyId, true);
+  });
+
+  propertyGrid.addEventListener("mouseout", (event) => {
+    const card = event.target.closest("[data-property-id]");
+    if (card && !card.contains(event.relatedTarget)) setPinEmphasis(card.dataset.propertyId, false);
   });
 }
 
@@ -633,4 +771,5 @@ if (inquiryForm) {
   });
 }
 
+initListingsMap();
 applyLanguage(currentLanguage);

@@ -15,7 +15,13 @@
     <meta property="og:image" content="assets/ebrostay-zaragoza-hero.png">
     <link rel="canonical" href="https://ebrostay.com/">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="styles.css?v=addresses-1">
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    >
+    <link rel="stylesheet" href="styles.css?v=map-1">
   </head>
   <body>
     <header class="site-header">
@@ -144,15 +150,16 @@
             <div class="property-list" id="propertyGrid" aria-live="polite"></div>
           </section>
 
-          <aside class="map-panel" aria-label="Google Maps preview">
+          <aside class="map-panel" aria-label="Property map">
             <div class="map-card">
               <div class="google-map-wrap">
+                <div id="listingsMap" class="listings-map" aria-label="Interactive map of Ebrostay homes"></div>
                 <iframe
                   id="googleMap"
                   title="Google Maps Zaragoza Ebrostay flats"
                   loading="lazy"
                   referrerpolicy="no-referrer-when-downgrade"
-                  src="https://www.google.com/maps?q=Pedro%20II%20El%20Catolico%203%2C%20Zaragoza%20Spain&output=embed"
+                  hidden
                 ></iframe>
               </div>
               <div class="map-copy">
@@ -239,6 +246,11 @@
       <a href="mailto:hello@ebrostay.com">hello@ebrostay.com</a>
     </footer>
 
-    <script src="site.js?v=addresses-1"></script>
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="site.js?v=map-1"></script>
   </body>
 </html>

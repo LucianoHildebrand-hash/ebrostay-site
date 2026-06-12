@@ -492,6 +492,24 @@ textarea {
   white-space: nowrap;
 }
 
+.property-price {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.price-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.property-card.is-map-highlight {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(47, 107, 85, 0.28);
+}
+
 .property-body p {
   margin: 0;
 }
@@ -554,7 +572,7 @@ textarea {
 .google-map-wrap {
   position: relative;
   width: 100%;
-  min-height: 340px;
+  min-height: 420px;
   background: var(--mist);
 }
 
@@ -564,6 +582,49 @@ textarea {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.listings-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+.map-price-pin-wrap {
+  background: none;
+  border: 0;
+  pointer-events: none !important;
+}
+
+.map-price-pin-wrap .map-price-pin {
+  pointer-events: auto;
+}
+
+.map-price-pin {
+  display: inline-block;
+  transform: translate(-50%, calc(-100% - var(--pin-stack, 0) * 32px));
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: var(--green);
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(24, 33, 29, 0.2);
+  cursor: pointer;
+}
+
+.map-price-pin:hover,
+.map-price-pin.is-active {
+  color: #fff;
+  background: var(--green);
+}
+
+.leaflet-popup-content {
+  font-family: inherit;
 }
 
 .map-copy {
