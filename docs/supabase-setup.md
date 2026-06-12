@@ -64,6 +64,17 @@ contact messages, and the admin panel.
 | Registered users | Authentication → Users |
 | Saved homes per user | `favorites` |
 
+## Upgrades
+
+If the project was created before a feature existed, run the matching
+upgrade file in the SQL Editor (each one is safe to run twice):
+
+- `supabase/upgrade-2026-06-property-photos.sql` — photo storage and
+  the full property editor in admin.html (photos upload to the
+  `property-photos` storage bucket; metadata in `property_photos`).
+
+Fresh projects don't need these: `schema.sql` already includes them.
+
 ## Optional next steps
 
 - Get an email notification for each new inquiry: Supabase

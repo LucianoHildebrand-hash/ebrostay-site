@@ -76,6 +76,37 @@ function renderDetail() {
   );
 }
 
+function setBannerPhoto(url) {
+  const media = document.querySelector("#detailMedia");
+  if (media) {
+    media.style.backgroundImage =
+      `linear-gradient(135deg, rgba(24, 33, 29, 0.18), rgba(24, 33, 29, 0.02)), url('${url}')`;
+  }
+}
+
+function renderGallery() {
+  const gallery = document.querySelector("#detailGallery");
+  const photos = property.photos || [];
+  if (!gallery || photos.length === 0) return;
+
+  setBannerPhoto(photos[0]);
+  gallery.hidden = photos.length < 2;
+  gallery.innerHTML = photos.map((url, index) => `
+    <button class="gallery-thumb${index === 0 ? " is-active" : ""}" type="button"
+      data-photo-index="${index}" style="background-image: url('${url}')"
+      aria-label="Foto ${index + 1}"></button>
+  `).join("");
+
+  gallery.addEventListener("click", (event) => {
+    const thumb = event.target.closest("[data-photo-index]");
+    if (!thumb) return;
+    setBannerPhoto(photos[Number(thumb.dataset.photoIndex)]);
+    gallery.querySelectorAll(".gallery-thumb").forEach((button) => {
+      button.classList.toggle("is-active", button === thumb);
+    });
+  });
+}
+
 function initDetailMap() {
   const mapElement = document.querySelector("#detailMap");
   if (!mapElement || typeof L === "undefined") return;
@@ -135,6 +166,7 @@ async function boot() {
   if (year) year.textContent = new Date().getFullYear();
 
   document.querySelector("#detailMedia")?.classList.add("property-media", `property-${property.addressKey}`);
+  renderGallery();
 
   languageButtons.forEach((button) => {
     button.addEventListener("click", () => applyLanguage(button.dataset.lang));
