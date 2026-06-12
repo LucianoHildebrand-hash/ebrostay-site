@@ -165,6 +165,102 @@ function renderMoveInCost() {
     (rows.length > 1 ? line("movein.total", total, true) : "");
 }
 
+let bookingPicker = null;
+
+function bookingEndDate(startDate, months) {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(start);
+  end.setUTCMonth(end.getUTCMonth() + months);
+  end.setUTCDate(end.getUTCDate() - 1);
+  return end.toISOString().slice(0, 10);
+}
+
+function updateBookingSummary() {
+  const summary = document.querySelector("#bookingSummary");
+  const startDate = document.querySelector("#bookingStart")?.value;
+  const months = Number(document.querySelector("#bookingMonths")?.value) || 1;
+  if (!summary) return;
+  if (!startDate) {
+    summary.innerHTML = "";
+    return;
+  }
+  const endDate = bookingEndDate(startDate, months);
+  summary.innerHTML = `
+    <li><span>${t("book.stay")}</span><span>${formatDate(dateValue(startDate))} &ndash; ${formatDate(dateValue(endDate))}</span></li>
+    <li class="is-total"><span>${t("book.payNow")}</span><span>${interpolate("cond.eur", { amount: property.priceNumber })}</span></li>
+  `;
+}
+
+function bookingMessage(key, isError = true) {
+  const element = document.querySelector("#bookingMessage");
+  if (!element) return;
+  element.textContent = key ? t(key) : "";
+  element.className = `auth-message${key && isError ? " is-error" : ""}`;
+}
+
+function initBookingWidget() {
+  const widget = document.querySelector("#bookingWidget");
+  if (!widget) return;
+  if (!window.EbrostayBackend?.isConfigured() || typeof flatpickr === "undefined") {
+    widget.hidden = true;
+    return;
+  }
+  widget.hidden = false;
+
+  const monthsSelect = document.querySelector("#bookingMonths");
+  const previous = Number(monthsSelect.value) || 1;
+  monthsSelect.innerHTML = Array.from({ length: 11 }, (_, index) => index + 1)
+    .map((m) => `<option value="${m}" ${m === previous ? "selected" : ""}>${m === 1 ? t("cond.month") : interpolate("cond.months", { count: m })}</option>`)
+    .join("");
+
+  const today = new Date().toISOString().slice(0, 10);
+  const availableFrom = property.availableFrom || today;
+  bookingPicker?.destroy();
+  bookingPicker = flatpickr(document.querySelector("#bookingStart"), {
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "j M Y",
+    minDate: availableFrom > today ? availableFrom : today,
+    disable: property.unavailable.map(([from, to]) => ({ from, to })),
+    locale: currentLanguage === "es" ? flatpickr.l10ns.es : "default",
+    onChange: updateBookingSummary
+  });
+  updateBookingSummary();
+
+  if (new URLSearchParams(window.location.search).get("booking") === "cancelled") {
+    bookingMessage("book.cancelled");
+  }
+}
+
+const BOOKING_ERROR_KEYS = {
+  dates_unavailable: "book.unavailable",
+  stripe_not_configured: "book.notConfigured",
+  unauthorized: "book.loginFirst"
+};
+
+document.querySelector("#bookingButton")?.addEventListener("click", async () => {
+  const startDate = document.querySelector("#bookingStart")?.value;
+  const months = Number(document.querySelector("#bookingMonths")?.value) || 1;
+  if (!startDate) {
+    bookingPicker?.open();
+    return;
+  }
+  if (!EbrostayBackend.getUser()) {
+    bookingMessage("book.loginFirst");
+    return;
+  }
+  const button = document.querySelector("#bookingButton");
+  button.disabled = true;
+  bookingMessage("book.redirecting", false);
+  const { url, code } = await EbrostayBackend.createBookingCheckout(property.id, startDate, months);
+  if (url) {
+    window.location.href = url;
+    return;
+  }
+  button.disabled = false;
+  bookingMessage(BOOKING_ERROR_KEYS[code] || "book.error");
+});
+
 function setBannerPhoto(url) {
   const media = document.querySelector("#detailMedia");
   if (media) {
@@ -238,6 +334,7 @@ function applyLanguage(language) {
 
   renderDetail();
   renderAvailabilityCalendar();
+  initBookingWidget();
   updateDetailMarker();
 }
 

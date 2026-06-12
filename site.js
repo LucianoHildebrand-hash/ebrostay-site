@@ -688,9 +688,31 @@ if (logoutButton) {
   logoutButton.addEventListener("click", () => EbrostayBackend.signOut());
 }
 
+function showPageToast(key, isError = false) {
+  const toast = document.createElement("p");
+  toast.className = `admin-status is-toast${isError ? " is-error" : ""}`;
+  toast.setAttribute("role", "status");
+  toast.textContent = t(key);
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 7000);
+}
+
+const pageParams = new URLSearchParams(window.location.search);
+if (pageParams.get("booking") === "success") {
+  showPageToast("book.confirmed");
+  history.replaceState(null, "", window.location.pathname + window.location.hash);
+}
+
 initListingsMap();
 setupDatePickers();
 applyLanguage(currentLanguage);
+
+if (window.location.hash === "#login" && authDialog) {
+  showAuthForm();
+  setAuthMode("signin");
+  authDialog.showModal();
+  history.replaceState(null, "", window.location.pathname);
+}
 
 if (window.EbrostayBackend) {
   EbrostayBackend.init({
@@ -750,7 +772,7 @@ async function openAccountDialog() {
   if (!accountDialog) return;
   accountEmail.textContent = EbrostayBackend.getUser()?.email || "";
   deleteAccountButton.dataset.armed = "";
-  deleteAccountButton.textContent = t("account.delete");
+  deleteAccountButton.textContent = t("account.deactivate");
   bookingsList.innerHTML = "";
   accountDialog.showModal();
 
@@ -759,13 +781,30 @@ async function openAccountDialog() {
     bookingsList.innerHTML = `<li class="bookings-empty">${t("bookings.error")}</li>`;
     return;
   }
-  bookingsList.innerHTML = bookings.length
-    ? bookings.map((booking) => `
-        <li>
-          <strong>${booking.propertyName}</strong>
-          <span>${formatBookingDate(booking.startDate)} &ndash; ${formatBookingDate(booking.endDate)}</span>
-        </li>
-      `).join("")
+
+  const links = (booking) => [
+    booking.invoice_url && `<a href="${booking.invoice_url}" target="_blank" rel="noopener">${t("bookings.invoice")}</a>`,
+    booking.invoice_pdf && `<a href="${booking.invoice_pdf}" target="_blank" rel="noopener">${t("bookings.pdf")}</a>`,
+    booking.receipt_url && `<a href="${booking.receipt_url}" target="_blank" rel="noopener">${t("bookings.receipt")}</a>`
+  ].filter(Boolean).join(" ");
+
+  const paidItems = bookings.paid.map((booking) => `
+    <li>
+      <strong>${booking.property_name}</strong>
+      <span>${formatBookingDate(booking.start_date)} &ndash; ${formatBookingDate(booking.end_date)}</span>
+      <span class="booking-paid">${interpolate("cond.eur", { amount: booking.amount_eur })} &middot; ${t("bookings.paidLabel")}</span>
+      ${links(booking) ? `<span class="booking-links">${links(booking)}</span>` : ""}
+    </li>
+  `);
+  const assignedItems = bookings.assigned.map((booking) => `
+    <li>
+      <strong>${booking.propertyName}</strong>
+      <span>${formatBookingDate(booking.startDate)} &ndash; ${formatBookingDate(booking.endDate)}</span>
+    </li>
+  `);
+  const items = [...paidItems, ...assignedItems];
+  bookingsList.innerHTML = items.length
+    ? items.join("")
     : `<li class="bookings-empty">${t("bookings.empty")}</li>`;
 }
 
@@ -775,13 +814,13 @@ if (accountButton) {
   deleteAccountButton?.addEventListener("click", async () => {
     if (deleteAccountButton.dataset.armed !== "yes") {
       deleteAccountButton.dataset.armed = "yes";
-      deleteAccountButton.textContent = t("account.deleteConfirm");
+      deleteAccountButton.textContent = t("account.deactivateConfirm");
       return;
     }
-    const error = await EbrostayBackend.deleteAccount();
+    const error = await EbrostayBackend.deactivateAccount();
     if (error) {
       deleteAccountButton.dataset.armed = "";
-      deleteAccountButton.textContent = t("account.deleteError");
+      deleteAccountButton.textContent = t("account.deactivateError");
       return;
     }
     accountDialog.close();
