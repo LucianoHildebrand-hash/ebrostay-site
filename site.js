@@ -404,6 +404,12 @@ mapAddressButtons.forEach((button) => {
   button.addEventListener("click", () => focusMap(button.dataset.mapAddress));
 });
 
+// Remember searched dates so the booking widget can preselect them
+function rememberSearchDates(checkIn, checkOut) {
+  if (!checkIn) return;
+  localStorage.setItem("ebrostay-search-dates", JSON.stringify({ checkIn, checkOut: checkOut || "" }));
+}
+
 if (heroSearch && availabilityFilter) {
   heroSearch.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -411,6 +417,7 @@ if (heroSearch && availabilityFilter) {
     availabilityFilter.elements.city.value = data.get("city") || "Zaragoza";
     const heroDate = data.get("checkIn")?.toString() || "";
     const heroOutDate = data.get("checkOut")?.toString() || "";
+    rememberSearchDates(heroDate, heroOutDate);
     if (datePickers.checkIn) {
       heroDate ? datePickers.checkIn.setDate(heroDate, true) : datePickers.checkIn.clear();
     } else {
@@ -435,6 +442,8 @@ if (availabilityFilter) {
     event.preventDefault();
     statusOverride = null;
     activeFilter = getFilterFromForm(availabilityFilter, true);
+    const filterData = new FormData(availabilityFilter);
+    rememberSearchDates(filterData.get("checkIn")?.toString() || "", filterData.get("checkOut")?.toString() || "");
     mapNeedsFit = true;
     renderProperties();
     // on mobile the panel is a toggle; collapse it so results are visible

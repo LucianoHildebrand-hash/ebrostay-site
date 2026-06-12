@@ -1,3 +1,5 @@
+// Admin dashboard: property list (each property edits on its own page),
+// confirmed bookings, manually assigned stays, and user management.
 const languageButtons = document.querySelectorAll("[data-lang]");
 const adminStatus = document.querySelector("#adminStatus");
 const adminLogin = document.querySelector("#adminLogin");
@@ -5,11 +7,18 @@ const adminLoginMessage = document.querySelector("#adminLoginMessage");
 const adminToolbar = document.querySelector("#adminToolbar");
 const adminUserEmail = document.querySelector("#adminUserEmail");
 const adminLogout = document.querySelector("#adminLogout");
-const adminProperties = document.querySelector("#adminProperties");
+const adminPanel = document.querySelector("#adminPanel");
+const adminMainTabs = document.querySelector("#adminMainTabs");
+const adminPropList = document.querySelector("#adminPropList");
+const adminBookingsTable = document.querySelector("#adminBookingsTable");
+const adminAssignedTable = document.querySelector("#adminAssignedTable");
+const adminUserList = document.querySelector("#adminUserList");
 
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
-let adminRows = [];
-let selectedPropertyId = null;
+let propertyRows = [];
+let bookingRows = [];
+let assignedRows = [];
+let userRows = [];
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
@@ -21,8 +30,16 @@ function formatDate(value) {
   }).format(new Date(`${value}T00:00:00`));
 }
 
-// Page-level notices stay inline; everything else floats as a toast so it is
-// visible no matter how far down the page the action happened.
+function formatTimestamp(value) {
+  return new Intl.DateTimeFormat(currentLanguage === "es" ? "es-ES" : "en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
 const PAGE_STATUS_KEYS = new Set(["admin.notConfigured", "admin.notAdmin"]);
 let statusTimer;
 
@@ -32,7 +49,7 @@ function showStatus(key) {
   adminStatus.dataset.statusKey = key;
   adminStatus.textContent = t(key);
   adminStatus.classList.toggle("is-toast", !PAGE_STATUS_KEYS.has(key));
-  const isError = key === "admin.error" || key === "admin.guestNotFound";
+  const isError = key === "admin.error";
   adminStatus.classList.toggle("is-error", isError);
   if (key === "admin.saved") statusTimer = setTimeout(hideStatus, 2600);
   if (isError) statusTimer = setTimeout(hideStatus, 5000);
@@ -44,289 +61,74 @@ function hideStatus() {
   delete adminStatus.dataset.statusKey;
 }
 
-function applyLanguage(language) {
-  currentLanguage = translations[language] ? language : "es";
-  localStorage.setItem("ebrostay-language", currentLanguage);
-  document.documentElement.lang = currentLanguage;
-
-  document.querySelectorAll("[data-i18n]").forEach((element) => {
-    element.textContent = t(element.dataset.i18n);
-  });
-
-  languageButtons.forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.lang === currentLanguage);
-  });
-
-  if (adminStatus.dataset.statusKey) adminStatus.textContent = t(adminStatus.dataset.statusKey);
-  if (adminRows.length) renderAdmin();
-}
-
-async function loadAdminData() {
-  const sb = EbrostayBackend.getClient();
-  const { data, error } = await sb
-    .from("properties")
-    .select("*, availability_blocks(id, start_date, end_date, profiles(email)), property_photos(id, storage_path, sort_order)")
-    .order("id");
-  if (error) {
-    showStatus("admin.error");
-    return;
-  }
-  adminRows = data || [];
-  renderAdmin();
-}
-
-const AMENITY_KEYS = ["wifi", "desk", "balcony", "lift", "ac", "heating", "kitchen", "terrace", "washer", "dishwasher", "tv", "microwave", "oven", "parking"];
-const ENERGY_RATINGS = ["A", "B", "C", "D", "E", "F", "G"];
-const TYPE_KEYS = ["apartment", "room", "home"];
-
 function escapeValue(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
 
-function renderPhotos(row) {
+function coverUrl(row) {
   const photos = (row.property_photos || [])
     .slice()
     .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1));
-
-  const items = photos.length
-    ? photos.map((photo, index) => `
-        <figure class="admin-photo">
-          <img src="${EbrostayBackend.photoUrl(photo.storage_path)}" alt="" loading="lazy">
-          ${index === 0 ? `<span class="admin-photo-cover">${t("admin.cover")}</span>` : ""}
-          <div class="admin-photo-actions">
-            ${index === 0 ? "" : `<button class="details-button" type="button" data-cover-photo="${photo.id}" data-property="${row.id}">${t("admin.makeCover")}</button>`}
-            <button class="details-button danger" type="button" data-delete-photo="${photo.id}" data-path="${escapeValue(photo.storage_path)}">${t("admin.delete")}</button>
-          </div>
-        </figure>
-      `).join("")
-    : `<p class="admin-empty-note">${t("admin.noPhotos")}</p>`;
-
-  return `
-    <section class="admin-section">
-      <div class="admin-section-head">
-        <h3>${t("admin.photos")}</h3>
-        <label class="admin-upload">
-          <span class="button ghost">${t("admin.addPhotos")}</span>
-          <input type="file" accept="image/*" multiple hidden data-photo-input="${row.id}">
-        </label>
-      </div>
-      <div class="admin-photo-grid">${items}</div>
-    </section>
-  `;
+  return photos.length ? EbrostayBackend.photoUrl(photos[0].storage_path) : "";
 }
 
-function renderEditForm(row) {
-  const text = (labelKey, name, value, type = "text") => `
-    <label>
-      <span>${t(labelKey)}</span>
-      <input name="${name}" type="${type}" value="${escapeValue(value)}" ${type === "number" ? 'step="any"' : ""}>
-    </label>
-  `;
-  const area = (labelKey, name, value) => `
-    <label class="admin-wide">
-      <span>${t(labelKey)}</span>
-      <textarea name="${name}" rows="3">${escapeValue(value)}</textarea>
-    </label>
-  `;
-  const flag = (labelKey, name, checked) => `
-    <label class="admin-flag"><input type="checkbox" name="${name}" ${checked ? "checked" : ""}> <span>${t(labelKey)}</span></label>
-  `;
-
-  return `
-    <details class="admin-edit">
-      <summary>${t("admin.editDetails")}</summary>
-      <form class="admin-form" data-edit-form="${row.id}">
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.basic")}</legend>
-          ${text("admin.field.name", "name", row.name)}
-          <label>
-            <span>${t("admin.field.type")}</span>
-            <select name="type">
-              ${TYPE_KEYS.map((key) => `<option value="${key}" ${row.type === key ? "selected" : ""}>${t(`type.${key}`)}</option>`).join("")}
-            </select>
-          </label>
-          ${text("admin.field.guests", "guests", row.guests, "number")}
-          ${text("admin.field.rating", "rating", row.rating, "number")}
-          ${text("admin.field.bedrooms", "bedrooms", row.bedrooms, "number")}
-          ${text("admin.field.bathrooms", "bathrooms", row.bathrooms, "number")}
-          ${text("admin.field.size", "size_m2", row.size_m2, "number")}
-          ${text("admin.field.floor", "floor_number", row.floor_number, "number")}
-        </fieldset>
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.price")}</legend>
-          ${text("admin.field.priceLabel", "price_label", row.price_label)}
-          ${text("admin.field.priceNumber", "price_number", row.price_number, "number")}
-          ${text("admin.field.priceNoteEs", "price_note_es", row.price_note_es)}
-          ${text("admin.field.priceNoteEn", "price_note_en", row.price_note_en)}
-        </fieldset>
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.conditions")}</legend>
-          ${text("admin.field.minStay", "min_stay_months", row.min_stay_months, "number")}
-          ${text("admin.field.maxStay", "max_stay_months", row.max_stay_months, "number")}
-          ${text("admin.field.deposit", "deposit_amount", row.deposit_amount, "number")}
-          ${text("admin.field.upfront", "upfront_rent_eur", row.upfront_rent_eur, "number")}
-          ${text("admin.field.utilitiesCap", "utilities_cap_eur", row.utilities_cap_eur, "number")}
-          <label>
-            <span>${t("admin.field.energy")}</span>
-            <select name="energy_rating">
-              <option value="">${t("admin.energyNone")}</option>
-              ${ENERGY_RATINGS.map((rating) => `<option value="${rating}" ${row.energy_rating === rating ? "selected" : ""}>${rating}</option>`).join("")}
-            </select>
-          </label>
-          ${text("admin.field.video", "video_url", row.video_url)}
-        </fieldset>
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.textsEs")}</legend>
-          ${text("admin.field.areaEs", "area_es", row.area_es)}
-          ${area("admin.field.copyEs", "copy_es", row.copy_es)}
-          ${area("admin.field.detailsEs", "details_es", row.details_es)}
-          ${text("admin.field.bedsEs", "beds_es", row.beds_es)}
-        </fieldset>
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.textsEn")}</legend>
-          ${text("admin.field.areaEn", "area_en", row.area_en)}
-          ${area("admin.field.copyEn", "copy_en", row.copy_en)}
-          ${area("admin.field.detailsEn", "details_en", row.details_en)}
-          ${text("admin.field.bedsEn", "beds_en", row.beds_en)}
-        </fieldset>
-        <fieldset class="admin-group">
-          <legend>${t("admin.section.location")}</legend>
-          <div class="admin-wide">
-            <span class="admin-label">${t("admin.field.address")}</span>
-            <div class="admin-geocode-row">
-              <input type="text" data-geocode-input="${row.id}" placeholder="${t("admin.geocodePlaceholder")}">
-              <button class="details-button" type="button" data-geocode="${row.id}">${t("admin.geocodeFind")}</button>
-            </div>
-            <p class="admin-hint" data-geocode-status="${row.id}">${t("admin.geocodeHint")}</p>
-          </div>
-          ${text("admin.field.city", "city", row.city)}
-          ${text("admin.field.addressKey", "address_key", row.address_key)}
-          ${text("admin.field.lat", "lat", row.lat, "number")}
-          ${text("admin.field.lng", "lng", row.lng, "number")}
-        </fieldset>
-        <fieldset class="admin-group admin-chips">
-          <legend>${t("admin.field.amenities")}</legend>
-          ${AMENITY_KEYS.map((key) => `
-            <label class="admin-flag"><input type="checkbox" name="amenities" value="${key}" ${(row.amenities || []).includes(key) ? "checked" : ""}> <span>${t(`amenity.${key}`)}</span></label>
-          `).join("")}
-        </fieldset>
-        <fieldset class="admin-group admin-chips">
-          <legend>${t("admin.section.status")}</legend>
-          ${flag("admin.flag.isNew", "is_new", row.is_new)}
-          ${flag("admin.flag.checked", "checked", row.checked)}
-          ${flag("admin.flag.deposit", "deposit_protected", row.deposit_protected)}
-          ${flag("admin.flag.bills", "bills_included", row.bills_included)}
-          ${flag("admin.flag.pets", "pets_allowed", row.pets_allowed)}
-          ${flag("admin.flag.smoking", "smoking_allowed", row.smoking_allowed)}
-          ${flag("admin.flag.couples", "couples_allowed", row.couples_allowed)}
-          ${flag("admin.flag.selfCheckin", "self_checkin", row.self_checkin)}
-          ${flag("admin.flag.published", "is_published", row.is_published)}
-        </fieldset>
-        <button class="button primary" type="submit">${t("admin.saveChanges")}</button>
-      </form>
-    </details>
-  `;
-}
-
-function renderAdmin() {
-  if (!adminRows.some((row) => row.id === selectedPropertyId)) {
-    selectedPropertyId = adminRows[0]?.id || null;
-  }
-
-  const openEditors = new Set(
-    [...adminProperties.querySelectorAll(".admin-edit[open]")]
-      .map((details) => details.closest("[data-property]")?.dataset.property)
-      .filter(Boolean)
-  );
-
-  const tabs = `
-    <nav class="admin-tabs" aria-label="${t("admin.title")}">
-      ${adminRows.map((row) => `
-        <button class="admin-tab ${row.id === selectedPropertyId ? "is-active" : ""}" type="button" data-tab="${row.id}">
-          <span class="admin-tab-dot ${row.is_published ? "is-live" : ""}"></span>${row.name}
-        </button>
-      `).join("")}
-    </nav>
-  `;
-
-  adminProperties.innerHTML = tabs + adminRows.map((row) => {
-    const blocks = (row.availability_blocks || [])
-      .slice()
-      .sort((a, b) => (a.start_date < b.start_date ? -1 : 1));
-    const blockItems = blocks.length
-      ? blocks.map((block) => `
-          <li>
-            <span>${formatDate(block.start_date)} &ndash; ${formatDate(block.end_date)}${block.profiles?.email ? `<small class="admin-guest">${t("admin.guest")}: ${block.profiles.email}</small>` : ""}</span>
-            <button class="details-button danger" type="button" data-delete-block="${block.id}">${t("admin.delete")}</button>
-          </li>
-        `).join("")
-      : `<li class="admin-empty">${t("admin.noBlocks")}</li>`;
-
+function renderPropList() {
+  adminPropList.innerHTML = propertyRows.map((row) => {
+    const cover = coverUrl(row);
+    const copy = currentLanguage === "es" ? (row.copy_es || row.copy_en) : (row.copy_en || row.copy_es);
+    const location = [row.address, currentLanguage === "es" ? row.area_es : row.area_en].filter(Boolean).join(" · ");
     return `
-      <section class="admin-card" data-property="${row.id}" ${row.id === selectedPropertyId ? "" : "hidden"}>
-        <header class="admin-card-head">
-          <div>
-            <h2>${row.name}</h2>
-            <p class="admin-card-meta">${row.price_label} &middot; ${row.guests} ${t("admin.guestsUnit")}${row.rating ? ` &middot; &#9733; ${row.rating}` : ""}</p>
-          </div>
-          <span class="admin-chip ${row.is_published ? "is-live" : "is-off"}">${t(row.is_published ? "admin.published" : "admin.unpublished")}</span>
-        </header>
-        ${renderPhotos(row)}
-        ${renderEditForm(row)}
-        <section class="admin-section">
-          <h3>${t("admin.availability")}</h3>
-          <form class="admin-available" data-available-form="${row.id}">
-            <label>
-              <span>${t("admin.availableFrom")}</span>
-              <input name="availableFrom" type="date" value="${row.available_from || ""}">
-            </label>
-            <button class="button ghost" type="submit">${t("admin.save")}</button>
-          </form>
-          <h4>${t("admin.blocks")}</h4>
-          <ul class="admin-blocks">${blockItems}</ul>
-          <form class="admin-add-block" data-block-form="${row.id}">
-            <label>
-              <span>${t("admin.from")}</span>
-              <input name="startDate" type="date" required>
-            </label>
-            <label>
-              <span>${t("admin.to")}</span>
-              <input name="endDate" type="date" required>
-            </label>
-            <label class="admin-guest-email">
-              <span>${t("admin.field.guestEmail")}</span>
-              <input name="guestEmail" type="email">
-            </label>
-            <button class="button primary" type="submit">${t("admin.add")}</button>
-          </form>
-        </section>
-      </section>
+      <li>
+        <a class="admin-prop-card" href="admin-property.html?id=${row.id}">
+          <span class="admin-prop-cover"${cover ? ` style="background-image: url('${cover}')"` : ""}></span>
+          <span class="admin-prop-body">
+            <strong>${escapeValue(row.name)}</strong>
+            ${location ? `<p>${escapeValue(location)}</p>` : ""}
+            ${copy ? `<p>${escapeValue(copy.length > 130 ? `${copy.slice(0, 130)}…` : copy)}</p>` : ""}
+          </span>
+          <span class="admin-prop-side">
+            <span class="admin-chip ${row.is_published ? "is-live" : "is-off"}">${t(row.is_published ? "admin.published" : "admin.unpublished")}</span>
+            <span>${escapeValue(row.price_label || "")}</span>
+            <span class="details-button">${t("admin.editProperty")}</span>
+          </span>
+        </a>
+      </li>
     `;
-  }).join("");
-
-  openEditors.forEach((propertyId) => {
-    adminProperties
-      .querySelector(`[data-property="${propertyId}"] .admin-edit`)
-      ?.setAttribute("open", "");
-  });
+  }).join("") || `<li class="admin-empty">${t("admin.noBlocks")}</li>`;
 }
 
-const adminUsersSection = document.querySelector("#adminUsers");
-const adminUserList = document.querySelector("#adminUserList");
+function renderBookingsTable() {
+  const th = (key) => `<th>${t(key)}</th>`;
+  const head = `<tr>${["admin.th.confirmed", "admin.th.property", "admin.th.checkin", "admin.th.checkout", "admin.th.months", "admin.th.amount", "admin.th.name", "admin.th.email", "admin.th.invoice"].map(th).join("")}</tr>`;
+  const rows = bookingRows.map((row) => `
+    <tr>
+      <td>${formatTimestamp(row.created_at)}</td>
+      <td>${escapeValue(row.property_name)}</td>
+      <td>${formatDate(row.start_date)}</td>
+      <td>${formatDate(row.end_date)}</td>
+      <td>${row.months ?? ""}</td>
+      <td>${row.amount_eur} EUR</td>
+      <td>${escapeValue(row.customer_name || "—")}</td>
+      <td>${escapeValue(row.customer_email || "")}</td>
+      <td>${row.invoice_url ? `<a href="${row.invoice_url}" target="_blank" rel="noopener">${t("bookings.invoice")}</a>` : ""}</td>
+    </tr>
+  `).join("");
+  adminBookingsTable.innerHTML = head + (rows || `<tr><td colspan="9">${t("admin.noBookings")}</td></tr>`);
 
-async function loadUsers() {
-  if (!adminUsersSection) return;
-  const sb = EbrostayBackend.getClient();
-  const { data, error } = await sb
-    .from("profiles")
-    .select("id, email, is_admin, deactivated_at, created_at, bookings(count)")
-    .order("created_at");
-  if (error) {
-    adminUsersSection.hidden = true;
-    return;
-  }
-  adminUsersSection.hidden = false;
-  adminUserList.innerHTML = (data || []).map((row) => {
+  const assignedHead = `<tr>${["admin.th.property", "admin.th.checkin", "admin.th.checkout", "admin.th.email"].map(th).join("")}</tr>`;
+  const assignedBody = assignedRows.map((row) => `
+    <tr>
+      <td>${escapeValue(row.properties?.name || row.property_id)}</td>
+      <td>${formatDate(row.start_date)}</td>
+      <td>${formatDate(row.end_date)}</td>
+      <td>${escapeValue(row.profiles?.email || "")}</td>
+    </tr>
+  `).join("");
+  adminAssignedTable.innerHTML = assignedHead + (assignedBody || `<tr><td colspan="4">${t("admin.noBookings")}</td></tr>`);
+}
+
+function renderUsers() {
+  adminUserList.innerHTML = userRows.map((row) => {
     const bookingsCount = row.bookings?.[0]?.count || 0;
     return `
       <li>
@@ -344,12 +146,51 @@ async function loadUsers() {
   }).join("");
 }
 
+function renderAll() {
+  renderPropList();
+  renderBookingsTable();
+  renderUsers();
+}
+
+async function loadAdminData() {
+  const sb = EbrostayBackend.getClient();
+  const [propsResult, bookingsResult, assignedResult, usersResult] = await Promise.all([
+    sb.from("properties").select("id, name, address, area_es, area_en, copy_es, copy_en, price_label, is_published, property_photos(storage_path, sort_order)").order("id"),
+    sb.from("bookings").select("*").order("created_at", { ascending: false }),
+    sb.from("availability_blocks").select("property_id, start_date, end_date, properties(name), profiles(email)").not("user_id", "is", null).order("start_date"),
+    sb.from("profiles").select("id, email, is_admin, deactivated_at, created_at, bookings(count)").order("created_at")
+  ]);
+  if (propsResult.error) {
+    showStatus("admin.error");
+    return;
+  }
+  propertyRows = propsResult.data || [];
+  bookingRows = bookingsResult.data || [];
+  assignedRows = assignedResult.data || [];
+  userRows = usersResult.data || [];
+  renderAll();
+}
+
+function applyLanguage(language) {
+  currentLanguage = translations[language] ? language : "es";
+  localStorage.setItem("ebrostay-language", currentLanguage);
+  document.documentElement.lang = currentLanguage;
+  document.querySelectorAll("[data-i18n]").forEach((element) => {
+    element.textContent = t(element.dataset.i18n);
+  });
+  languageButtons.forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.lang === currentLanguage);
+  });
+  if (adminStatus.dataset.statusKey) adminStatus.textContent = t(adminStatus.dataset.statusKey);
+  if (propertyRows.length || bookingRows.length || userRows.length) renderAll();
+}
+
 async function routeUI(user, isAdmin) {
   if (!EbrostayBackend.isConfigured()) {
     showStatus("admin.notConfigured");
     adminLogin.hidden = true;
     adminToolbar.hidden = true;
-    adminProperties.innerHTML = "";
+    adminPanel.hidden = true;
     return;
   }
 
@@ -357,9 +198,7 @@ async function routeUI(user, isAdmin) {
     hideStatus();
     adminLogin.hidden = false;
     adminToolbar.hidden = true;
-    adminProperties.innerHTML = "";
-    adminRows = [];
-    if (adminUsersSection) adminUsersSection.hidden = true;
+    adminPanel.hidden = true;
     return;
   }
 
@@ -369,15 +208,26 @@ async function routeUI(user, isAdmin) {
 
   if (!isAdmin) {
     showStatus("admin.notAdmin");
-    adminProperties.innerHTML = "";
-    adminRows = [];
-    if (adminUsersSection) adminUsersSection.hidden = true;
+    adminPanel.hidden = true;
     return;
   }
 
   hideStatus();
+  adminPanel.hidden = false;
   await loadAdminData();
-  await loadUsers();
+}
+
+if (adminMainTabs) {
+  adminMainTabs.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-main-tab]")?.dataset.mainTab;
+    if (!tab) return;
+    adminMainTabs.querySelectorAll("[data-main-tab]").forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.mainTab === tab);
+    });
+    document.querySelectorAll("[data-main-panel]").forEach((panel) => {
+      panel.hidden = panel.dataset.mainPanel !== tab;
+    });
+  });
 }
 
 if (adminLogin) {
@@ -402,131 +252,6 @@ if (adminLogout) {
   adminLogout.addEventListener("click", () => EbrostayBackend.signOut());
 }
 
-async function uploadPhotos(propertyId, files) {
-  const sb = EbrostayBackend.getClient();
-  const row = adminRows.find((item) => item.id === propertyId);
-  let maxOrder = Math.max(0, ...(row?.property_photos || []).map((photo) => photo.sort_order));
-  showStatus("admin.uploading");
-
-  for (const file of files) {
-    const cleanName = file.name.toLowerCase().replace(/[^a-z0-9.]+/g, "-").slice(-60);
-    const path = `${propertyId}/${Date.now()}-${cleanName}`;
-    const { error: uploadError } = await sb.storage.from("property-photos").upload(path, file);
-    if (uploadError) {
-      showStatus("admin.error");
-      return;
-    }
-    maxOrder += 10;
-    const { error: insertError } = await sb.from("property_photos").insert({
-      property_id: propertyId,
-      storage_path: path,
-      sort_order: maxOrder
-    });
-    if (insertError) {
-      showStatus("admin.error");
-      return;
-    }
-  }
-
-  showStatus("admin.saved");
-  await loadAdminData();
-}
-
-async function geocodeAddress(propertyId) {
-  const card = adminProperties.querySelector(`[data-property="${propertyId}"]`);
-  const input = card?.querySelector(`[data-geocode-input="${propertyId}"]`);
-  const status = card?.querySelector(`[data-geocode-status="${propertyId}"]`);
-  const form = card?.querySelector(`[data-edit-form="${propertyId}"]`);
-  const query = input?.value.trim();
-  if (!card || !form || !query) return;
-
-  status.textContent = t("admin.geocodeSearching");
-  const search = async (q) => {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`,
-      { headers: { Accept: "application/json" } }
-    );
-    const results = await response.json();
-    return Array.isArray(results) && results.length ? results[0] : null;
-  };
-
-  try {
-    // OpenStreetMap often lacks the house number or expects the official
-    // street name, so fall back to progressively looser queries
-    const cleanup = (value) => value.replace(/\s{2,}/g, " ").replace(/\s+,/g, ",").replace(/^[\s,]+|[\s,]+$/g, "");
-    const noNumber = cleanup(query.replace(/\d+/g, " "));
-    const noStreetType = cleanup(noNumber.replace(/\b(calle|c\/|avenida|avda\.?|av\.?|paseo|plaza|pza\.?|camino|ronda)\s+(de\s+|del\s+|la\s+)?/gi, ""));
-    const candidates = [...new Set([query, noNumber, noStreetType].filter(Boolean))];
-
-    let match = null;
-    for (const candidate of candidates) {
-      match = await search(candidate);
-      if (match) break;
-    }
-    if (!match) {
-      status.textContent = t("admin.geocodeNone");
-      return;
-    }
-    form.querySelector('input[name="lat"]').value = Number(match.lat).toFixed(5);
-    form.querySelector('input[name="lng"]').value = Number(match.lon).toFixed(5);
-    status.textContent = `${t("admin.geocodeFound")} ${match.display_name}`;
-  } catch {
-    status.textContent = t("admin.geocodeError");
-  }
-}
-
-function editPayloadFromForm(form) {
-  const formData = new FormData(form);
-  const textOrNull = (name) => formData.get(name)?.toString().trim() || null;
-  const numberOrNull = (name) => {
-    const value = formData.get(name)?.toString().trim();
-    return value === "" || value == null || Number.isNaN(Number(value)) ? null : Number(value);
-  };
-  return {
-    name: formData.get("name")?.toString().trim() || "",
-    price_label: formData.get("price_label")?.toString().trim() || "",
-    price_number: Number(formData.get("price_number")) || 0,
-    guests: Number(formData.get("guests")) || 1,
-    area_es: textOrNull("area_es"),
-    area_en: textOrNull("area_en"),
-    copy_es: textOrNull("copy_es"),
-    copy_en: textOrNull("copy_en"),
-    details_es: textOrNull("details_es"),
-    details_en: textOrNull("details_en"),
-    price_note_es: textOrNull("price_note_es"),
-    price_note_en: textOrNull("price_note_en"),
-    rating: formData.get("rating") ? Number(formData.get("rating")) : null,
-    type: formData.get("type")?.toString() || "apartment",
-    address_key: formData.get("address_key")?.toString().trim() || "pedro",
-    city: formData.get("city")?.toString().trim().toLowerCase() || "zaragoza",
-    lat: Number(formData.get("lat")) || 0,
-    lng: Number(formData.get("lng")) || 0,
-    amenities: formData.getAll("amenities").map((value) => value.toString()),
-    bedrooms: numberOrNull("bedrooms"),
-    bathrooms: numberOrNull("bathrooms"),
-    size_m2: numberOrNull("size_m2"),
-    floor_number: numberOrNull("floor_number"),
-    min_stay_months: numberOrNull("min_stay_months"),
-    max_stay_months: numberOrNull("max_stay_months"),
-    deposit_amount: numberOrNull("deposit_amount"),
-    upfront_rent_eur: numberOrNull("upfront_rent_eur"),
-    utilities_cap_eur: numberOrNull("utilities_cap_eur"),
-    energy_rating: textOrNull("energy_rating"),
-    video_url: textOrNull("video_url"),
-    beds_es: textOrNull("beds_es"),
-    beds_en: textOrNull("beds_en"),
-    pets_allowed: formData.has("pets_allowed"),
-    smoking_allowed: formData.has("smoking_allowed"),
-    couples_allowed: formData.has("couples_allowed"),
-    self_checkin: formData.has("self_checkin"),
-    is_new: formData.has("is_new"),
-    checked: formData.has("checked"),
-    deposit_protected: formData.has("deposit_protected"),
-    bills_included: formData.has("bills_included"),
-    is_published: formData.has("is_published")
-  };
-}
-
 if (adminUserList) {
   adminUserList.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-delete-user]");
@@ -541,132 +266,7 @@ if (adminUserList) {
     if (error) showStatus("admin.error");
     else {
       showStatus("admin.saved");
-      await loadUsers();
-    }
-  });
-}
-
-if (adminProperties) {
-  adminProperties.addEventListener("click", async (event) => {
-    const tabId = event.target.closest("[data-tab]")?.dataset.tab;
-    if (tabId) {
-      selectedPropertyId = tabId;
-      renderAdmin();
-      return;
-    }
-
-    const geocodeId = event.target.closest("[data-geocode]")?.dataset.geocode;
-    if (geocodeId) {
-      await geocodeAddress(geocodeId);
-      return;
-    }
-
-    const sb = EbrostayBackend.getClient();
-    const blockId = event.target.closest("[data-delete-block]")?.dataset.deleteBlock;
-    const deletePhoto = event.target.closest("[data-delete-photo]");
-    const coverPhoto = event.target.closest("[data-cover-photo]");
-
-    if (blockId) {
-      const { error } = await sb.from("availability_blocks").delete().eq("id", blockId);
-      if (error) showStatus("admin.error");
-      else await loadAdminData();
-    }
-
-    if (deletePhoto) {
-      await sb.storage.from("property-photos").remove([deletePhoto.dataset.path]);
-      const { error } = await sb.from("property_photos").delete().eq("id", deletePhoto.dataset.deletePhoto);
-      if (error) showStatus("admin.error");
-      else await loadAdminData();
-    }
-
-    if (coverPhoto) {
-      const row = adminRows.find((item) => item.id === coverPhoto.dataset.property);
-      const minOrder = Math.min(0, ...(row?.property_photos || []).map((photo) => photo.sort_order));
-      const { error } = await sb
-        .from("property_photos")
-        .update({ sort_order: minOrder - 10 })
-        .eq("id", coverPhoto.dataset.coverPhoto);
-      if (error) showStatus("admin.error");
-      else await loadAdminData();
-    }
-  });
-
-  adminProperties.addEventListener("keydown", (event) => {
-    const geocodeInput = event.target.closest("[data-geocode-input]");
-    if (geocodeInput && event.key === "Enter") {
-      event.preventDefault();
-      geocodeAddress(geocodeInput.dataset.geocodeInput);
-    }
-  });
-
-  adminProperties.addEventListener("change", async (event) => {
-    const propertyId = event.target.closest("[data-photo-input]")?.dataset.photoInput;
-    if (!propertyId || !event.target.files?.length) return;
-    await uploadPhotos(propertyId, [...event.target.files]);
-  });
-
-  adminProperties.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const sb = EbrostayBackend.getClient();
-    const blockPropertyId = event.target.dataset.blockForm;
-    const availablePropertyId = event.target.dataset.availableForm;
-    const editPropertyId = event.target.dataset.editForm;
-    const formData = new FormData(event.target);
-
-    if (editPropertyId) {
-      const { error } = await sb
-        .from("properties")
-        .update(editPayloadFromForm(event.target))
-        .eq("id", editPropertyId);
-      if (error) showStatus("admin.error");
-      else {
-        showStatus("admin.saved");
-        await loadAdminData();
-      }
-      return;
-    }
-
-    if (blockPropertyId) {
-      const startDate = formData.get("startDate");
-      const endDate = formData.get("endDate");
-      if (!startDate || !endDate || endDate < startDate) {
-        showStatus("admin.error");
-        return;
-      }
-      let guestId = null;
-      const guestEmail = formData.get("guestEmail")?.toString().trim().toLowerCase();
-      if (guestEmail) {
-        const { data: guestProfile } = await sb
-          .from("profiles")
-          .select("id")
-          .ilike("email", guestEmail)
-          .maybeSingle();
-        if (!guestProfile) {
-          showStatus("admin.guestNotFound");
-          return;
-        }
-        guestId = guestProfile.id;
-      }
-      const { error } = await sb.from("availability_blocks").insert({
-        property_id: blockPropertyId,
-        start_date: startDate,
-        end_date: endDate,
-        user_id: guestId
-      });
-      if (error) showStatus("admin.error");
-      else {
-        showStatus("admin.saved");
-        await loadAdminData();
-      }
-    }
-
-    if (availablePropertyId) {
-      const { error } = await sb
-        .from("properties")
-        .update({ available_from: formData.get("availableFrom") || null })
-        .eq("id", availablePropertyId);
-      if (error) showStatus("admin.error");
-      else showStatus("admin.saved");
+      await loadAdminData();
     }
   });
 }

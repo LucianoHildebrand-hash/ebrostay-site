@@ -84,6 +84,7 @@ Deno.serve(async (req: Request) => {
       stripe_session_id: session.id,
       user_id: md.user_id || null,
       customer_email: customerEmail,
+      customer_name: session.customer_details?.name || null,
       property_id: md.property_id || null,
       property_name: md.property_name || "",
       start_date: md.start_date,

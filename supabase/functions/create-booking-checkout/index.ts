@@ -62,7 +62,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: property } = await admin
       .from("properties")
-      .select("id, name, price_number, is_published, available_from, deposit_amount, min_stay_months, max_stay_months")
+      .select("id, name, address, price_number, is_published, available_from, deposit_amount, min_stay_months, max_stay_months")
       .eq("id", propertyId)
       .maybeSingle();
     if (!property || !property.is_published) return json({ error: "not_found" }, 404);
@@ -103,14 +103,16 @@ Deno.serve(async (req: Request) => {
     const origin = ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : "https://ebrostay.com";
 
     const stayLabel = `${startDate} a ${bookingEnd}`;
+    const monthsLabel = `${stayMonths} ${stayMonths === 1 ? "mes" : "meses"}`;
+    const addressLabel = property.address ? `${property.address}, Zaragoza` : "Zaragoza";
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       quantity: stayMonths,
       price_data: {
         currency: "eur",
         unit_amount: Math.round(Number(property.price_number) * 100),
         product_data: {
-          name: `Reserva: ${property.name}`,
-          description: `Estancia de ${stayMonths} ${stayMonths === 1 ? "mes" : "meses"} (${stayLabel}). Ebrostay, Zaragoza.`
+          name: `Alquiler (${monthsLabel}): ${property.name}`,
+          description: `Renta mensual de la vivienda "${property.name}" (${addressLabel}). Estancia del ${startDate} al ${bookingEnd}.`
         }
       }
     }];
@@ -122,8 +124,8 @@ Deno.serve(async (req: Request) => {
           currency: "eur",
           unit_amount: Math.round(depositEur * 100),
           product_data: {
-            name: `Fianza: ${property.name}`,
-            description: `Fianza reembolsable de la estancia (${stayLabel}).`
+            name: `Fianza reembolsable: ${property.name}`,
+            description: `Fianza de la vivienda "${property.name}" (${addressLabel}). Se devuelve al finalizar la estancia (${stayLabel}) si no hay incidencias.`
           }
         }
       });
@@ -132,7 +134,20 @@ Deno.serve(async (req: Request) => {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: user.email || undefined,
-      invoice_creation: { enabled: true },
+      invoice_creation: {
+        enabled: true,
+        invoice_data: {
+          description: `Reserva Ebrostay - ${property.name} (${addressLabel}). Estancia del ${startDate} al ${bookingEnd} (${monthsLabel}).` +
+            (depositEur > 0 ? ` Incluye fianza reembolsable de ${depositEur} EUR.` : ""),
+          custom_fields: [
+            { name: "Vivienda", value: property.name.slice(0, 140) },
+            { name: "Direcci\u00f3n", value: addressLabel.slice(0, 140) },
+            { name: "Estancia", value: `${stayLabel} (${monthsLabel})` }
+          ],
+          footer: "Ebrostay - Zaragoza - info@ebrostay.com. La fianza es reembolsable al finalizar la estancia.",
+          metadata: { property_id: property.id, start_date: startDate, end_date: bookingEnd }
+        }
+      },
       line_items: lineItems,
       metadata: {
         user_id: user.id,
