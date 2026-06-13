@@ -13,23 +13,23 @@ Market research behind the corporate-rental outreach effort.
 
 ## What's in it
 
-A B2B prospect list of **77 Zaragoza-area companies** to approach about renting
+A B2B prospect list of **290 Zaragoza-area companies** to approach about renting
 the furnished apartments for corporate / relocation / medium-stay housing.
+**286 of the 290 have a usable email** (151 with a verbatim/published address,
+175 with a pattern-inferred one; some have both).
 
-Three entry points (see the `Source / Entry point` column):
+Entry points (see the `Source / Entry point` column):
 
 1. **PLAZA Logística** park directory (34 companies).
 2. **Páginas Amarillas + public registries** (eInforma, elEconomista/Empresite,
-   Axesor, Cámara Zaragoza, Aliaragón) — 24 companies, filtered to
-   medium/large employers in industry, manufacturing, logistics/transport,
-   engineering, IT/tech, energy, automotive, food and healthcare.
-3. **elEconomista company ranking** (ranking-empresas.eleconomista.es) + web —
-   19 large/medium Zaragoza employers added in batch 2 (2026-06-13), cross-checked
-   against registries, company sites and LinkedIn. Includes Stellantis
-   (Figueruelas), Ibercaja, Adidas España (Iberia HQ), CAF, Schindler, Valeo,
-   Fujikura, Adient, Carreras, Inditex/Plataforma Europa and more. Most are
-   `partial` (full firmographics + recruitment route, no named HR contact —
-   large employers recruit via portals).
+   Axesor, Cámara Zaragoza, Aliaragón) — 24 companies.
+3. **elEconomista company ranking** — 19 large/medium Zaragoza employers (batch 2).
+4. **Directory harvest across Aragón** (batch 3, 2026-06-13) — 213 companies from
+   Zaragoza-city polígonos (Cogullada, San Valero, Malpica, Alcalde Caballero),
+   the Ebro corridor (Pedrola, Figueruelas, Alagón, Zuera), Cuarte/La Muela/Utebo,
+   Calatayud/Cariñena, the Cinco Villas/Tarazona/Borja north, and Zaragoza
+   engineering/IT clusters. Broadened filter (SMEs included); most are `list-only`
+   or `partial` with a verbatim or generic-inferred email.
 
 Per company the sheet records: sector, HQ/locations, employee count, website,
 general email, phone, LinkedIn, any named HR/leadership contact, an email

@@ -33,7 +33,7 @@ before sending anything to a prospect.)
 
 ## Status
 
-- [x] Add the market-research spreadsheet to `research/` (now 77-company PLAZA / Zaragoza prospect list)
+- [x] Add the market-research spreadsheet to `research/` (now 290-company Aragón prospect list, 286 with emails)
 - [ ] Build the prioritised target company list in `targets/`
 - [ ] Draft outreach templates (EN/ES) in `templates/`
 - [ ] Begin outreach and track responses
