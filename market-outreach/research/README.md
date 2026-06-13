@@ -13,9 +13,9 @@ Market research behind the corporate-rental outreach effort.
 
 ## What's in it
 
-A B2B prospect list of **867 Aragón companies (685 Zaragoza-commutable + 182 Huesca/Teruel)** to approach about renting
+A B2B prospect list of **1,011 Aragón companies (≈700 Zaragoza-commutable + the rest Huesca/Teruel)** to approach about renting
 the furnished apartments for corporate / relocation / medium-stay housing.
-**862 of the 867 have a usable email** (552 verbatim/published, 350 pattern-inferred). NOTE: the 182 Huesca/Teruel rows (batch 6) are tagged NON-COMMUTABLE / lower-fit — they cannot house staff in Zaragoza and are low priority vs the 685 Zaragoza-commutable core.
+**1,006 of the 1,011 have a usable email** (630 verbatim/published, 376+ pattern-inferred). NOTE: the Huesca/Teruel rows (batches 6–7) are tagged NON-COMMUTABLE / lower-fit — they cannot house staff in Zaragoza and are a low-priority long tail vs the Zaragoza-commutable core. Prioritise commutable + verbatim-email rows first.
 
 Entry points (see the `Source / Entry point` column):
 
