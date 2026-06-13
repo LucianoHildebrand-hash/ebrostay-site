@@ -52,34 +52,37 @@ function escapeValue(value) {
   return String(value ?? "").replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 }
 
-function renderPhotos() {
-  const photos = (row.property_photos || [])
-    .slice()
+function sortedPhotos(isFloorplan) {
+  return (row.property_photos || [])
+    .filter((photo) => Boolean(photo.is_floorplan) === isFloorplan)
     .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1));
+}
 
+function renderPhotoSection(isFloorplan) {
+  const photos = sortedPhotos(isFloorplan);
   const items = photos.length
     ? photos.map((photo, index) => `
         <figure class="admin-photo">
           <img src="${EbrostayBackend.photoUrl(photo.storage_path)}" alt="" loading="lazy">
-          ${photo.is_floorplan ? `<span class="admin-photo-cover">${t("admin.floorplan")}</span>` : index === 0 ? `<span class="admin-photo-cover">${t("admin.cover")}</span>` : ""}
+          ${!isFloorplan && index === 0 ? `<span class="admin-photo-cover">${t("admin.cover")}</span>` : ""}
           <div class="admin-photo-actions">
-            ${index === 0 || photo.is_floorplan ? "" : `<button class="details-button" type="button" data-cover-photo="${photo.id}">${t("admin.makeCover")}</button>`}
-            <button class="details-button" type="button" data-floorplan-photo="${photo.id}" data-current="${photo.is_floorplan ? "yes" : "no"}">${t(photo.is_floorplan ? "admin.unmakeFloorplan" : "admin.makeFloorplan")}</button>
+            ${isFloorplan || index === 0 ? "" : `<button class="details-button" type="button" data-cover-photo="${photo.id}">${t("admin.makeCover")}</button>`}
             <button class="details-button danger" type="button" data-delete-photo="${photo.id}" data-path="${escapeValue(photo.storage_path)}">${t("admin.delete")}</button>
           </div>
         </figure>
       `).join("")
-    : `<p class="admin-empty-note">${t("admin.noPhotos")}</p>`;
+    : `<p class="admin-empty-note">${t(isFloorplan ? "admin.noFloorplans" : "admin.noPhotos")}</p>`;
 
   return `
     <section class="admin-section">
       <div class="admin-section-head">
-        <h3>${t("admin.photos")}</h3>
+        <h3>${t(isFloorplan ? "admin.floorplans" : "admin.photos")}</h3>
         <label class="admin-upload">
-          <span class="button ghost">${t("admin.addPhotos")}</span>
-          <input type="file" accept="image/*" multiple hidden data-photo-input="${row.id}">
+          <span class="button ghost">${t(isFloorplan ? "admin.addFloorplans" : "admin.addPhotos")}</span>
+          <input type="file" accept="image/*" multiple hidden data-photo-input="${row.id}" data-floorplan="${isFloorplan ? "yes" : "no"}">
         </label>
       </div>
+      ${isFloorplan ? `<p class="admin-hint">${t("admin.floorplansCopy")}</p>` : ""}
       <div class="admin-photo-grid">${items}</div>
     </section>
   `;
@@ -252,7 +255,8 @@ function renderEditor() {
         </div>
         <span class="admin-chip ${row.is_published ? "is-live" : "is-off"}">${t(row.is_published ? "admin.published" : "admin.unpublished")}</span>
       </header>
-      ${renderPhotos()}
+      ${renderPhotoSection(false)}
+      ${renderPhotoSection(true)}
       ${renderEditForm()}
       ${renderGuestInfoForm()}
       <section class="admin-section">
@@ -290,7 +294,7 @@ async function loadProperty() {
   const sb = EbrostayBackend.getClient();
   const [propResult, infoResult] = await Promise.all([
     sb.from("properties")
-      .select("*, availability_blocks(id, start_date, end_date, profiles(email)), property_photos(id, storage_path, sort_order)")
+      .select("*, availability_blocks(id, start_date, end_date, profiles(email)), property_photos(id, storage_path, sort_order, is_floorplan)")
       .eq("id", propertyId)
       .maybeSingle(),
     sb.from("property_guest_info").select("*").eq("property_id", propertyId).maybeSingle()
@@ -402,7 +406,7 @@ function editPayloadFromForm(form) {
   };
 }
 
-async function uploadPhotos(files) {
+async function uploadPhotos(files, isFloorplan) {
   const sb = EbrostayBackend.getClient();
   let maxOrder = Math.max(0, ...(row?.property_photos || []).map((photo) => photo.sort_order));
   showStatus("admin.uploading");
@@ -419,7 +423,8 @@ async function uploadPhotos(files) {
     const { error: insertError } = await sb.from("property_photos").insert({
       property_id: propertyId,
       storage_path: path,
-      sort_order: maxOrder
+      sort_order: maxOrder,
+      is_floorplan: isFloorplan
     });
     if (insertError) {
       showStatus("admin.error");
@@ -439,16 +444,6 @@ if (propertyEditor) {
     }
 
     const sb = EbrostayBackend.getClient();
-    const floorplanToggle = event.target.closest("[data-floorplan-photo]");
-    if (floorplanToggle) {
-      const { error } = await sb
-        .from("property_photos")
-        .update({ is_floorplan: floorplanToggle.dataset.current !== "yes" })
-        .eq("id", floorplanToggle.dataset.floorplanPhoto);
-      if (error) showStatus("admin.error");
-      else await loadProperty();
-      return;
-    }
     const blockId = event.target.closest("[data-delete-block]")?.dataset.deleteBlock;
     const deletePhoto = event.target.closest("[data-delete-photo]");
     const coverPhoto = event.target.closest("[data-cover-photo]");
@@ -478,8 +473,9 @@ if (propertyEditor) {
   });
 
   propertyEditor.addEventListener("change", async (event) => {
-    if (!event.target.closest("[data-photo-input]") || !event.target.files?.length) return;
-    await uploadPhotos([...event.target.files]);
+    const input = event.target.closest("[data-photo-input]");
+    if (!input || !event.target.files?.length) return;
+    await uploadPhotos([...event.target.files], input.dataset.floorplan === "yes");
   });
 
   propertyEditor.addEventListener("submit", async (event) => {

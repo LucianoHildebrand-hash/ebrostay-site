@@ -2409,3 +2409,22 @@ a.property-media {
   color: var(--ink);
   white-space: nowrap;
 }
+
+/* Visitor address-distance form */
+.distance-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 560px;
+  margin-bottom: 8px;
+}
+
+.distance-form input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.distance-list .is-custom {
+  border-color: var(--river);
+  background: rgba(55, 111, 131, 0.06);
+}

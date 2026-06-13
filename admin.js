@@ -67,7 +67,7 @@ function escapeValue(value) {
 
 function coverUrl(row) {
   const photos = (row.property_photos || [])
-    .slice()
+    .filter((photo) => !photo.is_floorplan)
     .sort((a, b) => a.sort_order - b.sort_order || (a.storage_path < b.storage_path ? -1 : 1));
   return photos.length ? EbrostayBackend.photoUrl(photos[0].storage_path) : "";
 }
@@ -186,7 +186,7 @@ function renderAll() {
 async function loadAdminData() {
   const sb = EbrostayBackend.getClient();
   const [propsResult, bookingsResult, assignedResult, usersResult] = await Promise.all([
-    sb.from("properties").select("id, name, address, area_es, area_en, copy_es, copy_en, price_number, is_published, property_photos(storage_path, sort_order)").order("id"),
+    sb.from("properties").select("id, name, address, area_es, area_en, copy_es, copy_en, price_number, is_published, property_photos(storage_path, sort_order, is_floorplan)").order("id"),
     sb.from("bookings").select("*").order("created_at", { ascending: false }),
     sb.from("availability_blocks").select("property_id, start_date, end_date, properties(name), profiles(email)").not("user_id", "is", null).order("start_date"),
     sb.from("profiles").select("id, email, is_admin, deactivated_at, created_at, bookings(count)").order("created_at")

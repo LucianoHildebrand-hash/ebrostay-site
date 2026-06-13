@@ -158,7 +158,7 @@ function renderFloorplan() {
 const LANDMARKS = [
   { key: "landmark.pilar", lat: 41.6563, lng: -0.8786 },
   { key: "landmark.delicias", lat: 41.6591, lng: -0.9117 },
-  { key: "landmark.universidad", lat: 41.642, lng: -0.8973 }
+  { key: "landmark.plaza", lat: 41.643, lng: -0.9941 }
 ];
 
 function haversineKm(aLat, aLng, bLat, bLng) {
@@ -169,8 +169,8 @@ function haversineKm(aLat, aLng, bLat, bLng) {
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 }
 
-async function osrmDurations(server, profile) {
-  const coords = [`${property.lng},${property.lat}`, ...LANDMARKS.map((l) => `${l.lng},${l.lat}`)].join(";");
+async function osrmDurations(server, profile, destinations) {
+  const coords = [`${property.lng},${property.lat}`, ...destinations.map((l) => `${l.lng},${l.lat}`)].join(";");
   const response = await fetch(
     `https://routing.openstreetmap.de/${server}/table/v1/${profile}/${coords}?sources=0&annotations=duration,distance`
   );
@@ -182,20 +182,17 @@ async function osrmDurations(server, profile) {
   };
 }
 
-async function renderDistances() {
-  const list = document.querySelector("#distanceList");
-  if (!list || !property.lat) return;
-
+async function travelTimes(destinations) {
   // distance-based estimates as the baseline
-  const straightKm = LANDMARKS.map((l) => haversineKm(property.lat, property.lng, l.lat, l.lng));
+  const straightKm = destinations.map((l) => haversineKm(property.lat, property.lng, l.lat, l.lng));
   let walk = straightKm.map((km) => Math.max(1, Math.round((km * 1.3) / 4.7 * 60)));
   let car = straightKm.map((km) => Math.max(2, Math.round(2 + (km * 1.3) / 28 * 60)));
   let routeKm = straightKm.map((km) => km * 1.3);
 
   try {
     const [foot, driving] = await Promise.all([
-      osrmDurations("routed-foot", "foot"),
-      osrmDurations("routed-car", "driving")
+      osrmDurations("routed-foot", "foot", destinations),
+      osrmDurations("routed-car", "driving", destinations)
     ]);
     walk = foot.minutes;
     car = driving.minutes;
@@ -204,18 +201,93 @@ async function renderDistances() {
 
   // urban bus estimate: short wait plus ~15 km/h door to door, never worse than walking
   const transit = routeKm.map((km, index) => Math.min(walk[index], Math.max(4, Math.round(6 + (km / 15) * 60))));
+  return { walk, car, transit, routeKm };
+}
 
-  list.innerHTML = LANDMARKS.map((landmark, index) => `
-    <li>
-      <span class="distance-name">${t(landmark.key)}<small>${routeKm[index].toFixed(1)} km</small></span>
+function distanceRow(name, times, index, extraClass = "") {
+  return `
+    <li${extraClass ? ` class="${extraClass}"` : ""}>
+      <span class="distance-name">${name}<small>${times.routeKm[index].toFixed(1)} km</small></span>
       <span class="distance-modes">
-        <span title="${t("dist.walk")}">&#128694; ${walk[index]} min</span>
-        <span title="${t("dist.transit")}">&#128652; ${transit[index]} min</span>
-        <span title="${t("dist.car")}">&#128663; ${car[index]} min</span>
+        <span title="${t("dist.walk")}">&#128694; ${times.walk[index]} min</span>
+        <span title="${t("dist.transit")}">&#128652; ${times.transit[index]} min</span>
+        <span title="${t("dist.car")}">&#128663; ${times.car[index]} min</span>
       </span>
     </li>
-  `).join("");
+  `;
 }
+
+async function renderDistances() {
+  const list = document.querySelector("#distanceList");
+  if (!list || !property.lat) return;
+  const times = await travelTimes(LANDMARKS);
+  list.innerHTML = LANDMARKS.map((landmark, index) => distanceRow(t(landmark.key), times, index)).join("");
+  if (customDestination) renderCustomDistance();
+}
+
+// Visitor-typed destination: geocoded, measured, and drawn on the map
+let customDestination = null;
+let customLayer = null;
+
+async function geocodeDestination(query) {
+  const search = async (q) => {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&q=${encodeURIComponent(q)}`,
+      { headers: { Accept: "application/json" } }
+    );
+    const results = await response.json();
+    return Array.isArray(results) && results.length ? results[0] : null;
+  };
+  return (/zaragoza/i.test(query) ? await search(query) : await search(`${query}, Zaragoza`)) || await search(query);
+}
+
+function drawCustomDestination() {
+  if (!detailMap || !customDestination || typeof L === "undefined") return;
+  if (customLayer) detailMap.removeLayer(customLayer);
+  customLayer = L.layerGroup([
+    L.marker([customDestination.lat, customDestination.lng], { title: customDestination.label }),
+    L.polyline(
+      [[property.lat, property.lng], [customDestination.lat, customDestination.lng]],
+      { color: "#376f83", weight: 3, dashArray: "7 7" }
+    )
+  ]).addTo(detailMap);
+  detailMap.fitBounds(
+    L.latLngBounds([[property.lat, property.lng], [customDestination.lat, customDestination.lng]]),
+    { padding: [34, 34] }
+  );
+}
+
+async function renderCustomDistance() {
+  const list = document.querySelector("#distanceList");
+  if (!list || !customDestination) return;
+  const times = await travelTimes([customDestination]);
+  document.querySelector("#customDistanceRow")?.remove();
+  list.insertAdjacentHTML("beforeend",
+    distanceRow(`&#128205; ${customDestination.label}`, times, 0, "is-custom").replace("<li", '<li id="customDistanceRow"'));
+  drawCustomDestination();
+}
+
+document.querySelector("#distanceForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const input = document.querySelector("#distanceInput");
+  const status = document.querySelector("#distanceStatus");
+  const query = input?.value.trim();
+  if (!query) return;
+  status.hidden = false;
+  status.textContent = t("dist.searching");
+  const match = await geocodeDestination(query).catch(() => null);
+  if (!match) {
+    status.textContent = t("dist.notFound");
+    return;
+  }
+  status.hidden = true;
+  customDestination = {
+    lat: Number(match.lat),
+    lng: Number(match.lon),
+    label: match.display_name.split(",").slice(0, 2).join(",")
+  };
+  await renderCustomDistance();
+});
 
 let availabilityCalendar = null;
 
