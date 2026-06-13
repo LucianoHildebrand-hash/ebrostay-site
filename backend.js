@@ -391,6 +391,23 @@ const EbrostayBackend = (() => {
     return isOwner;
   }
 
+  // Stripe Connect onboarding for owners. action: "onboard" returns an
+  // onboarding URL; "status" refreshes whether payouts are enabled.
+  async function ownerConnect(action) {
+    const sb = getClient();
+    try {
+      const { data, error } = await sb.functions.invoke("owner-connect", { body: { action } });
+      if (error) {
+        let code = "server_error";
+        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
+        return { code };
+      }
+      return data || {};
+    } catch {
+      return { code: "server_error" };
+    }
+  }
+
   return {
     isConfigured,
     getClient,

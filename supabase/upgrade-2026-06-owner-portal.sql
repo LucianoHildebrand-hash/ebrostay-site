@@ -39,3 +39,8 @@ drop policy if exists "Anyone can submit owner leads" on public.owner_leads;
 create policy "Anyone can submit owner leads" on public.owner_leads for insert with check (true);
 drop policy if exists "Admins read owner leads" on public.owner_leads;
 create policy "Admins read owner leads" on public.owner_leads for select using (is_admin());
+
+-- Stripe Connect onboarding (migration "owner_stripe_connect")
+alter table public.owner_payout_details add column if not exists stripe_account_id text;
+alter table public.owner_payout_details add column if not exists connect_status text;
+create index if not exists idx_properties_owner on public.properties (owner_id);

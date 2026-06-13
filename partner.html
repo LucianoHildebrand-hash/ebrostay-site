@@ -6,16 +6,19 @@
     <title>Ebrostay | Portal de propietarios</title>
     <meta name="robots" content="noindex,nofollow">
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/ebrostay-icon-180.png">
+    <link rel="manifest" href="site.webmanifest">
+    <meta name="theme-color" content="#0e9f6e">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=design-1">
+    <link rel="stylesheet" href="styles.css?v=design-2">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="Ebrostay home">
-        <img class="brand-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+        <img class="brand-mark" src="assets/ebrostay-icon.svg" alt="" width="36" height="36"><span class="brand-wordmark">Ebrostay</span>
       </a>
       <div class="header-actions">
         <div class="language-switch" aria-label="Language selector">
@@ -79,8 +82,18 @@
         </section>
 
         <section class="partner-section">
-          <h2 data-i18n="partner.payoutTitle">Datos de pago</h2>
-          <p class="admin-card-meta" data-i18n="partner.payoutCopy">Aquí ingresamos tus rentas. Tus datos están cifrados y solo los ve Ebrostay. Transferimos tras cada estancia confirmada.</p>
+          <h2 data-i18n="partner.connectTitle">Pagos automáticos</h2>
+          <p class="admin-card-meta" data-i18n="partner.connectCopy">Conecta tu cuenta con Stripe para recibir tus rentas automáticamente tras cada reserva, sin esperas ni transferencias manuales.</p>
+          <div class="guest-info-card" id="connectCard" style="max-width: 620px;">
+            <p id="connectStatusLine" data-i18n="partner.connectChecking">Comprobando estado…</p>
+            <button class="button primary" id="connectButton" type="button" hidden></button>
+            <p class="form-note" id="connectNote" role="status"></p>
+          </div>
+        </section>
+
+        <section class="partner-section">
+          <h2 data-i18n="partner.payoutTitle">Datos de pago (alternativa manual)</h2>
+          <p class="admin-card-meta" data-i18n="partner.payoutCopy">Si prefieres transferencia manual, deja aquí tu IBAN. Tus datos están cifrados y solo los ve Ebrostay. Transferimos tras cada estancia confirmada.</p>
           <form class="partner-payout-form" id="payoutForm">
             <label><span data-i18n="partner.holder">Titular de la cuenta</span><input name="account_holder" autocomplete="name"></label>
             <label><span data-i18n="partner.iban">IBAN</span><input name="iban" placeholder="ES.. .... .... .... .... ...."></label>
@@ -97,7 +110,7 @@
 
     <footer class="site-footer">
       <span class="footer-brand">
-        <img class="footer-logo" src="assets/ebrostay-logo.webp" alt="Ebrostay">
+        <img class="footer-logo" src="assets/ebrostay-icon.svg" alt="Ebrostay" width="44" height="44">
         <span>&copy; <span id="year"></span> Ebrostay</span>
       </span>
       <a href="owners.html" data-i18n="nav.owners">Propietarios</a>
@@ -106,9 +119,9 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=design-1"></script>
-    <script src="data.js?v=design-1"></script>
-    <script src="backend.js?v=design-1"></script>
-    <script src="partner.js?v=design-1"></script>
+    <script src="supabase-config.js?v=design-2"></script>
+    <script src="data.js?v=design-2"></script>
+    <script src="backend.js?v=design-2"></script>
+    <script src="partner.js?v=design-2"></script>
   </body>
 </html>
