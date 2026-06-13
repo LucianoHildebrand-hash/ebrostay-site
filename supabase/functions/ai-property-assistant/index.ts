@@ -11,7 +11,7 @@
 //     uploaded file had no description text of its own.
 //
 // Set DEEPSEEK_API_KEY as an Edge Function secret. The model can be overridden
-// with DEEPSEEK_MODEL (defaults to the cheap deepseek-v4-flash).
+// with DEEPSEEK_MODEL (defaults to deepseek-v4-pro).
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const CORS = {
@@ -23,7 +23,7 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const DEEPSEEK_URL = "https://api.deepseek.com/chat/completions";
-const MODEL = Deno.env.get("DEEPSEEK_MODEL") || "deepseek-v4-flash";
+const MODEL = Deno.env.get("DEEPSEEK_MODEL") || "deepseek-v4-pro";
 const MAX_INPUT = 24000;
 
 const TYPE_KEYS = ["apartment", "room", "home"];
