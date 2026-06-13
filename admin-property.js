@@ -833,6 +833,52 @@ function populateFormFromAi(fields) {
   }
 }
 
+// Read the structured fields currently in the form, to feed the description writer.
+function collectFieldsFromForm() {
+  const form = propertyEditor.querySelector("[data-edit-form]");
+  if (!form) return {};
+  const text = (name) => form.querySelector(`[name="${name}"]`)?.value?.trim() || "";
+  const number = (name) => {
+    const value = text(name);
+    return value === "" || Number.isNaN(Number(value)) ? null : Number(value);
+  };
+  return {
+    type: text("type"),
+    area_es: text("area_es"), area_en: text("area_en"),
+    address: text("address"), city: text("city"),
+    guests: number("guests"), bedrooms: number("bedrooms"), bathrooms: number("bathrooms"),
+    size_m2: number("size_m2"), floor_number: number("floor_number"),
+    beds_es: text("beds_es"), beds_en: text("beds_en"),
+    price_number: number("price_number"),
+    min_stay_months: number("min_stay_months"), max_stay_months: number("max_stay_months"),
+    energy_rating: text("energy_rating"),
+    amenities: [...form.querySelectorAll('input[name="amenities"]:checked')].map((box) => box.value)
+  };
+}
+
+// Downscale a few extracted photos to data URIs so the description writer can
+// actually "see" the home. Skips images the admin marked as skip.
+async function imagesToDataUrls(maxCount = 3, maxDim = 800) {
+  const candidates = extractedImages.filter((image) => image.classification !== "skip").slice(0, maxCount);
+  const urls = [];
+  for (const image of candidates) {
+    try {
+      const bitmap = await createImageBitmap(image.blob);
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      const w = Math.max(1, Math.round(bitmap.width * scale));
+      const h = Math.max(1, Math.round(bitmap.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0, w, h);
+      urls.push(canvas.toDataURL("image/jpeg", 0.7));
+    } catch {
+      /* skip unreadable image */
+    }
+  }
+  return urls;
+}
+
 async function runAutofill() {
   const fileInput = propertyEditor.querySelector("[data-ai-file]");
   const pasteEl = propertyEditor.querySelector("[data-ai-paste]");
@@ -875,6 +921,19 @@ async function runAutofill() {
     extractedImages = await extractImagesFromFile(file);
     refreshExtractedImages();
   }
+
+  // If the source had no description text, write one from the known facts and
+  // the extracted photos.
+  const form = propertyEditor.querySelector("[data-edit-form]");
+  const descriptionEmpty = ["copy_es", "copy_en", "details_es", "details_en"]
+    .every((name) => !(form?.querySelector(`[name="${name}"]`)?.value || "").trim());
+  if (descriptionEmpty) {
+    showStatus("admin.ai.writing");
+    const images = await imagesToDataUrls(3);
+    const generated = await EbrostayBackend.aiGenerateDescription(collectFieldsFromForm(), images);
+    if (generated.ok) populateFormFromAi(generated.fields);
+  }
+
   showStatus("admin.ai.filled");
 }
 
