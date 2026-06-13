@@ -35,5 +35,5 @@ before sending anything to a prospect.)
 
 - [x] Add the market-research spreadsheet to `research/` (now 685-company Zaragoza prospect list, 680 with emails)
 - [ ] Build the prioritised target company list in `targets/`
-- [ ] Draft outreach templates (EN/ES) in `templates/`
+- [x] Draft outreach templates (EN/ES) in `templates/`
 - [ ] Begin outreach and track responses
