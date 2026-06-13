@@ -197,7 +197,10 @@ function initListingsMap() {
     return;
   }
 
-  leafletMap = L.map(listingsMapElement, { scrollWheelZoom: false });
+  leafletMap = L.map(listingsMapElement, {
+    scrollWheelZoom: false,
+    attributionControl: { prefix: '<a href="https://leafletjs.com">Leaflet</a>' }
+  });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
