@@ -393,6 +393,45 @@ const EbrostayBackend = (() => {
     return isOwner;
   }
 
+  // AI editor helpers (DeepSeek via the ai-property-assistant Edge Function).
+  // Both return a plain result object and never throw, so the editor can show
+  // a friendly status when AI is unconfigured or offline.
+  async function aiExtractProperty(text) {
+    const sb = getClient();
+    if (!sb) return { ok: false, code: "not_configured" };
+    try {
+      const { data, error } = await sb.functions.invoke("ai-property-assistant", {
+        body: { action: "extract", text: String(text || "").slice(0, 24000) }
+      });
+      if (error) {
+        let code = "server_error";
+        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
+        return { ok: false, code };
+      }
+      return { ok: true, fields: data?.fields || {} };
+    } catch {
+      return { ok: false, code: "server_error" };
+    }
+  }
+
+  async function aiTranslateField(text, source, target, field) {
+    const sb = getClient();
+    if (!sb) return { ok: false, code: "not_configured" };
+    try {
+      const { data, error } = await sb.functions.invoke("ai-property-assistant", {
+        body: { action: "translate", text: String(text || "").slice(0, 24000), source, target, field }
+      });
+      if (error) {
+        let code = "server_error";
+        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
+        return { ok: false, code };
+      }
+      return { ok: true, text: data?.text || "" };
+    } catch {
+      return { ok: false, code: "server_error" };
+    }
+  }
+
   // Stripe Connect onboarding for owners. action: "onboard" returns an
   // onboarding URL; "status" refreshes whether payouts are enabled.
   async function ownerConnect(action) {
@@ -433,6 +472,8 @@ const EbrostayBackend = (() => {
     submitOwnerLead,
     loadOwnerDashboard,
     saveOwnerPayout,
+    aiExtractProperty,
+    aiTranslateField,
     photoUrl,
     getUser: () => user,
     getIsAdmin: () => isAdmin,

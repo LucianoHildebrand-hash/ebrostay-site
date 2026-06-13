@@ -616,7 +616,23 @@ const translations = {
     "admin.bookingsCount": "Reservas: {count}",
     "admin.deleteUser": "Eliminar",
     "admin.deleteUserConfirm": "¿Seguro? Pulsa otra vez",
-    "admin.userDeleted": "Usuario eliminado."
+    "admin.userDeleted": "Usuario eliminado.",
+    "admin.ai.section": "Autocompletar con IA",
+    "admin.ai.intro": "Sube un PDF u otro archivo con la descripción de la vivienda, o pega el texto, y la IA rellenará los campos del formulario. Revisa todo antes de guardar.",
+    "admin.ai.file": "Elegir archivo (PDF o texto)",
+    "admin.ai.paste": "...o pega aquí el texto de la descripción",
+    "admin.ai.pastePlaceholder": "Pega aquí la descripción de la vivienda...",
+    "admin.ai.autofill": "Rellenar campos con IA",
+    "admin.ai.reading": "Leyendo el archivo...",
+    "admin.ai.thinking": "La IA está analizando la descripción...",
+    "admin.ai.filled": "Campos rellenados. Revísalos y pulsa Guardar cambios.",
+    "admin.ai.noText": "No se pudo leer texto del archivo (¿PDF escaneado?). Pega el texto manualmente.",
+    "admin.ai.empty": "Añade un archivo o pega algo de texto primero.",
+    "admin.ai.error": "La IA no está disponible ahora mismo. Inténtalo de nuevo.",
+    "admin.ai.notConfigured": "La IA no está configurada (falta la clave de DeepSeek en el servidor).",
+    "admin.ai.autoTranslate": "Traducir ES↔EN automáticamente al editar un campo",
+    "admin.ai.translating": "Traduciendo...",
+    "admin.ai.translateOne": "Traducir al otro idioma"
   },
   en: {
     "meta.title": "Ebrostay | Mid-term corporate rentals in Zaragoza",
@@ -1232,7 +1248,23 @@ const translations = {
     "admin.bookingsCount": "Bookings: {count}",
     "admin.deleteUser": "Delete",
     "admin.deleteUserConfirm": "Sure? Press again",
-    "admin.userDeleted": "User deleted."
+    "admin.userDeleted": "User deleted.",
+    "admin.ai.section": "Autofill with AI",
+    "admin.ai.intro": "Upload a PDF or other file describing the home, or paste the text, and AI will fill in the form fields. Review everything before saving.",
+    "admin.ai.file": "Choose file (PDF or text)",
+    "admin.ai.paste": "...or paste the description text here",
+    "admin.ai.pastePlaceholder": "Paste the property description here...",
+    "admin.ai.autofill": "Autofill fields with AI",
+    "admin.ai.reading": "Reading the file...",
+    "admin.ai.thinking": "AI is analysing the description...",
+    "admin.ai.filled": "Fields filled in. Review them and press Save changes.",
+    "admin.ai.noText": "Couldn't read text from the file (scanned PDF?). Paste the text manually.",
+    "admin.ai.empty": "Add a file or paste some text first.",
+    "admin.ai.error": "AI is not available right now. Try again.",
+    "admin.ai.notConfigured": "AI is not configured (DeepSeek key missing on the server).",
+    "admin.ai.autoTranslate": "Auto-translate ES↔EN when I edit a field",
+    "admin.ai.translating": "Translating...",
+    "admin.ai.translateOne": "Translate to the other language"
   }
 };
 
