@@ -723,7 +723,7 @@ function initDetailMap() {
 
   detailMap = L.map(mapElement, {
     scrollWheelZoom: false,
-    attributionControl: { prefix: '<a href="https://leafletjs.com">Leaflet</a>' }
+    attributionControl: { prefix: false }
   }).setView([property.lat, property.lng], 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
