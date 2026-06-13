@@ -6,8 +6,8 @@ Ebrostay alquila viviendas amuebladas y listas para entrar para estancias medias
 
 ## Properties
 
-- [Movera - Planta Baja](https://ebrostay.com/property.html?id=movera0): ground-floor home at Camino de Movera 7, Zaragoza. From 870 EUR/month.
-- [Movera - 1 Planta](https://ebrostay.com/property.html?id=movera1): first-floor home at Camino de Movera 7, Zaragoza. From 1350 EUR/month.
+- [Movera - 2 Planta](https://ebrostay.com/property.html?id=movera0): second-floor home with 3 private bedrooms at Camino de Movera 7, Zaragoza. From 1350 EUR/month (450 EUR/room).
+- [Movera - 1 Planta](https://ebrostay.com/property.html?id=movera1): first-floor home with 3 private bedrooms at Camino de Movera 7, Zaragoza. From 1350 EUR/month (450 EUR/room).
 - [Pedro II el Católico - 1 planta](https://ebrostay.com/property.html?id=pedro1): apartment at Pedro II el Católico 3, Zaragoza city centre. From 950 EUR/month.
 - [Pedro II el Católico - 2 planta](https://ebrostay.com/property.html?id=pedro2): apartment at Pedro II el Católico 3, Zaragoza city centre. From 980 EUR/month.
 
