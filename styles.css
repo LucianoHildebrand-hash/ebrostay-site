@@ -2746,3 +2746,15 @@ input:focus, select:focus, textarea:focus {
 @media (max-width: 460px) {
   .brand-wordmark { font-size: 1.15rem; }
 }
+
+/* Booking summary: commission discount + VAT tip */
+.movein-rows .booking-discount span { color: var(--green-700); font-weight: 850; }
+.booking-vat-ok { color: var(--green-700); font-weight: 750; }
+.booking-split {
+  background: rgba(255, 122, 69, 0.1);
+  border: 1px solid rgba(255, 122, 69, 0.3);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  color: var(--ink);
+  font-weight: 650;
+}

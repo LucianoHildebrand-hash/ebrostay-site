@@ -125,11 +125,13 @@ Deno.serve(async (req: Request) => {
           const { data: payout } = await db.from("owner_payout_details")
             .select("stripe_account_id, connect_status").eq("owner_id", property.owner_id).maybeSingle();
           if (payout?.stripe_account_id && payout.connect_status === "active") {
+            // The guest pays rent + commission + deposit. Ebrostay keeps the
+            // commission (its fee) and holds the deposit; the owner receives
+            // the full rent = total - deposit - commission.
             const depositEur = Number(md.deposit_eur) || 0;
+            const commissionEur = Number(md.commission_eur) || 0;
             const totalEur = (session.amount_total ?? 0) / 100;
-            const rentEur = Math.max(0, totalEur - depositEur);
-            const feePct = Number(Deno.env.get("PLATFORM_FEE_PCT") || "0.15");
-            const ownerEur = Math.round(rentEur * (1 - feePct) * 100) / 100;
+            const ownerEur = Math.max(0, Math.round((totalEur - depositEur - commissionEur) * 100) / 100);
             if (ownerEur > 0) {
               await stripe.transfers.create({
                 amount: Math.round(ownerEur * 100),
