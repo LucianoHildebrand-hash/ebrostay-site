@@ -1493,6 +1493,18 @@ a.property-media {
   font-weight: 700;
 }
 
+.movein-box li > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.movein-box li > span:last-child {
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .movein-box li.is-total {
   border-top: 1px solid var(--line);
   padding-top: 7px;
@@ -1532,6 +1544,18 @@ a.property-media {
   gap: 12px;
   color: var(--muted);
   font-weight: 700;
+}
+
+.movein-rows li > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.movein-rows li > span:last-child {
+  flex-shrink: 0;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .movein-rows li.is-total {
