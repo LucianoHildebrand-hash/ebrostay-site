@@ -1,8 +1,8 @@
 // Creates a Stripe Checkout session for a booking request.
-// Auth: Supabase JWT (verify_jwt). Price and availability are computed
-// server-side; the client only sends property, check-in and check-out dates.
-// The total charged is the full stay (whole months, rounded up) plus the
-// property's deposit when one is set.
+// Auth: Supabase JWT (verify_jwt). Price, commission and availability are
+// computed server-side; the client sends property, dates and tenant names.
+// Charge = rent (1-11 whole months) + Ebrostay commission (15% of rent, VAT
+// 21% included, capped at one month's rent) + refundable deposit.
 import Stripe from "npm:stripe@17.7.0";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -15,8 +15,9 @@ const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
 const ALLOWED_ORIGINS = ["https://ebrostay.com", "https://www.ebrostay.com", "http://127.0.0.1:8123"];
-
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_MONTHS = 11;
+const COMMISSION_PCT = 0.15;
 
 function addMonthsMinusDay(startDate: string, months: number) {
   const end = new Date(`${startDate}T00:00:00Z`);
@@ -55,7 +56,7 @@ Deno.serve(async (req: Request) => {
     const { data: profile } = await admin.from("profiles").select("deactivated_at").eq("id", user.id).maybeSingle();
     if (profile?.deactivated_at) return json({ error: "unauthorized" }, 401);
 
-    const { propertyId, startDate, endDate, months } = await req.json();
+    const { propertyId, startDate, endDate, months, tenantNames } = await req.json();
     if (!propertyId || !DATE_RE.test(String(startDate || ""))) {
       return json({ error: "bad_request" }, 400);
     }
@@ -72,17 +73,16 @@ Deno.serve(async (req: Request) => {
     if (DATE_RE.test(String(endDate || ""))) {
       bookingEnd = endDate;
     } else {
-      const monthCount = Math.max(1, Math.min(12, Number(months) || 0));
+      const monthCount = Math.max(1, Math.min(MAX_MONTHS, Number(months) || 0));
       bookingEnd = addMonthsMinusDay(startDate, monthCount);
     }
     if (bookingEnd <= startDate) return json({ error: "bad_request" }, 400);
 
     const stayMonths = billedMonths(startDate, bookingEnd);
-    const maxMonths = Math.min(24, property.max_stay_months || 12);
-    if (stayMonths > maxMonths) return json({ error: "bad_request" }, 400);
-    if (property.min_stay_months && stayMonths < property.min_stay_months) {
-      return json({ error: "bad_request" }, 400);
-    }
+    const maxMonths = Math.min(MAX_MONTHS, property.max_stay_months || MAX_MONTHS);
+    if (stayMonths > maxMonths) return json({ error: "max_stay" }, 400);
+    const minMonths = Math.max(1, property.min_stay_months || 1);
+    if (stayMonths < minMonths) return json({ error: "min_stay" }, 400);
 
     const today = new Date().toISOString().slice(0, 10);
     if (startDate < today) return json({ error: "dates_unavailable" }, 409);
@@ -102,21 +102,51 @@ Deno.serve(async (req: Request) => {
     const requestOrigin = req.headers.get("origin") || "";
     const origin = ALLOWED_ORIGINS.includes(requestOrigin) ? requestOrigin : "https://ebrostay.com";
 
+    const price = Number(property.price_number) || 0;
+    const rentTotal = stayMonths * price;
+    // Commission: 15% of rent, VAT 21% included, capped at one month's rent.
+    const commissionRaw = COMMISSION_PCT * rentTotal;
+    const commission = Math.min(commissionRaw, price);
+    const commissionCapped = commissionRaw > price + 0.001;
+    const depositEur = Number(property.deposit_amount) || 0;
+
+    const names = String(tenantNames || "").trim().slice(0, 800);
+    const tenantsListed = names.length > 0;
+
     const stayLabel = `${startDate} a ${bookingEnd}`;
     const monthsLabel = `${stayMonths} ${stayMonths === 1 ? "mes" : "meses"}`;
     const addressLabel = property.address ? `${property.address}, Zaragoza` : "Zaragoza";
+
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
       quantity: stayMonths,
       price_data: {
         currency: "eur",
-        unit_amount: Math.round(Number(property.price_number) * 100),
+        unit_amount: Math.round(price * 100),
         product_data: {
           name: `Alquiler (${monthsLabel}): ${property.name}`,
-          description: `Renta mensual de la vivienda "${property.name}" (${addressLabel}). Estancia del ${startDate} al ${bookingEnd}.`
+          description: `Renta mensual de la vivienda "${property.name}" (${addressLabel}). Estancia del ${startDate} al ${bookingEnd}.` +
+            (tenantsListed ? " Inquilinos identificados: estancia exenta de IVA." : " Sin inquilinos nombrados: una reserva a nombre de empresa puede conllevar un 21% de IVA que la empresa autoliquida (no incluido).")
         }
       }
     }];
-    const depositEur = Number(property.deposit_amount) || 0;
+
+    if (commission > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "eur",
+          unit_amount: Math.round(commission * 100),
+          product_data: {
+            name: `Comisión y gestión Ebrostay (IVA 21% incl.)`,
+            description: `Comisión del 15% sobre la renta, con un tope de 1 mes de renta (${price} EUR).` +
+              (commissionCapped
+                ? ` Tope alcanzado: descuento por estancia larga aplicado (15% habría sido ${commissionRaw.toFixed(2)} EUR).`
+                : "")
+          }
+        }
+      });
+    }
+
     if (depositEur > 0) {
       lineItems.push({
         quantity: 1,
@@ -131,20 +161,26 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const vatField = tenantsListed
+      ? "Exento (inquilinos identificados)"
+      : "Renta sin IVA; empresa autoliquida 21% si aplica";
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: user.email || undefined,
       invoice_creation: {
         enabled: true,
         invoice_data: {
-          description: `Reserva Ebrostay - ${property.name} (${addressLabel}). Estancia del ${startDate} al ${bookingEnd} (${monthsLabel}).` +
-            (depositEur > 0 ? ` Incluye fianza reembolsable de ${depositEur} EUR.` : ""),
+          description: `Reserva Ebrostay - ${property.name} (${addressLabel}). Estancia del ${startDate} al ${bookingEnd} (${monthsLabel}). ` +
+            `Comisión y gestión 15% (IVA 21% incl.), tope 1 mes.` +
+            (depositEur > 0 ? ` Incluye fianza reembolsable de ${depositEur} EUR.` : "") +
+            (tenantsListed ? ` Inquilinos: ${names.replace(/\s+/g, " ").slice(0, 300)}.` : " Reserva sin inquilinos nombrados."),
           custom_fields: [
             { name: "Vivienda", value: property.name.slice(0, 140) },
-            { name: "Direcci\u00f3n", value: addressLabel.slice(0, 140) },
-            { name: "Estancia", value: `${stayLabel} (${monthsLabel})` }
+            { name: "Estancia", value: `${stayLabel} (${monthsLabel})` },
+            { name: "IVA renta", value: vatField.slice(0, 140) }
           ],
-          footer: "Ebrostay - Zaragoza - info@ebrostay.com. La fianza es reembolsable al finalizar la estancia.",
+          footer: "Ebrostay - Zaragoza - info@ebrostay.com. La fianza es reembolsable al finalizar la estancia. La comisión incluye IVA 21%.",
           metadata: { property_id: property.id, start_date: startDate, end_date: bookingEnd }
         }
       },
@@ -157,7 +193,10 @@ Deno.serve(async (req: Request) => {
         start_date: startDate,
         end_date: bookingEnd,
         months: String(stayMonths),
-        deposit_eur: String(depositEur)
+        deposit_eur: String(depositEur),
+        commission_eur: commission.toFixed(2),
+        tenants_listed: tenantsListed ? "yes" : "no",
+        tenant_names: names.slice(0, 480)
       },
       success_url: `${origin}/account.html?booking=success`,
       cancel_url: `${origin}/property.html?id=${property.id}&booking=cancelled`

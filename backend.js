@@ -268,11 +268,11 @@ const EbrostayBackend = (() => {
     return { ...data, cover: coverUrl(data.properties), guestInfo };
   }
 
-  async function createBookingCheckout(propertyId, startDate, endDate) {
+  async function createBookingCheckout(propertyId, startDate, endDate, tenantNames) {
     const sb = getClient();
     try {
       const { data, error } = await sb.functions.invoke("create-booking-checkout", {
-        body: { propertyId, startDate, endDate }
+        body: { propertyId, startDate, endDate, tenantNames: tenantNames || "" }
       });
       if (error) {
         let code = "server_error";

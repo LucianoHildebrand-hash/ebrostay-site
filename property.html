@@ -25,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=design-2">
+    <link rel="stylesheet" href="styles.css?v=design-3">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
   </head>
   <body>
@@ -132,10 +132,16 @@
                 <span data-i18n="book.end">Salida</span>
                 <input id="bookingEnd" type="text">
               </label>
+              <label>
+                <span data-i18n="book.tenants">Inquilinos (uno por línea)</span>
+                <textarea id="bookingTenants" rows="2" data-i18n-attr="placeholder:book.tenantsPlaceholder" placeholder="Nombre y apellidos de cada inquilino"></textarea>
+              </label>
               <p class="booking-note" id="bookingMinStay" hidden></p>
+              <p class="booking-note booking-split" id="bookingSplit" hidden></p>
               <ul class="movein-rows" id="bookingSummary"></ul>
+              <p class="booking-note" id="bookingVatTip"></p>
               <button class="button primary" id="bookingButton" type="button" data-i18n="book.button">Reservar y pagar</button>
-              <p class="booking-note" data-i18n="book.note">Pagas ahora la estancia completa y la fianza para confirmar la reserva. La fianza es reembolsable al finalizar la estancia.</p>
+              <p class="booking-note" data-i18n="book.note">Pagas ahora la estancia completa, la comisión de gestión y la fianza. La fianza es reembolsable al finalizar la estancia.</p>
               <p class="auth-message" id="bookingMessage" role="status"></p>
             </div>
             <h3 data-i18n="detail.requestTitle">¿Te interesa esta vivienda?</h3>
@@ -166,10 +172,10 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase-config.js?v=design-2"></script>
-    <script src="data.js?v=design-2"></script>
-    <script src="backend.js?v=design-2"></script>
-    <script src="nav.js?v=design-2"></script>
-    <script src="property.js?v=design-2"></script>
+    <script src="supabase-config.js?v=design-3"></script>
+    <script src="data.js?v=design-3"></script>
+    <script src="backend.js?v=design-3"></script>
+    <script src="nav.js?v=design-3"></script>
+    <script src="property.js?v=design-3"></script>
   </body>
 </html>

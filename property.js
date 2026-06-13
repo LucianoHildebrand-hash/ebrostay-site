@@ -411,24 +411,59 @@ function monthsText(months) {
   return months === 1 ? t("cond.month") : interpolate("cond.months", { count: months });
 }
 
+const MAX_STAY_MONTHS = 11;
+const COMMISSION_PCT = 0.15;
+const money = (amount) => interpolate("cond.eur", { amount: Math.round(amount * 100) / 100 });
+
 function updateBookingSummary() {
   const summary = document.querySelector("#bookingSummary");
   const startDate = document.querySelector("#bookingStart")?.value;
   const endDate = document.querySelector("#bookingEnd")?.value;
+  const split = document.querySelector("#bookingSplit");
+  const vatTip = document.querySelector("#bookingVatTip");
+  const button = document.querySelector("#bookingButton");
   if (!summary) return;
+  if (split) split.hidden = true;
+  if (button) button.disabled = false;
   if (!startDate || !endDate || endDate <= startDate) {
     summary.innerHTML = "";
+    if (vatTip) vatTip.textContent = "";
     return;
   }
   const months = billedMonths(startDate, endDate);
-  const rent = months * property.priceNumber;
+
+  // Stays longer than 11 months need two separate contracts.
+  if (months > MAX_STAY_MONTHS) {
+    summary.innerHTML = "";
+    if (vatTip) vatTip.textContent = "";
+    if (split) { split.hidden = false; split.textContent = t("book.splitNote"); }
+    if (button) button.disabled = true;
+    return;
+  }
+
+  const price = property.priceNumber;
+  const rent = months * price;
+  const commissionRaw = COMMISSION_PCT * rent;
+  const commission = Math.min(commissionRaw, price);
+  const capped = commissionRaw > price + 0.001;
+  const discount = capped ? commissionRaw - commission : 0;
   const deposit = property.depositAmount || 0;
+  const total = rent + commission + deposit;
+
   summary.innerHTML = `
     <li><span>${t("book.stay")}</span><span>${formatDate(dateValue(startDate))} &ndash; ${formatDate(dateValue(endDate))}</span></li>
-    <li><span>${t("book.rent")} (${monthsText(months)})</span><span>${interpolate("cond.eur", { amount: rent })}</span></li>
-    ${deposit ? `<li><span>${t("cond.deposit")}</span><span>${interpolate("cond.eur", { amount: deposit })}</span></li>` : ""}
-    <li class="is-total"><span>${t("book.payNow")}</span><span>${interpolate("cond.eur", { amount: rent + deposit })}</span></li>
+    <li><span>${t("book.rent")} (${monthsText(months)})</span><span>${money(rent)}</span></li>
+    <li><span>${t("book.commission")}</span><span>${money(commissionRaw)}</span></li>
+    ${capped ? `<li class="booking-discount"><span>${t("book.commissionDiscount")}</span><span>&minus;${money(discount)}</span></li>` : ""}
+    ${deposit ? `<li><span>${t("cond.deposit")}</span><span>${money(deposit)}</span></li>` : ""}
+    <li class="is-total"><span>${t("book.payNow")}</span><span>${money(total)}</span></li>
   `;
+
+  if (vatTip) {
+    const names = document.querySelector("#bookingTenants")?.value.trim();
+    vatTip.textContent = names ? t("book.vatExempt") : t("book.vatCompany");
+    vatTip.className = `booking-note${names ? " booking-vat-ok" : ""}`;
+  }
 }
 
 function bookingMessage(key, isError = true) {
@@ -460,12 +495,16 @@ function initBookingWidget() {
   };
   const minEndFor = (startDate) =>
     bookingEndDate(startDate, Math.max(1, property.minStayMonths || 1));
+  // the cap is 11 months; a single contract can't run longer
+  const maxEndFor = (startDate) =>
+    bookingEndDate(startDate, Math.min(MAX_STAY_MONTHS, property.maxStayMonths || MAX_STAY_MONTHS));
 
   bookingPicker?.destroy();
   bookingEndPicker?.destroy();
   bookingEndPicker = flatpickr(document.querySelector("#bookingEnd"), {
     ...baseConfig,
     minDate: minEndFor(minStart),
+    maxDate: maxEndFor(minStart),
     onChange: updateBookingSummary
   });
   bookingPicker = flatpickr(document.querySelector("#bookingStart"), {
@@ -474,6 +513,7 @@ function initBookingWidget() {
     onChange: (dates, dateString) => {
       if (dateString) {
         bookingEndPicker.set("minDate", minEndFor(dateString));
+        bookingEndPicker.set("maxDate", maxEndFor(dateString));
         if (!bookingEndPicker.input.value || bookingEndPicker.input.value < minEndFor(dateString)) {
           bookingEndPicker.setDate(minEndFor(dateString), false);
         }
@@ -481,6 +521,7 @@ function initBookingWidget() {
       updateBookingSummary();
     }
   });
+  document.querySelector("#bookingTenants")?.addEventListener("input", updateBookingSummary);
   const minStayNote = document.querySelector("#bookingMinStay");
   if (minStayNote) {
     const minStay = property.minStayMonths || 0;
@@ -523,7 +564,9 @@ function preselectSearchDates(minStart, minEndFor) {
 const BOOKING_ERROR_KEYS = {
   dates_unavailable: "book.unavailable",
   stripe_not_configured: "book.notConfigured",
-  unauthorized: "book.loginFirst"
+  unauthorized: "book.loginFirst",
+  max_stay: "book.splitNote",
+  min_stay: "book.minStayError"
 };
 
 document.querySelector("#bookingButton")?.addEventListener("click", async () => {
@@ -553,7 +596,8 @@ document.querySelector("#bookingButton")?.addEventListener("click", async () => 
   button.disabled = true;
   window.umami?.track("booking-start", { property: property.id, checkIn: startDate, checkOut: endDate });
   bookingMessage("book.redirecting", false);
-  const { url, code } = await EbrostayBackend.createBookingCheckout(property.id, startDate, endDate);
+  const tenantNames = document.querySelector("#bookingTenants")?.value.trim() || "";
+  const { url, code } = await EbrostayBackend.createBookingCheckout(property.id, startDate, endDate, tenantNames);
   if (url) {
     window.location.href = url;
     return;
