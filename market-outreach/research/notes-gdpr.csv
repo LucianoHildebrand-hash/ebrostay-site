@@ -1,0 +1,18 @@
+PLAZA Logística (Zaragoza) — B2B prospect list for short-term / corporate-rental apartment outreach
+Sources of company list:,Two entry points — see the 'Source / Entry point' column on each row.
+  1) PLAZA Logística,"https://www.plazalogistica.com/empresas/?lang=en (official PLAZA park directory, 34 companies). Detail page: /empresainstalada/<slug>/"
+  2) Páginas Amarillas + registries,"paginasamarillas.es (Zaragoza, relevant sectors) + public registries/directories (eInforma, elEconomista/Empresite, Axesor, Cámara Zaragoza, Aliaragón). 24 added Zaragoza companies."
+Relevance filter for added rows,"Prioritised medium/large employers in industrial, manufacturing, logistics/transport, engineering, IT/tech, energy, automotive, food & healthcare. Tiny retail/hospitality skipped."
+'list-only' added rows,Name sourced from Páginas Amarillas; website/contact not yet verified — flagged for a 2nd-pass enrichment on request.
+Status legend:
+  enriched,Has a named HR/leadership contact OR confirmed general email + LinkedIn + size
+  partial,Has general email/website/LinkedIn but no named HR contact yet
+  list-only,Directory baseline only — needs a second enrichment pass
+Email confidence:
+  Confirmed,Email published on the company's own site or the PLAZA directory
+  INFERRED,Built from the company's visible email pattern (e.g. name.surname@company.com) — NOT verified; verify before sending
+Email columns:
+  HR mailbox (confirmed),The verified recruitment route. Note: NONE of these companies publish a dedicated rrhh@/seleccion@/empleo@ mailbox — they recruit via web forms / InfoJobs / portals. Cell shows the route + any general inbox. Only Berdiel publishes a usable address (owner's).
+  HR email — inferred,"Best-guess personal email for the named HR/leadership contact, built from the company's email pattern (pattern source noted, usually RocketReach/published address). UNVERIFIED. 'Low-confidence guess' = pattern could not be established. Always verify before sending."
+LinkedIn note:,Names/titles taken from LinkedIn are view-only and unverified. LinkedIn does not publish emails.
+GDPR note:,"This is a B2B prospect list. Outreach to named individuals should rely on the legitimate-interest legal basis (GDPR Art.6(1)(f) / Spanish LOPDGDD & LSSI for e-marketing), be relevant to the person's professional role, and include a clear opt-out in every message. Honour opt-outs and keep a record of the legitimate-interest assessment."
