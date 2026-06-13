@@ -13,16 +13,23 @@ Market research behind the corporate-rental outreach effort.
 
 ## What's in it
 
-A B2B prospect list of **58 Zaragoza-area companies** to approach about renting
+A B2B prospect list of **77 Zaragoza-area companies** to approach about renting
 the furnished apartments for corporate / relocation / medium-stay housing.
 
-Two entry points (see the `Source / Entry point` column):
+Three entry points (see the `Source / Entry point` column):
 
 1. **PLAZA Logística** park directory (34 companies).
 2. **Páginas Amarillas + public registries** (eInforma, elEconomista/Empresite,
-   Axesor, Cámara Zaragoza, Aliaragón) — 24 added companies, filtered to
+   Axesor, Cámara Zaragoza, Aliaragón) — 24 companies, filtered to
    medium/large employers in industry, manufacturing, logistics/transport,
    engineering, IT/tech, energy, automotive, food and healthcare.
+3. **elEconomista company ranking** (ranking-empresas.eleconomista.es) + web —
+   19 large/medium Zaragoza employers added in batch 2 (2026-06-13), cross-checked
+   against registries, company sites and LinkedIn. Includes Stellantis
+   (Figueruelas), Ibercaja, Adidas España (Iberia HQ), CAF, Schindler, Valeo,
+   Fujikura, Adient, Carreras, Inditex/Plataforma Europa and more. Most are
+   `partial` (full firmographics + recruitment route, no named HR contact —
+   large employers recruit via portals).
 
 Per company the sheet records: sector, HQ/locations, employee count, website,
 general email, phone, LinkedIn, any named HR/leadership contact, an email
