@@ -633,7 +633,16 @@ const translations = {
     "admin.ai.notConfigured": "La IA no está configurada (falta la clave de DeepSeek en el servidor).",
     "admin.ai.autoTranslate": "Traducir ES↔EN automáticamente al editar un campo",
     "admin.ai.translating": "Traduciendo...",
-    "admin.ai.translateOne": "Traducir al otro idioma"
+    "admin.ai.translateOne": "Traducir al otro idioma",
+    "admin.ai.extractingImages": "Extrayendo imágenes del archivo...",
+    "admin.ai.images": "Imágenes encontradas en el archivo",
+    "admin.ai.imagesHint": "Marca cada una como Foto, Plano u Omitir y añádelas al anuncio. Se suben directamente (no hace falta Guardar).",
+    "admin.ai.addImages": "Añadir imágenes al anuncio",
+    "admin.ai.imgPhoto": "Foto",
+    "admin.ai.imgFloorplan": "Plano",
+    "admin.ai.imgSkip": "Omitir",
+    "admin.ai.noImages": "No se encontraron imágenes en el archivo.",
+    "admin.ai.noImagesSelected": "Marca al menos una imagen como Foto o Plano."
   },
   en: {
     "meta.title": "Ebrostay | Mid-term corporate rentals in Zaragoza",
@@ -1266,7 +1275,16 @@ const translations = {
     "admin.ai.notConfigured": "AI is not configured (DeepSeek key missing on the server).",
     "admin.ai.autoTranslate": "Auto-translate ES↔EN when I edit a field",
     "admin.ai.translating": "Translating...",
-    "admin.ai.translateOne": "Translate to the other language"
+    "admin.ai.translateOne": "Translate to the other language",
+    "admin.ai.extractingImages": "Extracting images from the file...",
+    "admin.ai.images": "Images found in the file",
+    "admin.ai.imagesHint": "Mark each as Photo, Floor plan or Skip and add them to the listing. They upload directly (no Save needed).",
+    "admin.ai.addImages": "Add images to listing",
+    "admin.ai.imgPhoto": "Photo",
+    "admin.ai.imgFloorplan": "Floor plan",
+    "admin.ai.imgSkip": "Skip",
+    "admin.ai.noImages": "No images found in the file.",
+    "admin.ai.noImagesSelected": "Mark at least one image as Photo or Floor plan."
   }
 };
 

@@ -1864,6 +1864,33 @@ a.property-media {
   font-weight: 600;
 }
 
+.admin-ai-image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+
+.admin-ai-image {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.admin-ai-image img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+.admin-ai-image select {
+  width: 100%;
+  font-weight: 600;
+}
+
 .admin-ai-actions {
   display: flex;
   align-items: center;
