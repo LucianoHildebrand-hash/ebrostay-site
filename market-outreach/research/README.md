@@ -13,9 +13,9 @@ Market research behind the corporate-rental outreach effort.
 
 ## What's in it
 
-A B2B prospect list of **527 Zaragoza-area companies** to approach about renting
+A B2B prospect list of **685 Zaragoza-area companies** to approach about renting
 the furnished apartments for corporate / relocation / medium-stay housing.
-**523 of the 527 have a usable email** (305 verbatim/published, 258 pattern-inferred; some have both).
+**680 of the 685 have a usable email** (426 verbatim/published, 294 pattern-inferred; some have both).
 
 Entry points (see the `Source / Entry point` column):
 
