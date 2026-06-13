@@ -12,8 +12,9 @@ function confirmationEmailHtml(booking: Record<string, string>) {
   return `
   <div style="margin:0;padding:24px;background:#f7f6f0;font-family:Arial,Helvetica,sans-serif;color:#18211d;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #e4e2d8;">
-      <div style="background:#2f6b55;padding:22px 28px;">
-        <img src="https://ebrostay.com/assets/ebrostay-logo.webp" alt="Ebrostay" width="120" style="display:block;">
+      <div style="background:#0c1a14;padding:20px 28px;display:flex;align-items:center;gap:10px;">
+        <img src="https://ebrostay.com/assets/ebrostay-icon-192.png" alt="" width="34" height="34" style="display:block;border-radius:8px;">
+        <span style="color:#fff;font-size:20px;font-weight:bold;letter-spacing:-0.5px;">Ebrostay</span>
       </div>
       <div style="padding:28px;">
         <h1 style="margin:0 0 6px;font-size:22px;">Reserva confirmada</h1>
@@ -112,6 +113,38 @@ Deno.serve(async (req: Request) => {
       end_date: md.end_date,
       note: `stripe:${session.id}`
     });
+
+    // Route the rent to the owner's connected account (Stripe Connect), if the
+    // property's owner has finished onboarding. Deposit and the platform fee
+    // stay on the platform. Failures never block booking recording.
+    try {
+      if (md.property_id) {
+        const { data: property } = await db.from("properties")
+          .select("owner_id").eq("id", md.property_id).maybeSingle();
+        if (property?.owner_id) {
+          const { data: payout } = await db.from("owner_payout_details")
+            .select("stripe_account_id, connect_status").eq("owner_id", property.owner_id).maybeSingle();
+          if (payout?.stripe_account_id && payout.connect_status === "active") {
+            const depositEur = Number(md.deposit_eur) || 0;
+            const totalEur = (session.amount_total ?? 0) / 100;
+            const rentEur = Math.max(0, totalEur - depositEur);
+            const feePct = Number(Deno.env.get("PLATFORM_FEE_PCT") || "0.15");
+            const ownerEur = Math.round(rentEur * (1 - feePct) * 100) / 100;
+            if (ownerEur > 0) {
+              await stripe.transfers.create({
+                amount: Math.round(ownerEur * 100),
+                currency: session.currency || "eur",
+                destination: payout.stripe_account_id,
+                transfer_group: session.id,
+                metadata: { booking_session: session.id, property_id: md.property_id }
+              });
+            }
+          }
+        }
+      }
+    } catch (transferError) {
+      console.error("owner transfer failed", transferError);
+    }
 
     const resendKey = Deno.env.get("RESEND_API_KEY");
     if (resendKey && customerEmail) {
