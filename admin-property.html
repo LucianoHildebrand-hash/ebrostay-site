@@ -50,6 +50,14 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script>
+      // Extract text from uploaded PDFs in the browser so the AI helper only
+      // ever receives plain text (cheaper and simpler than parsing on the server).
+      if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+      }
+    </script>
     <script src="supabase-config.js?v=design-6"></script>
     <script src="data.js?v=design-6"></script>
     <script src="backend.js?v=design-6"></script>

@@ -13,6 +13,7 @@ let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let row = null;
 let guestInfo = null;
 let ownerEmail = "";
+let aiAutoTranslate = localStorage.getItem("ebrostay-ai-autotranslate") !== "off";
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
@@ -33,9 +34,10 @@ function showStatus(key) {
   adminStatus.dataset.statusKey = key;
   adminStatus.textContent = t(key);
   adminStatus.classList.toggle("is-toast", !PAGE_STATUS_KEYS.has(key));
-  const isError = key === "admin.error" || key === "admin.guestNotFound" || key === "admin.geocodeNone" || key === "admin.ownerNotFound";
+  const AI_ERROR_KEYS = new Set(["admin.ai.error", "admin.ai.notConfigured", "admin.ai.empty", "admin.ai.noText"]);
+  const isError = key === "admin.error" || key === "admin.guestNotFound" || key === "admin.geocodeNone" || key === "admin.ownerNotFound" || AI_ERROR_KEYS.has(key);
   adminStatus.classList.toggle("is-error", isError);
-  if (key === "admin.saved") statusTimer = setTimeout(hideStatus, 2600);
+  if (key === "admin.saved" || key === "admin.ai.filled") statusTimer = setTimeout(hideStatus, 2600);
   if (isError) statusTimer = setTimeout(hideStatus, 5000);
 }
 
@@ -89,6 +91,30 @@ function renderPhotoSection(isFloorplan) {
   `;
 }
 
+function renderAiSection() {
+  return `
+    <section class="admin-section admin-ai">
+      <h3>✦ ${t("admin.ai.section")}</h3>
+      <p class="admin-hint">${t("admin.ai.intro")}</p>
+      <div class="admin-ai-controls">
+        <label class="admin-upload">
+          <span class="button ghost">${t("admin.ai.file")}</span>
+          <input type="file" accept=".pdf,.txt,.md,.csv,.text,application/pdf,text/plain" hidden data-ai-file>
+        </label>
+        <span class="admin-ai-filename" data-ai-filename></span>
+      </div>
+      <label class="admin-wide">
+        <span>${t("admin.ai.paste")}</span>
+        <textarea data-ai-paste rows="4" placeholder="${escapeValue(t("admin.ai.pastePlaceholder"))}"></textarea>
+      </label>
+      <div class="admin-ai-actions">
+        <button class="button primary" type="button" data-ai-autofill>✦ ${t("admin.ai.autofill")}</button>
+        <label class="admin-flag admin-ai-toggle"><input type="checkbox" data-ai-toggle ${aiAutoTranslate ? "checked" : ""}> <span>${t("admin.ai.autoTranslate")}</span></label>
+      </div>
+    </section>
+  `;
+}
+
 function renderEditForm() {
   const text = (labelKey, name, value, type = "text") => `
     <label>
@@ -96,14 +122,24 @@ function renderEditForm() {
       <input name="${name}" type="${type}" value="${escapeValue(value)}" ${type === "number" ? 'step="any"' : ""}>
     </label>
   `;
-  const area = (labelKey, name, value) => `
-    <label class="admin-wide">
-      <span>${t(labelKey)}</span>
-      <textarea name="${name}" rows="3">${escapeValue(value)}</textarea>
-    </label>
-  `;
   const flag = (labelKey, name, checked) => `
     <label class="admin-flag"><input type="checkbox" name="${name}" ${checked ? "checked" : ""}> <span>${t(labelKey)}</span></label>
+  `;
+  // Bilingual fields carry translate metadata + a per-field translate button,
+  // so the editor can fill the counterpart language on demand or automatically.
+  const transBtn = (group, lang) =>
+    `<button type="button" class="ai-translate-btn" data-ai-translate data-translate-group="${group}" data-translate-lang="${lang}" title="${t("admin.ai.translateOne")}" aria-label="${t("admin.ai.translateOne")}">✦</button>`;
+  const pairText = (labelKey, name, value, group, lang) => `
+    <label>
+      <span>${t(labelKey)} ${transBtn(group, lang)}</span>
+      <input name="${name}" type="text" value="${escapeValue(value)}" data-translate-group="${group}" data-translate-lang="${lang}">
+    </label>
+  `;
+  const pairArea = (labelKey, name, value, group, lang) => `
+    <label class="admin-wide">
+      <span>${t(labelKey)} ${transBtn(group, lang)}</span>
+      <textarea name="${name}" rows="3" data-translate-group="${group}" data-translate-lang="${lang}">${escapeValue(value)}</textarea>
+    </label>
   `;
 
   return `
@@ -127,8 +163,8 @@ function renderEditForm() {
       <fieldset class="admin-group">
         <legend>${t("admin.section.price")}</legend>
         ${text("admin.field.priceNumber", "price_number", row.price_number, "number")}
-        ${text("admin.field.priceNoteEs", "price_note_es", row.price_note_es)}
-        ${text("admin.field.priceNoteEn", "price_note_en", row.price_note_en)}
+        ${pairText("admin.field.priceNoteEs", "price_note_es", row.price_note_es, "priceNote", "es")}
+        ${pairText("admin.field.priceNoteEn", "price_note_en", row.price_note_en, "priceNote", "en")}
       </fieldset>
       <fieldset class="admin-group">
         <legend>${t("admin.section.conditions")}</legend>
@@ -148,17 +184,17 @@ function renderEditForm() {
       </fieldset>
       <fieldset class="admin-group">
         <legend>${t("admin.section.textsEs")}</legend>
-        ${text("admin.field.areaEs", "area_es", row.area_es)}
-        ${area("admin.field.copyEs", "copy_es", row.copy_es)}
-        ${area("admin.field.detailsEs", "details_es", row.details_es)}
-        ${text("admin.field.bedsEs", "beds_es", row.beds_es)}
+        ${pairText("admin.field.areaEs", "area_es", row.area_es, "area", "es")}
+        ${pairArea("admin.field.copyEs", "copy_es", row.copy_es, "copy", "es")}
+        ${pairArea("admin.field.detailsEs", "details_es", row.details_es, "details", "es")}
+        ${pairText("admin.field.bedsEs", "beds_es", row.beds_es, "beds", "es")}
       </fieldset>
       <fieldset class="admin-group">
         <legend>${t("admin.section.textsEn")}</legend>
-        ${text("admin.field.areaEn", "area_en", row.area_en)}
-        ${area("admin.field.copyEn", "copy_en", row.copy_en)}
-        ${area("admin.field.detailsEn", "details_en", row.details_en)}
-        ${text("admin.field.bedsEn", "beds_en", row.beds_en)}
+        ${pairText("admin.field.areaEn", "area_en", row.area_en, "area", "en")}
+        ${pairArea("admin.field.copyEn", "copy_en", row.copy_en, "copy", "en")}
+        ${pairArea("admin.field.detailsEn", "details_en", row.details_en, "details", "en")}
+        ${pairText("admin.field.bedsEn", "beds_en", row.beds_en, "beds", "en")}
       </fieldset>
       <fieldset class="admin-group">
         <legend>${t("admin.section.location")}</legend>
@@ -266,6 +302,7 @@ function renderEditor() {
       </header>
       ${renderPhotoSection(false)}
       ${renderPhotoSection(true)}
+      ${renderAiSection()}
       ${renderEditForm()}
       ${renderGuestInfoForm()}
       <section class="admin-section">
@@ -450,8 +487,137 @@ async function uploadPhotos(files, isFloorplan) {
   await loadProperty();
 }
 
+// Pull plain text out of an uploaded file: PDFs via pdf.js (in the browser),
+// everything else as text. Returns "" when nothing readable is found.
+async function extractTextFromFile(file) {
+  if (!file) return "";
+  const name = (file.name || "").toLowerCase();
+  const isPdf = file.type === "application/pdf" || name.endsWith(".pdf");
+  if (isPdf) {
+    if (!window.pdfjsLib) return "";
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const pages = Math.min(pdf.numPages, 30);
+      let out = "";
+      for (let i = 1; i <= pages; i += 1) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        out += content.items.map((item) => item.str).join(" ") + "\n";
+      }
+      return out.trim();
+    } catch {
+      return "";
+    }
+  }
+  try {
+    return (await file.text()).trim();
+  } catch {
+    return "";
+  }
+}
+
+// Write AI-extracted values into the edit form without saving, so the admin
+// reviews them and presses Save changes. Existing values are only overwritten
+// when the AI returned something for that field.
+function populateFormFromAi(fields) {
+  const form = propertyEditor.querySelector("[data-edit-form]");
+  if (!form || !fields) return;
+  const setValue = (fieldName, value) => {
+    const input = form.querySelector(`[name="${fieldName}"]`);
+    if (input && value != null && String(value).trim() !== "") input.value = value;
+  };
+  [
+    "name", "area_es", "area_en", "copy_es", "copy_en", "details_es", "details_en",
+    "beds_es", "beds_en", "price_note_es", "price_note_en", "city", "address",
+    "guests", "bedrooms", "bathrooms", "size_m2", "floor_number", "price_number",
+    "deposit_amount", "upfront_rent_eur", "utilities_cap_eur", "min_stay_months", "max_stay_months"
+  ].forEach((fieldName) => setValue(fieldName, fields[fieldName]));
+
+  if (fields.type && TYPE_KEYS.includes(fields.type)) setValue("type", fields.type);
+  if (fields.energy_rating && ENERGY_RATINGS.includes(fields.energy_rating)) setValue("energy_rating", fields.energy_rating);
+
+  if (Array.isArray(fields.amenities)) {
+    fields.amenities.forEach((key) => {
+      const box = form.querySelector(`input[name="amenities"][value="${key}"]`);
+      if (box) box.checked = true;
+    });
+  }
+}
+
+async function runAutofill() {
+  const fileInput = propertyEditor.querySelector("[data-ai-file]");
+  const pasteEl = propertyEditor.querySelector("[data-ai-paste]");
+  const file = fileInput?.files?.[0] || null;
+  const pasted = (pasteEl?.value || "").trim();
+  let text = "";
+  if (file) {
+    showStatus("admin.ai.reading");
+    text = await extractTextFromFile(file);
+    if (!text && !pasted) {
+      showStatus("admin.ai.noText");
+      return;
+    }
+  }
+  if (!text) text = pasted;
+  if (!text) {
+    showStatus("admin.ai.empty");
+    return;
+  }
+  showStatus("admin.ai.thinking");
+  const result = await EbrostayBackend.aiExtractProperty(text);
+  if (!result.ok) {
+    showStatus(result.code === "ai_not_configured" ? "admin.ai.notConfigured" : "admin.ai.error");
+    return;
+  }
+  populateFormFromAi(result.fields);
+  showStatus("admin.ai.filled");
+}
+
+// Translate one bilingual field into its counterpart language and write the
+// result into the paired input. Used automatically on change and via the ✦ button.
+async function translateFromField(sourceEl) {
+  if (!sourceEl) return;
+  const group = sourceEl.dataset.translateGroup;
+  const sourceLang = sourceEl.dataset.translateLang;
+  if (!group || !sourceLang) return;
+  const targetLang = sourceLang === "es" ? "en" : "es";
+  const targetEl = propertyEditor.querySelector(
+    `[data-translate-group="${group}"][data-translate-lang="${targetLang}"]`
+  );
+  const value = sourceEl.value.trim();
+  if (!targetEl || !value) return;
+  if (sourceEl.dataset.lastTranslated === value) return;
+  showStatus("admin.ai.translating");
+  const result = await EbrostayBackend.aiTranslateField(value, sourceLang, targetLang, group);
+  if (result.ok && result.text) {
+    targetEl.value = result.text;
+    targetEl.dataset.lastTranslated = result.text;
+    sourceEl.dataset.lastTranslated = value;
+    hideStatus();
+  } else {
+    showStatus(result.code === "ai_not_configured" ? "admin.ai.notConfigured" : "admin.ai.error");
+  }
+}
+
 if (propertyEditor) {
   propertyEditor.addEventListener("click", async (event) => {
+    if (event.target.closest("[data-ai-autofill]")) {
+      await runAutofill();
+      return;
+    }
+
+    const translateBtn = event.target.closest("[data-ai-translate]");
+    if (translateBtn) {
+      const group = translateBtn.dataset.translateGroup;
+      const lang = translateBtn.dataset.translateLang;
+      const sourceEl = propertyEditor.querySelector(
+        `[data-translate-group="${group}"][data-translate-lang="${lang}"]`
+      );
+      await translateFromField(sourceEl);
+      return;
+    }
+
     if (event.target.closest("[data-geocode]")) {
       await geocodeIntoForm();
       return;
@@ -487,9 +653,32 @@ if (propertyEditor) {
   });
 
   propertyEditor.addEventListener("change", async (event) => {
-    const input = event.target.closest("[data-photo-input]");
-    if (!input || !event.target.files?.length) return;
-    await uploadPhotos([...event.target.files], input.dataset.floorplan === "yes");
+    const photoInput = event.target.closest("[data-photo-input]");
+    if (photoInput) {
+      if (event.target.files?.length) await uploadPhotos([...event.target.files], photoInput.dataset.floorplan === "yes");
+      return;
+    }
+
+    const aiFile = event.target.closest("[data-ai-file]");
+    if (aiFile) {
+      const nameEl = propertyEditor.querySelector("[data-ai-filename]");
+      if (nameEl) nameEl.textContent = aiFile.files?.[0]?.name || "";
+      return;
+    }
+
+    const aiToggle = event.target.closest("[data-ai-toggle]");
+    if (aiToggle) {
+      aiAutoTranslate = aiToggle.checked;
+      localStorage.setItem("ebrostay-ai-autotranslate", aiAutoTranslate ? "on" : "off");
+      return;
+    }
+
+    // Auto-translate a bilingual field into its counterpart when the admin
+    // edits it (fires on blur/change), if the toggle is on.
+    const pairField = event.target.closest("[data-translate-group]");
+    if (pairField && aiAutoTranslate) {
+      await translateFromField(pairField);
+    }
   });
 
   propertyEditor.addEventListener("submit", async (event) => {

@@ -63,6 +63,7 @@ It is a **static front end** (plain HTML/CSS/JavaScript, no build step) hosted o
   - `create-booking-checkout` — computes price/commission/availability server-side and creates a Stripe Checkout session.
   - `stripe-webhook` — handles Stripe events to confirm bookings and payouts.
   - `owner-connect` — Stripe Connect Express onboarding and payout-status checks for owners.
+  - `ai-property-assistant` — DeepSeek-powered helper for the property editor: extracts listing fields from a pasted document and translates text fields between ES and EN. Needs the `DEEPSEEK_API_KEY` secret; see [`docs/deepseek-ai-setup.md`](docs/deepseek-ai-setup.md).
 
 ### Other
 - `assets/` — logos, icons, hero images, and property photos.
