@@ -14,6 +14,9 @@ let row = null;
 let guestInfo = null;
 let ownerEmail = "";
 let aiAutoTranslate = localStorage.getItem("ebrostay-ai-autotranslate") !== "off";
+// Images pulled out of an uploaded file, awaiting the admin's photo/floorplan/skip
+// classification before they are uploaded to the listing.
+let extractedImages = [];
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
@@ -111,6 +114,7 @@ function renderAiSection() {
         <button class="button primary" type="button" data-ai-autofill>✦ ${t("admin.ai.autofill")}</button>
         <label class="admin-flag admin-ai-toggle"><input type="checkbox" data-ai-toggle ${aiAutoTranslate ? "checked" : ""}> <span>${t("admin.ai.autoTranslate")}</span></label>
       </div>
+      <div data-ai-images>${renderExtractedImages()}</div>
     </section>
   `;
 }
@@ -582,6 +586,225 @@ async function extractTextFromFile(file, onProgress) {
   }
 }
 
+// Turn a pdf.js image object (bitmap or raw pixel data) into a canvas, flattening
+// any transparency onto white so floor-plan PNGs don't become black as JPEG.
+function imageObjToCanvas(img) {
+  const w = img && img.width;
+  const h = img && img.height;
+  if (!w || !h) return null;
+  const raw = document.createElement("canvas");
+  raw.width = w;
+  raw.height = h;
+  const rctx = raw.getContext("2d");
+  if (img.bitmap) {
+    rctx.drawImage(img.bitmap, 0, 0);
+  } else if (img.data) {
+    const data = img.data;
+    const imageData = rctx.createImageData(w, h);
+    const out = imageData.data;
+    if (data.length === w * h * 4) {
+      out.set(data);
+    } else if (data.length === w * h * 3) {
+      for (let i = 0, j = 0; i < data.length; i += 3, j += 4) {
+        out[j] = data[i]; out[j + 1] = data[i + 1]; out[j + 2] = data[i + 2]; out[j + 3] = 255;
+      }
+    } else if (data.length === w * h) {
+      for (let i = 0, j = 0; i < data.length; i += 1, j += 4) {
+        out[j] = out[j + 1] = out[j + 2] = data[i]; out[j + 3] = 255;
+      }
+    } else {
+      return null;
+    }
+    rctx.putImageData(imageData, 0, 0);
+  } else {
+    return null;
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(raw, 0, 0);
+  return canvas;
+}
+
+// Heuristic: floor plans are mostly white with thin, low-saturation lines,
+// whereas photos are colourful. Used only to pre-select the classification.
+function looksLikeFloorplan(canvas) {
+  try {
+    const size = 64;
+    const small = document.createElement("canvas");
+    small.width = size;
+    small.height = size;
+    const ctx = small.getContext("2d");
+    ctx.drawImage(canvas, 0, 0, size, size);
+    const data = ctx.getImageData(0, 0, size, size).data;
+    let white = 0;
+    let satSum = 0;
+    const total = size * size;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i]; const g = data[i + 1]; const b = data[i + 2];
+      const max = Math.max(r, g, b); const min = Math.min(r, g, b);
+      if (max > 235 && min > 225) white += 1;
+      satSum += max === 0 ? 0 : (max - min) / max;
+    }
+    return white / total > 0.55 && satSum / total < 0.12;
+  } catch {
+    return false;
+  }
+}
+
+function getImageObj(page, name, timeoutMs = 4000) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    try {
+      page.objs.get(name, (img) => { clearTimeout(timer); finish(img); });
+    } catch {
+      clearTimeout(timer);
+      finish(null);
+    }
+  });
+}
+
+// Pull the embedded photos / floor plans out of an uploaded file: image XObjects
+// from a PDF, or the image file itself. Tiny graphics (logos) are skipped.
+async function extractImagesFromFile(file) {
+  const results = [];
+  const name = (file.name || "").toLowerCase();
+  const isPdf = file.type === "application/pdf" || name.endsWith(".pdf");
+  const isImage = (file.type || "").startsWith("image/") || /\.(png|jpe?g|webp|gif|bmp|tiff?)$/.test(name);
+
+  const pushCanvas = (canvas) => {
+    if (!canvas) return;
+    if (Math.max(canvas.width, canvas.height) < 200) return; // skip logos/icons
+    results.push(canvas);
+  };
+
+  if (isPdf && window.pdfjsLib) {
+    try {
+      const buffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const pages = Math.min(pdf.numPages, 20);
+      const seen = new Set();
+      const OPS = pdfjsLib.OPS;
+      for (let p = 1; p <= pages && results.length < 24; p += 1) {
+        const page = await pdf.getPage(p);
+        const ops = await page.getOperatorList();
+        for (let i = 0; i < ops.fnArray.length; i += 1) {
+          const fn = ops.fnArray[i];
+          if (fn === OPS.paintImageXObject || fn === OPS.paintImageXObjectRepeat) {
+            const imgName = ops.argsArray[i][0];
+            if (typeof imgName !== "string" || seen.has(imgName)) continue;
+            seen.add(imgName);
+            const img = await getImageObj(page, imgName);
+            if (img) pushCanvas(imageObjToCanvas(img));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("PDF image extraction failed", error);
+    }
+  } else if (isImage) {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      canvas.getContext("2d").drawImage(bitmap, 0, 0);
+      pushCanvas(canvas);
+    } catch (error) {
+      console.warn("image load failed", error);
+    }
+  }
+
+  // Convert each canvas to a JPEG blob + preview URL and pre-classify it.
+  const items = [];
+  for (const canvas of results) {
+    const blob = await new Promise((res) => canvas.toBlob(res, "image/jpeg", 0.9));
+    if (!blob) continue;
+    items.push({
+      blob,
+      url: URL.createObjectURL(blob),
+      classification: looksLikeFloorplan(canvas) ? "floorplan" : "photo"
+    });
+  }
+  return items;
+}
+
+// Render the extracted-image review strip: a thumbnail per image with a
+// Photo / Floor plan / Skip choice and an "Add images to listing" button.
+function renderExtractedImages() {
+  if (!extractedImages.length) return "";
+  const option = (value, current) => `<option value="${value}" ${current === value ? "selected" : ""}>${t(`admin.ai.img${value.charAt(0).toUpperCase()}${value.slice(1)}`)}</option>`;
+  const cards = extractedImages.map((image, index) => `
+    <figure class="admin-ai-image">
+      <img src="${image.url}" alt="" loading="lazy">
+      <select data-img-class="${index}">
+        ${option("photo", image.classification)}
+        ${option("floorplan", image.classification)}
+        ${option("skip", image.classification)}
+      </select>
+    </figure>
+  `).join("");
+  return `
+    <h4>${t("admin.ai.images")}</h4>
+    <p class="admin-hint">${t("admin.ai.imagesHint")}</p>
+    <div class="admin-ai-image-grid">${cards}</div>
+    <button class="button ghost" type="button" data-ai-add-images>${t("admin.ai.addImages")}</button>
+  `;
+}
+
+function refreshExtractedImages() {
+  const container = propertyEditor.querySelector("[data-ai-images]");
+  if (container) container.innerHTML = renderExtractedImages();
+}
+
+// Upload the chosen extracted images straight to the listing (storage + the
+// property_photos table), respecting each one's photo/floorplan classification.
+async function uploadExtractedImages() {
+  const chosen = extractedImages.filter((image) => image.classification !== "skip");
+  if (!chosen.length) {
+    showStatus("admin.ai.noImagesSelected");
+    return;
+  }
+  const sb = EbrostayBackend.getClient();
+  showStatus("admin.uploading");
+  const photos = row?.property_photos || [];
+  let photoOrder = Math.max(0, ...photos.filter((p) => !p.is_floorplan).map((p) => p.sort_order));
+  let floorOrder = Math.max(0, ...photos.filter((p) => p.is_floorplan).map((p) => p.sort_order));
+  let counter = 0;
+  for (const image of chosen) {
+    const isFloorplan = image.classification === "floorplan";
+    counter += 1;
+    const path = `${propertyId}/${Date.now()}-${counter}-ai.jpg`;
+    const { error: uploadError } = await sb.storage
+      .from("property-photos")
+      .upload(path, image.blob, { contentType: "image/jpeg" });
+    if (uploadError) {
+      showStatus("admin.error");
+      return;
+    }
+    const sortOrder = isFloorplan ? (floorOrder += 10) : (photoOrder += 10);
+    const { error: insertError } = await sb.from("property_photos").insert({
+      property_id: propertyId,
+      storage_path: path,
+      sort_order: sortOrder,
+      is_floorplan: isFloorplan
+    });
+    if (insertError) {
+      showStatus("admin.error");
+      return;
+    }
+  }
+  extractedImages.forEach((image) => URL.revokeObjectURL(image.url));
+  extractedImages = [];
+  showStatus("admin.saved");
+  await loadProperty();
+}
+
 // Write AI-extracted values into the edit form without saving, so the admin
 // reviews them and presses Save changes. Existing values are only overwritten
 // when the AI returned something for that field.
@@ -644,6 +867,14 @@ async function runAutofill() {
     return;
   }
   populateFormFromAi(result.fields);
+
+  // Also pull any photos / floor plans out of the file for review.
+  if (file) {
+    showStatus("admin.ai.extractingImages");
+    extractedImages.forEach((image) => URL.revokeObjectURL(image.url));
+    extractedImages = await extractImagesFromFile(file);
+    refreshExtractedImages();
+  }
   showStatus("admin.ai.filled");
 }
 
@@ -677,6 +908,11 @@ if (propertyEditor) {
   propertyEditor.addEventListener("click", async (event) => {
     if (event.target.closest("[data-ai-autofill]")) {
       await runAutofill();
+      return;
+    }
+
+    if (event.target.closest("[data-ai-add-images]")) {
+      await uploadExtractedImages();
       return;
     }
 
@@ -743,6 +979,13 @@ if (propertyEditor) {
     if (aiToggle) {
       aiAutoTranslate = aiToggle.checked;
       localStorage.setItem("ebrostay-ai-autotranslate", aiAutoTranslate ? "on" : "off");
+      return;
+    }
+
+    const imgClass = event.target.closest("[data-img-class]");
+    if (imgClass) {
+      const image = extractedImages[Number(imgClass.dataset.imgClass)];
+      if (image) image.classification = imgClass.value;
       return;
     }
 
