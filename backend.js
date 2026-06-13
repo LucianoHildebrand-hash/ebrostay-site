@@ -414,6 +414,24 @@ const EbrostayBackend = (() => {
     }
   }
 
+  async function aiGenerateDescription(fields, images) {
+    const sb = getClient();
+    if (!sb) return { ok: false, code: "not_configured" };
+    try {
+      const { data, error } = await sb.functions.invoke("ai-property-assistant", {
+        body: { action: "describe", fields: fields || {}, images: images || [] }
+      });
+      if (error) {
+        let code = "server_error";
+        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
+        return { ok: false, code };
+      }
+      return { ok: true, fields: data?.fields || {} };
+    } catch {
+      return { ok: false, code: "server_error" };
+    }
+  }
+
   async function aiTranslateField(text, source, target, field) {
     const sb = getClient();
     if (!sb) return { ok: false, code: "not_configured" };
@@ -474,6 +492,7 @@ const EbrostayBackend = (() => {
     saveOwnerPayout,
     aiExtractProperty,
     aiTranslateField,
+    aiGenerateDescription,
     photoUrl,
     getUser: () => user,
     getIsAdmin: () => isAdmin,

@@ -6,6 +6,9 @@
 //   - "extract": parse a pasted document (from a PDF or text file) into the
 //     listing fields, producing both Spanish and English for every text field.
 //   - "translate": translate one field value between Spanish and English.
+//   - "describe": write a listing description (ES + EN) from the known facts
+//     and, optionally, the property photos (DeepSeek vision) — used when the
+//     uploaded file had no description text of its own.
 //
 // Set DEEPSEEK_API_KEY as an Edge Function secret. The model can be overridden
 // with DEEPSEEK_MODEL (defaults to the cheap deepseek-v4-flash).
@@ -54,6 +57,42 @@ async function callDeepseek(apiKey: string, messages: unknown[], jsonMode: boole
   }
   const data = await response.json();
   return String(data.choices?.[0]?.message?.content || "");
+}
+
+function extractJson(text: string): Record<string, unknown> {
+  try { return JSON.parse(text); } catch { /* fall through */ }
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start !== -1 && end > start) {
+    try { return JSON.parse(text.slice(start, end + 1)); } catch { /* give up */ }
+  }
+  return {};
+}
+
+// Turn the known structured fields into a compact, readable fact sheet for the
+// copywriter prompt. Only facts we actually have are included.
+function buildFactsString(f: Record<string, unknown>): string {
+  const lines: string[] = [];
+  const typeLabel: Record<string, string> = { apartment: "apartment", room: "private room", home: "house" };
+  const add = (label: string, value: unknown) => {
+    if (value != null && String(value).trim() !== "") lines.push(`${label}: ${value}`);
+  };
+  if (typeof f.type === "string" && typeLabel[f.type]) add("Type", typeLabel[f.type]);
+  add("Area / neighbourhood", f.area_en || f.area_es);
+  add("Address", f.address);
+  add("City", f.city);
+  add("Bedrooms", f.bedrooms);
+  add("Bathrooms", f.bathrooms);
+  if (f.size_m2 != null && f.size_m2 !== "") add("Size", `${f.size_m2} m2`);
+  if (f.floor_number != null && f.floor_number !== "") add("Floor", Number(f.floor_number) === 0 ? "ground" : f.floor_number);
+  add("Sleeps", f.guests);
+  add("Beds", f.beds_en || f.beds_es);
+  if (Array.isArray(f.amenities) && f.amenities.length) add("Amenities", f.amenities.join(", "));
+  if (f.price_number != null && f.price_number !== "") add("Price", `${f.price_number} EUR/month`);
+  add("Minimum stay (months)", f.min_stay_months);
+  add("Energy rating", f.energy_rating);
+  const nl = String.fromCharCode(10);
+  return "Property facts:" + nl + lines.join(nl);
 }
 
 function sanitizeFields(obj: Record<string, unknown>) {
@@ -152,6 +191,47 @@ Rules: stay truthful to the document — never invent amenities, prices or numbe
       let parsed: Record<string, unknown> = {};
       try { parsed = JSON.parse(out); } catch { parsed = {}; }
       return json({ fields: sanitizeFields(parsed) });
+    }
+
+    // Write an appealing description from the known facts + (optionally) photos,
+    // used when the uploaded file had no description text of its own.
+    if (action === "describe") {
+      const fields = (body.fields && typeof body.fields === "object") ? body.fields : {};
+      const images: string[] = (Array.isArray(body.images) ? body.images : [])
+        .filter((url: unknown) => typeof url === "string" && url.startsWith("data:image/") && url.length < 3_000_000)
+        .slice(0, 3);
+      const facts = buildFactsString(fields).slice(0, 4000);
+      const system = `You are a copywriter for Ebrostay, furnished mid-term (1–12 month) corporate rentals in Zaragoza, Spain, aimed at relocating professionals and companies. Write an appealing but truthful listing description from the facts provided${images.length ? " and the attached photos" : ""}. Only mention features that are in the facts or clearly visible in the photos — never invent amenities, sizes, prices, views or neighbourhoods. Warm, professional and concise. Return ONLY a JSON object with keys: copy_es, copy_en (one inviting sentence each) and details_es, details_en (one paragraph of 3–5 sentences each). Provide both Spanish and English.`;
+
+      const userContent: unknown[] = [{ type: "text", text: facts }];
+      for (const url of images) userContent.push({ type: "image_url", image_url: { url } });
+
+      let out = "";
+      try {
+        out = await callDeepseek(apiKey, [
+          { role: "system", content: system },
+          { role: "user", content: images.length ? userContent : facts }
+        ], false);
+      } catch (error) {
+        // The model may reject image input; retry once with facts only.
+        if (images.length) {
+          out = await callDeepseek(apiKey, [
+            { role: "system", content: system },
+            { role: "user", content: facts }
+          ], false);
+        } else {
+          throw error;
+        }
+      }
+
+      const parsed = extractJson(out);
+      const result: Record<string, string> = {};
+      for (const key of ["copy_es", "copy_en", "details_es", "details_en"]) {
+        if (typeof parsed[key] === "string" && (parsed[key] as string).trim()) {
+          result[key] = (parsed[key] as string).trim();
+        }
+      }
+      return json({ fields: result });
     }
 
     return json({ error: "bad_request" }, 400);
