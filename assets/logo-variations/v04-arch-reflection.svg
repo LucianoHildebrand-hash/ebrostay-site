@@ -6,10 +6,24 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="15" fill="url(#g4)"/>
-  <!-- deck / waterline -->
-  <line x1="14" y1="32" x2="50" y2="32" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
-  <!-- arch above -->
-  <path d="M18 32 A14 14 0 0 1 46 32" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- bridge above the waterline -->
+  <g fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 26 V18"/>
+    <path d="M53 26 V18"/>
+    <path d="M10 26 H54"/>
+    <path d="M10 32 A5.5 5.5 0 0 1 21 32"/>
+    <path d="M21 32 A5.5 5.5 0 0 1 32 32"/>
+    <path d="M32 32 A5.5 5.5 0 0 1 43 32"/>
+    <path d="M43 32 A5.5 5.5 0 0 1 54 32"/>
+  </g>
+  <rect x="9.4" y="14.4" width="3.2" height="3.2" rx="0.6" fill="#c8f169"/>
+  <rect x="51.4" y="14.4" width="3.2" height="3.2" rx="0.6" fill="#c8f169"/>
   <!-- reflection in the Ebro -->
-  <path d="M18 32 A14 14 0 0 0 46 32" fill="none" stroke="#c8f169" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+  <g fill="none" stroke="#c8f169" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.8">
+    <path d="M10 38 H54"/>
+    <path d="M10 38 A5.5 5.5 0 0 0 21 38"/>
+    <path d="M21 38 A5.5 5.5 0 0 0 32 38"/>
+    <path d="M32 38 A5.5 5.5 0 0 0 43 38"/>
+    <path d="M43 38 A5.5 5.5 0 0 0 54 38"/>
+  </g>
 </svg>

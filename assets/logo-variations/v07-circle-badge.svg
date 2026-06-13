@@ -6,12 +6,20 @@
     </linearGradient>
   </defs>
   <circle cx="32" cy="32" r="32" fill="url(#g7)"/>
-  <g fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round">
-    <!-- deck -->
-    <line x1="14" y1="27" x2="50" y2="27"/>
-    <!-- single arch -->
-    <path d="M19 43 A13 13 0 0 1 45 43"/>
+  <!-- central dome of El Pilar above the bridge -->
+  <g fill="#ffffff">
+    <path d="M26 28 A6 6 0 0 1 38 28 Z"/>
+    <rect x="30.7" y="16" width="2.6" height="5" rx="0.5"/>
+    <circle cx="32" cy="15.4" r="1.7"/>
+  </g>
+  <!-- bridge -->
+  <g fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 38 H50"/>
+    <path d="M14 43.5 A4.5 4.5 0 0 1 23 43.5"/>
+    <path d="M23 43.5 A4.5 4.5 0 0 1 32 43.5"/>
+    <path d="M32 43.5 A4.5 4.5 0 0 1 41 43.5"/>
+    <path d="M41 43.5 A4.5 4.5 0 0 1 50 43.5"/>
   </g>
   <!-- Ebro river -->
-  <line x1="17" y1="48" x2="47" y2="48" stroke="#c8f169" stroke-width="2.8" stroke-linecap="round"/>
+  <line x1="15" y1="43.5" x2="49" y2="43.5" stroke="#c8f169" stroke-width="2.4" stroke-linecap="round"/>
 </svg>
