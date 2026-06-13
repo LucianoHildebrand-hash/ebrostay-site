@@ -33,7 +33,16 @@ Three entry points (see the `Source / Entry point` column):
 
 Per company the sheet records: sector, HQ/locations, employee count, website,
 general email, phone, LinkedIn, any named HR/leadership contact, an email
-confidence flag, source(s), a relevance note, and a status.
+confidence flag, source(s), a relevance note, and a status. Two dedicated email
+columns were added in an enrichment pass (2026-06-13):
+
+- **All emails found (verbatim)** — every published email located for the
+  company (general, department, DPO, named-person), each with its source.
+  63 of 77 companies have at least one verbatim address.
+- **Inferred emails (pattern + basis)** — best-guess address for the named
+  HR/leadership contact, built from the company's email pattern (e.g.
+  `first.last@`, `finitial+last@`) with the basis noted. **All are flagged
+  `(UNVERIFIED)` — verify before sending.**
 
 ### Status legend
 
