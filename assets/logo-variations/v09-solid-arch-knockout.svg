@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ebrostay">
+  <defs>
+    <linearGradient id="g9" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13b878"/>
+      <stop offset="1" stop-color="#0a7a54"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g9)"/>
+  <g fill="#ffffff">
+    <!-- deck -->
+    <rect x="11" y="23" width="42" height="4.4" rx="2.2"/>
+    <!-- solid pier body with one big arch knocked out -->
+    <path fill-rule="evenodd" d="M13 29 H51 V44 H13 Z
+      M19 44 L19 40 A13 13 0 0 1 45 40 L45 44 Z"/>
+  </g>
+  <!-- Ebro river -->
+  <rect x="14" y="48" width="36" height="3.2" rx="1.6" fill="#c8f169"/>
+</svg>

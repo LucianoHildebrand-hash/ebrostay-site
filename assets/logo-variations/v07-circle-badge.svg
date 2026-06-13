@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ebrostay">
+  <defs>
+    <linearGradient id="g7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13b878"/>
+      <stop offset="1" stop-color="#0a7a54"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="32" fill="url(#g7)"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round">
+    <!-- deck -->
+    <line x1="14" y1="27" x2="50" y2="27"/>
+    <!-- single arch -->
+    <path d="M19 43 A13 13 0 0 1 45 43"/>
+  </g>
+  <!-- Ebro river -->
+  <line x1="17" y1="48" x2="47" y2="48" stroke="#c8f169" stroke-width="2.8" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ebrostay">
+  <defs>
+    <linearGradient id="g4" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#13b878"/>
+      <stop offset="1" stop-color="#0a7a54"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#g4)"/>
+  <!-- deck / waterline -->
+  <line x1="14" y1="32" x2="50" y2="32" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- arch above -->
+  <path d="M18 32 A14 14 0 0 1 46 32" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- reflection in the Ebro -->
+  <path d="M18 32 A14 14 0 0 0 46 32" fill="none" stroke="#c8f169" stroke-width="3.2" stroke-linecap="round" opacity="0.85"/>
+</svg>

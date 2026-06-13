@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ebrostay — Logo variations</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #0c1a14; --muted: #5a6b62; --paper: #f3f6f3;
+      --surface: #ffffff; --line: rgba(12,26,20,0.10);
+      --display: "Space Grotesk", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--ink);
+      font-family: Inter, system-ui, sans-serif; line-height: 1.5;
+      padding: 48px 24px 80px;
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    h1 { font-family: var(--display); font-size: 2rem; letter-spacing: -0.03em; margin: 0 0 8px; }
+    .lede { color: var(--muted); max-width: 60ch; margin: 0 0 40px; }
+    .current {
+      display: flex; align-items: center; gap: 18px; padding: 18px 22px;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 18px; margin-bottom: 44px;
+    }
+    .current img { width: 56px; height: 56px; }
+    .current .label { font-family: var(--display); font-weight: 700; }
+    .current .label span { display: block; font-family: Inter; font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .card-head .num { font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+    .card-head .name { color: var(--muted); font-size: 0.82rem; text-align: right; }
+    .sizes { display: flex; align-items: center; gap: 18px; }
+    .sizes img.big { width: 64px; height: 64px; }
+    .sizes img.mid { width: 40px; height: 40px; }
+    .sizes img.sm  { width: 24px; height: 24px; }
+    /* header lockup preview, mirrors the real site brand styles */
+    .lockup { display: flex; align-items: center; gap: 10px; padding-top: 6px; border-top: 1px dashed var(--line); }
+    .lockup img { width: 36px; height: 36px; border-radius: 9px; box-shadow: 0 4px 12px -4px rgba(14,159,110,0.5); }
+    .lockup .word { font-family: var(--display); font-weight: 700; font-size: 1.32rem; letter-spacing: -0.03em; }
+    /* dark strip to check contrast on dark footer */
+    .ondark { background: #0c1a14; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+    .ondark img { width: 34px; height: 34px; border-radius: 9px; }
+    .ondark .word { font-family: var(--display); font-weight: 700; color: #fff; font-size: 1.1rem; letter-spacing: -0.03em; }
+    .file { font-size: 0.72rem; color: var(--muted); font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Ebrostay — logo variations</h1>
+    <p class="lede">Ten minimalist takes on the mark, all keeping a Zaragoza bridge as the symbol (the Puente de Piedra stone arches, plus one nod to the Calatrava Puente del Tercer Milenio). Each is shown at icon sizes, in the header lockup, and on the dark footer. Each file is a drop-in replacement for <code>assets/ebrostay-icon.svg</code>.</p>
+
+    <div class="current">
+      <img src="assets/ebrostay-icon.svg" alt="Current logo">
+      <div class="label">Current logo<span>Three filled arches — for reference</span></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <script>
+    const variants = [
+      ["01", "Single arch — monoline", "v01-single-arch-line.svg"],
+      ["02", "Three arches — monoline", "v02-three-arch-line.svg"],
+      ["03", "Two arches + centre pier", "v03-two-arch-line.svg"],
+      ["04", "Arch + river reflection", "v04-arch-reflection.svg"],
+      ["05", "Calatrava bowstring (Tercer Milenio)", "v05-calatrava-bowstring.svg"],
+      ["06", "Single arch — flat green", "v06-single-arch-flat.svg"],
+      ["07", "Circle badge", "v07-circle-badge.svg"],
+      ["08", "Light theme — green on paper", "v08-light-theme.svg"],
+      ["09", "Solid arch knockout (bold)", "v09-solid-arch-knockout.svg"],
+      ["10", "Arch + sunrise dot", "v10-arch-sunrise.svg"],
+    ];
+    const grid = document.getElementById("grid");
+    for (const [num, name, file] of variants) {
+      const src = "assets/logo-variations/" + file;
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-head">
+          <span class="num">${num}</span>
+          <span class="name">${name}</span>
+        </div>
+        <div class="sizes">
+          <img class="big" src="${src}" alt="${name} 64px">
+          <img class="mid" src="${src}" alt="${name} 40px">
+          <img class="sm"  src="${src}" alt="${name} 24px">
+        </div>
+        <div class="lockup">
+          <img src="${src}" alt="">
+          <span class="word">Ebrostay</span>
+        </div>
+        <div class="ondark">
+          <img src="${src}" alt="">
+          <span class="word">Ebrostay</span>
+        </div>
+        <div class="file">${file}</div>
+      `;
+      grid.appendChild(card);
+    }
+  </script>
+</body>
+</html>

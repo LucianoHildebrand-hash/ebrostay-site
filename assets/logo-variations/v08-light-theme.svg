@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Ebrostay">
+  <rect width="64" height="64" rx="15" fill="#f3f6f3" stroke="rgba(12,26,20,0.10)" stroke-width="1"/>
+  <g fill="none" stroke="#0e9f6e" stroke-width="3.4" stroke-linecap="round">
+    <!-- deck -->
+    <line x1="12" y1="27" x2="52" y2="27"/>
+    <!-- single arch -->
+    <path d="M17 44 A15 15 0 0 1 47 44"/>
+  </g>
+  <!-- Ebro river -->
+  <line x1="15" y1="50" x2="49" y2="50" stroke="#1c7c9c" stroke-width="3" stroke-linecap="round"/>
+</svg>
