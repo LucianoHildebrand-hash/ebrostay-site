@@ -1421,6 +1421,10 @@ const addressLocations = {
   movera: { lat: 41.64929, lng: -0.82209 }
 };
 
+window.translations = translations;
+window.properties = properties;
+window.addressLocations = addressLocations;
+
 function whatsappLink(text) {
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
