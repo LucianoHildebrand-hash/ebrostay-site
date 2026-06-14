@@ -5,6 +5,8 @@ let property = null;
 const languageButtons = document.querySelectorAll("[data-lang]");
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let detailMap = null;
+let detailPhotoIndex = 0;
+let detailLightboxIndex = 0;
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
@@ -80,6 +82,8 @@ function renderDetail() {
     interpolate("whatsapp.message", { property: t(property.nameKey) })
   );
 
+  renderShareActions();
+  renderBookingIncluded();
   updateSeoTags();
 }
 
@@ -659,7 +663,7 @@ function pageToast(message) {
   setTimeout(() => toast.remove(), 4000);
 }
 
-document.querySelector("#shareButton")?.addEventListener("click", async () => {
+function propertyShareUrl() {
   const url = new URL("property.html", window.location.href);
   url.searchParams.set("id", property.id);
   let search = null;
@@ -669,15 +673,36 @@ document.querySelector("#shareButton")?.addEventListener("click", async () => {
   if (from) url.searchParams.set("from", from);
   if (to) url.searchParams.set("to", to);
   if (search?.guests) url.searchParams.set("guests", search.guests);
-  const link = url.toString();
-  window.umami?.track("share", { property: property.id });
+  return url.toString();
+}
 
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `${t(property.nameKey)} | Ebrostay`, text: t("share.text"), url: link });
-      return;
-    } catch { return; /* user dismissed the share sheet */ }
+function renderShareActions() {
+  const shareButton = document.querySelector("#shareButton");
+  if (!shareButton || !property) return;
+  shareButton.hidden = true;
+  let actions = document.querySelector("#detailShareActions");
+  if (!actions) {
+    actions = document.createElement("div");
+    actions.className = "share-actions";
+    actions.id = "detailShareActions";
+    shareButton.insertAdjacentElement("afterend", actions);
   }
+  const link = propertyShareUrl();
+  const encodedUrl = encodeURIComponent(link);
+  const encodedTitle = encodeURIComponent(`${t(property.nameKey)} | Ebrostay`);
+  actions.innerHTML = `
+    <span class="share-label" aria-label="${t("share.button")}">↗</span>
+    <a class="share-chip share-linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}" target="_blank" rel="noopener" aria-label="LinkedIn"><strong>in</strong><span>LinkedIn</span></a>
+    <a class="share-chip share-whatsapp" href="${whatsappLink(`${t("share.text")} ${link}`)}" target="_blank" rel="noopener" aria-label="WhatsApp"><strong>W</strong><span>WhatsApp</span></a>
+    <a class="share-chip" href="mailto:?subject=${encodedTitle}&body=${encodeURIComponent(`${t("share.text")}\n${link}`)}" aria-label="Email"><strong>@</strong><span>Email</span></a>
+    <button class="share-chip" type="button" data-copy-share><strong>⧉</strong><span>${t("share.copy")}</span></button>
+  `;
+}
+
+document.addEventListener("click", async (event) => {
+  if (!event.target.closest("[data-copy-share]")) return;
+  const link = propertyShareUrl();
+  window.umami?.track("share", { property: property.id, channel: "copy" });
   try {
     await navigator.clipboard.writeText(link);
     pageToast(t("share.copied"));
@@ -686,12 +711,114 @@ document.querySelector("#shareButton")?.addEventListener("click", async () => {
   }
 });
 
+function bookingIncludedItems() {
+  return currentLanguage === "es" ? [
+    ["Respuesta instantánea", "Confirmación y siguiente paso sin esperas."],
+    ["Incidencias en horas", "Soporte coordinado para resolver problemas rápido."],
+    ["Alojamiento alternativo", "Ayuda activa si surge una incidencia grave."],
+    ["Servicios claros", "Utilities, contrato, pagos y fianza explicados antes de pagar."],
+    ["Contrato redactado", "Documentación preparada para estancias temporales."],
+    ["Turnover incluido", "Limpieza, entrada y salida coordinadas."],
+    ["Soporte 24/7", "WhatsApp y email durante toda la estancia."]
+  ] : [
+    ["Instant response", "Confirmation and next step without waiting."],
+    ["Issues solved in hours", "Coordinated support to fix problems quickly."],
+    ["Alternative accommodation", "Active help if a serious issue comes up."],
+    ["Clear services", "Utilities, contract, payments and deposit explained before payment."],
+    ["Contract drafted", "Documents prepared for temporary stays."],
+    ["Turnover included", "Cleaning, move-in and move-out coordinated."],
+    ["24/7 support", "WhatsApp and email throughout the stay."]
+  ];
+}
+
+function renderBookingIncluded() {
+  const widget = document.querySelector("#bookingWidget");
+  if (!widget) return;
+  let block = document.querySelector("#bookingIncluded");
+  if (!block) {
+    block = document.createElement("div");
+    block.className = "booking-included";
+    block.id = "bookingIncluded";
+    document.querySelector("#bookingSummary")?.insertAdjacentElement("afterend", block);
+  }
+  block.innerHTML = `
+    <h5>${currentLanguage === "es" ? "Incluido en la comisión de gestión" : "Included in the service fee"}</h5>
+    <div class="booking-included-grid">
+      ${bookingIncludedItems().map(([title, copy]) => `<span><strong>${title}</strong><small>${copy}</small></span>`).join("")}
+    </div>
+  `;
+}
+
 function setBannerPhoto(url) {
   const media = document.querySelector("#detailMedia");
   if (media) {
     media.style.backgroundImage =
-      `linear-gradient(135deg, rgba(24, 33, 29, 0.18), rgba(24, 33, 29, 0.02)), url('${url}')`;
+      `linear-gradient(135deg, rgba(24, 33, 29, 0.12), rgba(24, 33, 29, 0.02)), url('${url}')`;
   }
+}
+
+function setDetailPhoto(index) {
+  const photos = property.photos || [];
+  if (!photos.length) return;
+  detailPhotoIndex = (index + photos.length) % photos.length;
+  setBannerPhoto(photos[detailPhotoIndex]);
+  document.querySelectorAll(".gallery-thumb").forEach((button) => {
+    button.classList.toggle("is-active", Number(button.dataset.photoIndex) === detailPhotoIndex);
+  });
+  const counter = document.querySelector("#detailMediaCounter");
+  if (counter) counter.textContent = `${detailPhotoIndex + 1}/${photos.length}`;
+}
+
+function ensureDetailMediaControls() {
+  const media = document.querySelector("#detailMedia");
+  if (!media || media.dataset.controlsReady) return;
+  media.insertAdjacentHTML("beforeend", `
+    <button class="detail-media-arrow is-prev" type="button" data-detail-step="-1" aria-label="${currentLanguage === "es" ? "Foto anterior" : "Previous photo"}">‹</button>
+    <button class="detail-media-arrow is-next" type="button" data-detail-step="1" aria-label="${currentLanguage === "es" ? "Foto siguiente" : "Next photo"}">›</button>
+    <span class="detail-media-counter" id="detailMediaCounter"></span>
+  `);
+  media.dataset.controlsReady = "true";
+  media.addEventListener("click", (event) => {
+    const step = event.target.closest("[data-detail-step]")?.dataset.detailStep;
+    if (step) setDetailPhoto(detailPhotoIndex + Number(step));
+  });
+  media.addEventListener("dblclick", openDetailLightbox);
+}
+
+function ensureLightbox() {
+  document.querySelector(".lightbox")?.remove();
+  if (document.querySelector("#detailLightbox")) return;
+  const box = document.createElement("div");
+  box.className = "detail-lightbox";
+  box.id = "detailLightbox";
+  box.hidden = true;
+  box.innerHTML = `
+    <button class="lightbox-close" type="button" data-lightbox-close>×</button>
+    <button class="lightbox-arrow is-prev" type="button" data-lightbox-step="-1">‹</button>
+    <img alt="Ebrostay">
+    <button class="lightbox-arrow is-next" type="button" data-lightbox-step="1">›</button>
+  `;
+  document.body.appendChild(box);
+  box.addEventListener("click", (event) => {
+    if (event.target === box || event.target.closest("[data-lightbox-close]")) box.hidden = true;
+    const step = event.target.closest("[data-lightbox-step]")?.dataset.lightboxStep;
+    if (step) showLightboxPhoto(detailLightboxIndex + Number(step));
+  });
+}
+
+function showLightboxPhoto(index) {
+  const photos = property.photos || [];
+  if (!photos.length) return;
+  ensureLightbox();
+  detailLightboxIndex = (index + photos.length) % photos.length;
+  const box = document.querySelector("#detailLightbox");
+  box.querySelector("img").src = photos[detailLightboxIndex];
+  box.hidden = false;
+}
+
+function openDetailLightbox() {
+  detailLightboxIndex = detailPhotoIndex;
+  showLightboxPhoto(detailLightboxIndex);
 }
 
 function renderGallery() {
@@ -699,22 +826,24 @@ function renderGallery() {
   const photos = property.photos || [];
   if (!gallery || photos.length === 0) return;
 
-  setBannerPhoto(photos[0]);
+  ensureDetailMediaControls();
+  ensureLightbox();
   gallery.hidden = photos.length < 2;
   gallery.innerHTML = photos.map((url, index) => `
-    <button class="gallery-thumb${index === 0 ? " is-active" : ""}" type="button"
+    <button class="gallery-thumb${index === detailPhotoIndex ? " is-active" : ""}" type="button"
       data-photo-index="${index}" style="background-image: url('${url}')"
       aria-label="Foto ${index + 1}"></button>
   `).join("");
 
-  gallery.addEventListener("click", (event) => {
-    const thumb = event.target.closest("[data-photo-index]");
-    if (!thumb) return;
-    setBannerPhoto(photos[Number(thumb.dataset.photoIndex)]);
-    gallery.querySelectorAll(".gallery-thumb").forEach((button) => {
-      button.classList.toggle("is-active", button === thumb);
+  if (!gallery.dataset.bound) {
+    gallery.addEventListener("click", (event) => {
+      const thumb = event.target.closest("[data-photo-index]");
+      if (!thumb) return;
+      setDetailPhoto(Number(thumb.dataset.photoIndex));
     });
-  });
+    gallery.dataset.bound = "true";
+  }
+  setDetailPhoto(detailPhotoIndex);
 }
 
 function initDetailMap() {
@@ -770,6 +899,8 @@ function applyLanguage(language) {
   renderDistances();
   renderAvailabilityCalendar();
   initBookingWidget();
+  renderShareActions();
+  renderBookingIncluded();
   updateDetailMarker();
 }
 

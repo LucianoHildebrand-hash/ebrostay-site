@@ -44,6 +44,14 @@ let markerLayer = null;
 let markersById = new Map();
 let mapNeedsFit = true;
 let highlightTimer = null;
+let propertyPhotoIndexes = {};
+let mapBoundsFilter = null;
+let drawnMapBounds = null;
+let drawnMapShape = null;
+let draftDrawRect = null;
+let isDrawingMapArea = false;
+let suppressMapMove = false;
+let mapViewportFilteringEnabled = false;
 
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 const datePickers = {};
@@ -161,6 +169,12 @@ function isAvailable(property, filter) {
   return true;
 }
 
+function propertyInMapArea(property) {
+  const bounds = drawnMapBounds || mapBoundsFilter;
+  if (!bounds || !property.lat || !property.lng || typeof bounds.contains !== "function") return true;
+  return bounds.contains([property.lat, property.lng]);
+}
+
 function sortProperties(list, selectedSort) {
   return [...list].sort((a, b) => {
     if (selectedSort === "price") return a.priceNumber - b.priceNumber;
@@ -205,6 +219,123 @@ function initListingsMap() {
   }).addTo(leafletMap);
   markerLayer = L.layerGroup().addTo(leafletMap);
   leafletMap.setView([41.6516, -0.865], 12);
+  ensureMapTools();
+  leafletMap.on("dragstart zoomstart", markMapViewportIntent);
+  leafletMap.on("moveend", handleMapMove);
+}
+
+function ensureMapTools() {
+  const mapCard = document.querySelector(".map-card");
+  if (!mapCard || mapCard.querySelector(".map-tools")) return;
+  const tools = document.createElement("div");
+  tools.className = "map-tools";
+  tools.innerHTML = `
+    <button class="details-button" type="button" data-map-draw>${t("map.draw")}</button>
+    <button class="details-button" type="button" data-map-clear hidden>${t("map.clear")}</button>
+    <span class="map-area-status" data-map-area-status>${t("map.areaCity")}</span>
+  `;
+  const copy = mapCard.querySelector(".map-copy");
+  copy?.insertAdjacentElement("afterend", tools);
+  tools.querySelector("[data-map-draw]")?.addEventListener("click", startMapDraw);
+  tools.querySelector("[data-map-clear]")?.addEventListener("click", clearMapArea);
+}
+
+function syncMapTools() {
+  ensureMapTools();
+  const draw = document.querySelector("[data-map-draw]");
+  const clear = document.querySelector("[data-map-clear]");
+  if (draw) draw.textContent = isDrawingMapArea ? t("map.drawHint") : t("map.draw");
+  if (clear) {
+    clear.textContent = t("map.clear");
+    clear.hidden = !(drawnMapBounds || mapBoundsFilter);
+  }
+  const status = document.querySelector("[data-map-area-status]");
+  if (status) {
+    status.textContent = drawnMapBounds ? t("map.areaDrawn") : (mapBoundsFilter ? t("map.areaViewport") : t("map.areaCity"));
+  }
+}
+
+function suppressUpcomingMapMove() {
+  suppressMapMove = true;
+  window.setTimeout(() => { suppressMapMove = false; }, 700);
+}
+
+function markMapViewportIntent() {
+  if (suppressMapMove || isDrawingMapArea) return;
+  mapViewportFilteringEnabled = true;
+}
+
+function handleMapMove() {
+  if (!leafletMap || isDrawingMapArea) return;
+  if (suppressMapMove) {
+    suppressMapMove = false;
+    return;
+  }
+  if (!mapViewportFilteringEnabled) return;
+  mapBoundsFilter = leafletMap.getBounds();
+  mapNeedsFit = false;
+  renderProperties({ keepMapView: true });
+}
+
+function startMapDraw() {
+  if (!leafletMap || typeof L === "undefined") return;
+  clearDraftDrawRect();
+  isDrawingMapArea = true;
+  syncMapTools();
+  listingsMapElement?.classList.add("is-drawing-area");
+  leafletMap.dragging.disable();
+  leafletMap.once("mousedown", beginMapDraw);
+}
+
+function beginMapDraw(event) {
+  if (!leafletMap || !isDrawingMapArea) return;
+  const start = event.latlng;
+  draftDrawRect = L.rectangle([start, start], {
+    color: "#2f6b55",
+    weight: 2,
+    fillColor: "#2f6b55",
+    fillOpacity: 0.14,
+    dashArray: "6 6"
+  }).addTo(leafletMap);
+  const move = (moveEvent) => {
+    draftDrawRect.setBounds(L.latLngBounds(start, moveEvent.latlng));
+  };
+  const finish = () => {
+    leafletMap.off("mousemove", move);
+    leafletMap.dragging.enable();
+    listingsMapElement?.classList.remove("is-drawing-area");
+    isDrawingMapArea = false;
+    if (drawnMapShape) leafletMap.removeLayer(drawnMapShape);
+    drawnMapShape = draftDrawRect;
+    draftDrawRect = null;
+    drawnMapBounds = drawnMapShape.getBounds();
+    mapBoundsFilter = null;
+    mapNeedsFit = false;
+    syncMapTools();
+    renderProperties({ keepMapView: true });
+  };
+  leafletMap.on("mousemove", move);
+  leafletMap.once("mouseup", finish);
+}
+
+function clearDraftDrawRect() {
+  if (draftDrawRect && leafletMap) leafletMap.removeLayer(draftDrawRect);
+  draftDrawRect = null;
+}
+
+function clearMapArea() {
+  if (drawnMapShape && leafletMap) leafletMap.removeLayer(drawnMapShape);
+  clearDraftDrawRect();
+  drawnMapShape = null;
+  drawnMapBounds = null;
+  mapBoundsFilter = null;
+  mapViewportFilteringEnabled = false;
+  isDrawingMapArea = false;
+  leafletMap?.dragging.enable();
+  listingsMapElement?.classList.remove("is-drawing-area");
+  mapNeedsFit = true;
+  syncMapTools();
+  renderProperties();
 }
 
 function highlightCard(propertyId) {
@@ -222,7 +353,7 @@ function setPinEmphasis(propertyId, emphasized) {
   marker?.getElement()?.querySelector(".map-price-pin")?.classList.toggle("is-active", emphasized);
 }
 
-function updateMapMarkers(list) {
+function updateMapMarkers(list, options = {}) {
   if (!leafletMap || !markerLayer) return;
 
   markerLayer.clearLayers();
@@ -248,10 +379,11 @@ function updateMapMarkers(list) {
     markersById.set(property.id, marker);
   });
 
-  if (list.length && mapNeedsFit) {
+  if (list.length && mapNeedsFit && !options.keepMapView) {
+    suppressUpcomingMapMove();
     leafletMap.fitBounds(L.latLngBounds(list.map((property) => [property.lat, property.lng])), {
       padding: [42, 42],
-      maxZoom: 15
+      maxZoom: 12
     });
     mapNeedsFit = false;
   }
@@ -262,6 +394,7 @@ function focusProperty(propertyId) {
   if (!property) return;
 
   if (leafletMap) {
+    suppressUpcomingMapMove();
     leafletMap.setView([property.lat, property.lng], 16);
     markersById.get(propertyId)?.openPopup();
   } else if (googleMap && mapSources[property.addressKey]) {
@@ -282,6 +415,7 @@ function focusMap(addressKey) {
   const location = addressLocations[addressKey];
 
   if (leafletMap && location) {
+    suppressUpcomingMapMove();
     leafletMap.setView([location.lat, location.lng], 16);
   } else if (googleMap && mapSources[addressKey]) {
     googleMap.src = mapSources[addressKey];
@@ -290,14 +424,20 @@ function focusMap(addressKey) {
   syncAddressButtons(addressKey);
 }
 
-function renderProperties() {
+function renderProperties(options = {}) {
   if (!propertyGrid || !availabilityStatus) return;
 
   const selectedSort = sortBy?.value || activeFilter?.sortBy || "best";
-  const filtered = sortProperties(properties.filter((property) => isAvailable(property, activeFilter)), selectedSort);
+  const baseFiltered = properties.filter((property) => isAvailable(property, activeFilter));
+  const filtered = sortProperties(baseFiltered.filter(propertyInMapArea), selectedSort);
   const count = filtered.length;
+  const usingMapArea = Boolean(drawnMapBounds || mapBoundsFilter);
+
+  syncMapTools();
 
   if (statusOverride) availabilityStatus.textContent = statusOverride;
+  else if (usingMapArea && count === 0) availabilityStatus.textContent = t("status.mapNone");
+  else if (usingMapArea) availabilityStatus.textContent = interpolate("status.mapMatches", { count });
   else if (!activeFilter && quickFilters.size === 0) availabilityStatus.textContent = interpolate("status.all", { count: properties.length });
   else if (count === 0) availabilityStatus.textContent = t("status.none");
   else if (count === 1) availabilityStatus.textContent = t("status.one");
@@ -308,16 +448,27 @@ function renderProperties() {
     const detailUrl = `property.html?id=${property.id}`;
     const badges = badgeList(property).map((key) => `<span>${t(key)}</span>`).join("");
     const amenities = property.amenities.map((key) => `<span>${t(`amenity.${key}`)}</span>`).join("");
-    const mediaStyle = property.photos?.length
-      ? ` style="background-image: linear-gradient(135deg, rgba(24, 33, 29, 0.18), rgba(24, 33, 29, 0.02)), url('${property.photos[0]}')"`
+    const photos = property.photos || [];
+    const photoIndex = Math.min(propertyPhotoIndexes[property.id] || 0, Math.max(photos.length - 1, 0));
+    propertyPhotoIndexes[property.id] = photoIndex;
+    const activePhoto = photos[photoIndex] || photos[0];
+    const mediaStyle = activePhoto
+      ? ` style="background-image: linear-gradient(180deg, rgba(24, 33, 29, 0.05), rgba(24, 33, 29, 0.58)), url('${activePhoto}')"`
       : "";
+    const photoControls = photos.length > 1 ? `
+      <button class="property-photo-arrow is-prev" type="button" data-card-slide="-1" data-property-id="${property.id}" aria-label="${t("listing.prevPhoto")}">‹</button>
+      <button class="property-photo-arrow is-next" type="button" data-card-slide="1" data-property-id="${property.id}" aria-label="${t("listing.nextPhoto")}">›</button>
+      <span class="property-photo-count" data-photo-count>${photoIndex + 1}/${photos.length}</span>
+    ` : "";
 
     return `
       <article class="property-card" data-property-id="${property.id}">
-        <a class="property-media property-${property.addressKey}" href="${detailUrl}" aria-label="${t(property.nameKey)}"${mediaStyle}>
+        <div class="property-media property-${property.addressKey}" data-card-media="${property.id}" aria-label="${t(property.nameKey)}"${mediaStyle}>
+          <a class="property-card-hit" href="${detailUrl}" aria-label="${t(property.nameKey)}"></a>
           <span class="availability-pill">${t("listing.available")}</span>
           <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("listing.saved") : t("listing.favorite")}">${isFavorite ? t("listing.saved") : t("listing.favorite")}</button>
-        </a>
+          ${photoControls}
+        </div>
         <div class="property-body">
           <div class="property-title-row">
             <div>
@@ -339,9 +490,6 @@ function renderProperties() {
           </div>
           <div class="amenity-list">${amenities}</div>
           <div class="property-actions">
-            <a class="details-button" href="${detailUrl}">${t("listing.view")}</a>
-            <button class="details-button" type="button" data-map-focus="${property.id}">${t("listing.map")}</button>
-            <button class="details-button request-button" type="button" data-request="${property.id}">${t("listing.request")}</button>
             <a class="button primary request-button" href="${detailUrl}#book">${t("listing.book")}</a>
           </div>
         </div>
@@ -349,7 +497,7 @@ function renderProperties() {
     `;
   }).join("");
 
-  updateMapMarkers(filtered);
+  updateMapMarkers(filtered, options);
 }
 
 function applyLanguage(language) {
@@ -382,6 +530,7 @@ function applyLanguage(language) {
     link.href = whatsappLink(t("whatsapp.general"));
   });
 
+  syncMapTools();
   renderProperties();
 }
 
@@ -476,6 +625,7 @@ if (resetAvailability) {
   resetAvailability.addEventListener("click", () => {
     activeFilter = null;
     statusOverride = null;
+    clearMapArea();
     quickFilters.clear();
     quickButtons.forEach((button) => button.classList.remove("is-active"));
     availabilityFilter?.reset();
@@ -491,11 +641,34 @@ if (resetAvailability) {
   });
 }
 
+function setCardPhoto(propertyId, direction) {
+  const property = properties.find((item) => item.id === propertyId);
+  const photos = property?.photos || [];
+  if (photos.length < 2) return;
+  const next = ((propertyPhotoIndexes[propertyId] || 0) + direction + photos.length) % photos.length;
+  propertyPhotoIndexes[propertyId] = next;
+  const card = propertyGrid?.querySelector(`[data-property-id="${propertyId}"]`);
+  const media = card?.querySelector("[data-card-media]");
+  if (media) {
+    media.style.backgroundImage = `linear-gradient(180deg, rgba(24, 33, 29, 0.05), rgba(24, 33, 29, 0.58)), url('${photos[next]}')`;
+  }
+  const count = card?.querySelector("[data-photo-count]");
+  if (count) count.textContent = `${next + 1}/${photos.length}`;
+}
+
 if (propertyGrid) {
   propertyGrid.addEventListener("click", (event) => {
+    const slide = event.target.closest("[data-card-slide]");
     const favoriteId = event.target.closest("[data-favorite]")?.dataset.favorite;
     const requestId = event.target.closest("[data-request]")?.dataset.request;
     const mapFocusId = event.target.closest("[data-map-focus]")?.dataset.mapFocus;
+
+    if (slide) {
+      event.preventDefault();
+      event.stopPropagation();
+      setCardPhoto(slide.dataset.propertyId, Number(slide.dataset.cardSlide));
+      return;
+    }
 
     if (favoriteId) {
       event.preventDefault();
@@ -800,4 +973,3 @@ if (window.EbrostayBackend) {
     }
   });
 }
-
