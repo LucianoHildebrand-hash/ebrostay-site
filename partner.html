@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=design-6">
+    <link rel="stylesheet" href="styles.css?v=owner-fix-20260614">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
   </head>
   <body>
@@ -26,6 +26,7 @@
           <button class="language-option" type="button" data-lang="en">EN</button>
         </div>
         <a class="admin-link" href="owners.html" data-i18n="owners.aboutLink">Ventajas</a>
+        <a class="admin-link" href="owner-listing.html" data-i18n="partner.postProperty">Publicar nueva vivienda</a>
         <a class="nav-cta" href="index.html" data-i18n="admin.back">Volver al sitio</a>
       </div>
     </header>
@@ -38,12 +39,19 @@
 
       <!-- Signed out -->
       <section id="partnerSignedOut" hidden>
-        <p data-i18n="partner.signinCopy">Inicia sesión con la cuenta de propietario que te facilitamos para ver tus viviendas, ingresos y datos de pago.</p>
+        <div class="owner-portal-intro">
+          <p data-i18n="partner.signinCopy">Inicia sesión o crea una cuenta para ver tus viviendas, publicar nuevas propiedades y recuperar borradores guardados.</p>
+          <a class="button primary" href="owner-listing.html" data-i18n="partner.postProperty">Publicar nueva vivienda</a>
+        </div>
         <form class="auth-form admin-login" id="partnerLogin">
+          <div class="auth-tabs" id="partnerAuthTabs">
+            <button type="button" class="is-active" data-partner-auth-mode="signin" data-i18n="auth.signin">Iniciar sesión</button>
+            <button type="button" data-partner-auth-mode="signup" data-i18n="partner.createAccount">Crear cuenta</button>
+          </div>
           <label><span data-i18n="auth.email">Email</span><input name="email" type="email" autocomplete="email" required></label>
           <label><span data-i18n="auth.password">Contraseña</span><input name="password" type="password" autocomplete="current-password" required></label>
           <p class="auth-message" id="partnerLoginMessage" role="status"></p>
-          <button class="button primary" type="submit" data-i18n="auth.signin">Iniciar sesión</button>
+          <button class="button primary" id="partnerAuthSubmit" type="submit" data-i18n="auth.signin">Iniciar sesión</button>
         </form>
       </section>
 
@@ -51,7 +59,7 @@
       <section id="partnerNotOwner" hidden>
         <div class="partner-empty">
           <p data-i18n="partner.notOwner">Tu cuenta aún no está activada como propietario. Si quieres que gestionemos tu vivienda, envíanos una solicitud y la activamos.</p>
-          <p style="margin-top: 12px;"><a class="button primary" href="owners.html#owner-apply" data-i18n="owners.cta">Quiero unirme</a></p>
+          <p style="margin-top: 12px;"><a class="button primary" href="owner-listing.html" data-i18n="partner.postFirstProperty">Publica tu primera vivienda</a></p>
         </div>
       </section>
 
@@ -59,6 +67,7 @@
       <section id="partnerDashboard" hidden>
         <div class="admin-toolbar">
           <span class="user-email" id="partnerEmail"></span>
+          <a class="button primary" href="owner-listing.html" data-i18n="partner.postProperty">Publicar nueva vivienda</a>
           <button class="logout-button" id="partnerLogout" type="button" data-i18n="auth.logout">Salir</button>
         </div>
 
@@ -120,8 +129,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=design-6"></script>
+    <script src="data.js?v=owner-fix-20260614"></script>
     <script src="backend.js?v=design-6"></script>
-    <script src="partner.js?v=design-6"></script>
+    <script src="partner.js?v=owner-fix-20260614"></script>
   </body>
 </html>

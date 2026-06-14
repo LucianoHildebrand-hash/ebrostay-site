@@ -452,6 +452,24 @@ textarea {
     url("assets/ebrostay-hero.webp") center / cover;
 }
 
+.property-card-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.property-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(24, 33, 29, 0.03), rgba(24, 33, 29, 0.56));
+}
+
 a.property-media {
   display: block;
 }
@@ -479,6 +497,7 @@ a.property-media {
 
 .availability-pill {
   position: absolute;
+  z-index: 4;
   top: 12px;
 }
 
@@ -494,6 +513,7 @@ a.property-media {
 
 .favorite-button {
   position: absolute;
+  z-index: 4;
   right: 12px;
   bottom: 12px;
   max-width: calc(100% - 24px);
@@ -2794,6 +2814,21 @@ input:focus, select:focus, textarea:focus {
 .value-band .stat b { color: var(--lime); }
 
 /* ---- Partner / owner dashboard ---- */
+.owner-portal-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+}
+.owner-portal-intro p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+  line-height: 1.55;
+}
 .partner-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 18px 0 26px; }
 .partner-metric {
   border: 1px solid var(--line);
@@ -2812,6 +2847,7 @@ input:focus, select:focus, textarea:focus {
   color: var(--muted);
   font-weight: 700;
 }
+.partner-empty p { margin: 0 0 12px; }
 
 /* Section heading helper for new marketing sections */
 .section-head { width: min(1240px, calc(100% - 38px)); margin: 0 auto 26px; }

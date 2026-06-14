@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=section2-20260614c">
+    <link rel="stylesheet" href="styles.css?v=owner-fix-20260614">
   </head>
   <body>
     <header class="site-header">
@@ -25,6 +25,7 @@
           <button class="language-option" type="button" data-lang="en">EN</button>
         </div>
         <a class="nav-cta" href="owners.html" data-owner-i18n="navOwners">Propietarios</a>
+        <a class="admin-link owner-login-link" href="partner.html" data-owner-i18n="portal">Entrar / ver mis viviendas</a>
       </div>
     </header>
 
@@ -88,7 +89,7 @@
           <button class="button primary" type="submit" data-owner-i18n="save">Guardar borrador y continuar</button>
           <p class="form-note" id="ownerListingStatus" role="status" data-owner-i18n="saveNote">No te preocupes: guardamos lo que has escrito antes de pedirte iniciar sesión o crear cuenta.</p>
           <div class="owner-auth-actions" id="ownerAuthActions" hidden>
-            <a class="button primary" href="index.html#login" data-owner-i18n="login">Iniciar sesión o crear cuenta</a>
+            <a class="button primary" href="partner.html" data-owner-i18n="login">Iniciar sesión o crear cuenta</a>
             <a class="button ghost" href="mailto:info@ebrostay.com" data-owner-i18n="emailUs">Enviar por email</a>
           </div>
         </section>
@@ -106,8 +107,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=section2-20260614c"></script>
+    <script src="data.js?v=owner-fix-20260614"></script>
     <script src="backend.js?v=design-6"></script>
-    <script src="owner-listing.js?v=section2-20260614c"></script>
+    <script src="owner-listing.js?v=owner-fix-20260614"></script>
   </body>
 </html>

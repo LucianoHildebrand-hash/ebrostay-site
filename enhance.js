@@ -678,7 +678,6 @@
       .lightbox-actions { display:flex; gap:10px; justify-content:center; }
       .lightbox button { border:0; border-radius: var(--radius-pill); padding: 10px 14px; color: var(--green-900); background:#fff; font-weight:900; cursor:pointer; }
 
-      body[data-page="owners"] a[href="partner.html"] { display: none !important; }
 
       @media (prefers-reduced-motion: reduce) {
         .audience-selector.is-first-visit .audience-toggle-button.is-active { animation: none; }
@@ -758,7 +757,7 @@
       statusStrong.textContent = isOwner ? c("ownerStatus") : c("tenantStatus");
       statusCopy.textContent = isOwner ? c("ownerCopy") : c("tenantCopy");
       statusLink.textContent = isOwner ? c("ownerCta") : c("tenantCta");
-      statusLink.href = isOwner ? "owners.html" : "#search";
+      statusLink.href = isOwner ? "partner.html" : "#search";
       buttons.forEach(function (button) {
         var value = button.dataset.audienceValue;
         var active = value === mode;
@@ -1179,8 +1178,11 @@
       .property-list { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
       .property-card { position: relative !important; display: block !important; aspect-ratio: 1 / 1 !important; min-height: 360px; overflow: hidden; border-radius: 10px; background: #fff; }
       .property-card[hidden] { display: none !important; }
-      .property-media { position: absolute !important; inset: 0; min-height: 0 !important; height: auto !important; background-position: center !important; background-size: cover !important; transition: transform .35s ease; }
-      .property-card:hover .property-media { transform: scale(1.025); }
+      .property-media { position: absolute !important; inset: 0; min-height: 0 !important; height: auto !important; overflow: hidden; background-position: center !important; background-size: cover !important; }
+      .property-card-photo { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
+      .property-media::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(24,33,29,.03), rgba(24,33,29,.56)); }
+      .property-card:hover .property-card-photo { transform: scale(1.025); }
+      .availability-pill, .favorite-button { z-index: 5; }
       .property-card-hit { position: absolute; inset: 54px 54px 118px 54px; z-index: 2; border-radius: 10px; }
       .property-body { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; display: grid !important; gap: 7px !important; max-height: min(52%, 230px); overflow: hidden; padding: 12px !important; border: 1px solid rgba(255,255,255,.62); border-radius: 10px; background: rgba(255,255,255,.93); box-shadow: 0 12px 30px rgba(24,33,29,.18); backdrop-filter: blur(14px); }
       .property-title-row { grid-template-columns: 1fr; gap: 5px !important; }

@@ -11,6 +11,7 @@ let photoUrls = [];
 const OWNER_COPY = {
   es: {
     navOwners: "Propietarios",
+    portal: "Entrar / ver mis viviendas",
     kicker: "Publica sin llamadas",
     title: "Sube fotos y deja que Ebrostay prepare el primer borrador.",
     lead: "Añade tus fotos, marca servicios como wifi o gastos incluidos y guarda el borrador. Si creas cuenta después, no se pierde nada.",
@@ -57,6 +58,7 @@ const OWNER_COPY = {
   },
   en: {
     navOwners: "Owners",
+    portal: "Sign in / see my homes",
     kicker: "List without calls",
     title: "Upload photos and let Ebrostay prepare the first draft.",
     lead: "Add your photos, mark services like wifi or utilities included, and save the draft. If you create an account after, nothing is lost.",

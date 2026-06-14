@@ -3,6 +3,7 @@
 const languageButtons = document.querySelectorAll("[data-lang]");
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let dashboard = null;
+let partnerAuthMode = "signin";
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 function interpolate(key, values) {
@@ -51,7 +52,7 @@ function renderDashboard() {
             </span>
           </div>
         </li>`).join("")
-    : `<li class="partner-empty">${t("partner.noProps")}</li>`;
+    : `<li class="partner-empty"><p>${t("partner.noProps")}</p><a class="button primary" href="owner-listing.html">${t("partner.postFirstProperty")}</a></li>`;
 
   const th = (key) => `<th>${t(key)}</th>`;
   const head = `<tr>${["admin.th.property", "admin.th.checkin", "admin.th.checkout", "admin.th.months", "admin.th.amount", "partner.thStatus"].map(th).join("")}</tr>`;
@@ -86,10 +87,33 @@ function applyLanguage(language) {
     button.classList.toggle("is-active", button.dataset.lang === currentLanguage);
   });
   renderDashboard();
+  setPartnerAuthMode(partnerAuthMode);
+}
+
+function setPartnerAuthMode(mode) {
+  partnerAuthMode = mode === "signup" ? "signup" : "signin";
+  const tabs = document.querySelector("#partnerAuthTabs");
+  const submit = document.querySelector("#partnerAuthSubmit");
+  const message = document.querySelector("#partnerLoginMessage");
+  tabs?.querySelectorAll("[data-partner-auth-mode]").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.partnerAuthMode === partnerAuthMode);
+  });
+  if (submit) {
+    submit.textContent = t(partnerAuthMode === "signup" ? "partner.createAccount" : "auth.signin");
+  }
+  if (message) {
+    message.textContent = t(partnerAuthMode === "signup" ? "partner.signupCopy" : "partner.signinCopy");
+    message.className = "auth-message";
+  }
 }
 
 languageButtons.forEach((button) => {
   button.addEventListener("click", () => applyLanguage(button.dataset.lang));
+});
+
+document.querySelector("#partnerAuthTabs")?.addEventListener("click", (event) => {
+  const mode = event.target.closest("[data-partner-auth-mode]")?.dataset.partnerAuthMode;
+  if (mode) setPartnerAuthMode(mode);
 });
 
 document.querySelector("#partnerLogin")?.addEventListener("submit", async (event) => {
@@ -97,7 +121,26 @@ document.querySelector("#partnerLogin")?.addEventListener("submit", async (event
   const data = new FormData(event.target);
   const message = document.querySelector("#partnerLoginMessage");
   message.className = "auth-message";
-  const error = await EbrostayBackend.signIn(data.get("email")?.toString().trim() || "", data.get("password")?.toString() || "");
+  if (!window.EbrostayBackend?.isConfigured()) {
+    message.textContent = t("partner.authUnavailable");
+    message.classList.add("is-error");
+    return;
+  }
+  const email = data.get("email")?.toString().trim() || "";
+  const password = data.get("password")?.toString() || "";
+  if (partnerAuthMode === "signup") {
+    const result = await EbrostayBackend.signUp(email, password);
+    if (result.error) {
+      message.textContent = t("auth.signupError");
+      message.classList.add("is-error");
+    } else {
+      message.textContent = result.needsConfirmation ? t("auth.successEmailTitle") : t("partner.signinCopy");
+      message.classList.add("is-success");
+      event.target.reset();
+    }
+    return;
+  }
+  const error = await EbrostayBackend.signIn(email, password);
   if (error) {
     message.textContent = t("auth.error");
     message.classList.add("is-error");
@@ -173,6 +216,7 @@ document.querySelector("#connectButton")?.addEventListener("click", async () => 
 
 document.querySelector("#year").textContent = new Date().getFullYear();
 applyLanguage(currentLanguage);
+setPartnerAuthMode("signin");
 showState("loading");
 
 // returning from Stripe onboarding → re-check status

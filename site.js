@@ -175,6 +175,13 @@ function propertyInMapArea(property) {
   return bounds.contains([property.lat, property.lng]);
 }
 
+function propertyCardPhotos(property) {
+  if (property.photos?.length) return property.photos;
+  return property.addressKey === "pedro"
+    ? ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"]
+    : ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
+}
+
 function sortProperties(list, selectedSort) {
   return [...list].sort((a, b) => {
     if (selectedSort === "price") return a.priceNumber - b.priceNumber;
@@ -448,13 +455,10 @@ function renderProperties(options = {}) {
     const detailUrl = `property.html?id=${property.id}`;
     const badges = badgeList(property).map((key) => `<span>${t(key)}</span>`).join("");
     const amenities = property.amenities.map((key) => `<span>${t(`amenity.${key}`)}</span>`).join("");
-    const photos = property.photos || [];
+    const photos = propertyCardPhotos(property);
     const photoIndex = Math.min(propertyPhotoIndexes[property.id] || 0, Math.max(photos.length - 1, 0));
     propertyPhotoIndexes[property.id] = photoIndex;
     const activePhoto = photos[photoIndex] || photos[0];
-    const mediaStyle = activePhoto
-      ? ` style="background-image: linear-gradient(180deg, rgba(24, 33, 29, 0.05), rgba(24, 33, 29, 0.58)), url('${activePhoto}')"`
-      : "";
     const photoControls = photos.length > 1 ? `
       <button class="property-photo-arrow is-prev" type="button" data-card-slide="-1" data-property-id="${property.id}" aria-label="${t("listing.prevPhoto")}">‹</button>
       <button class="property-photo-arrow is-next" type="button" data-card-slide="1" data-property-id="${property.id}" aria-label="${t("listing.nextPhoto")}">›</button>
@@ -463,7 +467,8 @@ function renderProperties(options = {}) {
 
     return `
       <article class="property-card" data-property-id="${property.id}">
-        <div class="property-media property-${property.addressKey}" data-card-media="${property.id}" aria-label="${t(property.nameKey)}"${mediaStyle}>
+        <div class="property-media property-${property.addressKey}" data-card-media="${property.id}" aria-label="${t(property.nameKey)}">
+          <img class="property-card-photo" src="${activePhoto}" alt="${t(property.nameKey)}" loading="lazy" data-card-photo>
           <a class="property-card-hit" href="${detailUrl}" aria-label="${t(property.nameKey)}"></a>
           <span class="availability-pill">${t("listing.available")}</span>
           <button class="favorite-button${isFavorite ? " is-active" : ""}" type="button" data-favorite="${property.id}" aria-label="${isFavorite ? t("listing.saved") : t("listing.favorite")}">${isFavorite ? t("listing.saved") : t("listing.favorite")}</button>
@@ -643,15 +648,13 @@ if (resetAvailability) {
 
 function setCardPhoto(propertyId, direction) {
   const property = properties.find((item) => item.id === propertyId);
-  const photos = property?.photos || [];
+  const photos = property ? propertyCardPhotos(property) : [];
   if (photos.length < 2) return;
   const next = ((propertyPhotoIndexes[propertyId] || 0) + direction + photos.length) % photos.length;
   propertyPhotoIndexes[propertyId] = next;
   const card = propertyGrid?.querySelector(`[data-property-id="${propertyId}"]`);
-  const media = card?.querySelector("[data-card-media]");
-  if (media) {
-    media.style.backgroundImage = `linear-gradient(180deg, rgba(24, 33, 29, 0.05), rgba(24, 33, 29, 0.58)), url('${photos[next]}')`;
-  }
+  const photo = card?.querySelector("[data-card-photo]");
+  if (photo) photo.src = photos[next];
   const count = card?.querySelector("[data-photo-count]");
   if (count) count.textContent = `${next + 1}/${photos.length}`;
 }
@@ -732,7 +735,7 @@ if (inquiryForm) {
 
 function updateAuthUI(user) {
   const configured = Boolean(window.EbrostayBackend?.isConfigured());
-  if (authButton) authButton.hidden = !configured || Boolean(user);
+  if (authButton) authButton.hidden = Boolean(user);
   if (userChip) userChip.hidden = !configured || !user;
   if (user && userEmail) userEmail.textContent = user.email || "";
   if (adminLink) adminLink.hidden = !EbrostayBackend?.getIsAdmin();
@@ -844,6 +847,11 @@ if (authForm) {
     const email = formData.get("email")?.toString().trim() || "";
     const password = formData.get("password")?.toString() || "";
     authMessage.className = "auth-message";
+
+    if (!window.EbrostayBackend?.isConfigured()) {
+      showAuthError("auth.unavailable");
+      return;
+    }
 
     if (authMode === "signup") {
       const { needsConfirmation, error } = await EbrostayBackend.signUp(email, password);
