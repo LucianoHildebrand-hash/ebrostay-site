@@ -39,6 +39,7 @@ const OWNER_COPY = {
     login: "Iniciar sesión o crear cuenta",
     emailUs: "Enviar por email",
     emptyPhotos: "Sube fotos de salón, dormitorios, cocina, baño y plano si lo tienes.",
+    addMorePhotos: "Añadir más fotos",
     localDraft: "Borrador local generado con tus datos y fotos.",
     aiDraft: "Descripción generada por IA. Revísala antes de guardar.",
     toggles: {
@@ -54,7 +55,8 @@ const OWNER_COPY = {
       parking: "Parking",
       lift: "Ascensor",
       selfCheckin: "Autoentrada"
-    }
+    },
+    photoSlots: ["Salón principal", "Dormitorio", "Cocina", "Baño", "Entrada o fachada", "Plano"]
   },
   en: {
     navOwners: "Owners",
@@ -86,6 +88,7 @@ const OWNER_COPY = {
     login: "Sign in or create account",
     emailUs: "Send by email",
     emptyPhotos: "Upload living room, bedroom, kitchen, bathroom and floor plan photos if you have them.",
+    addMorePhotos: "Add more photos",
     localDraft: "Local draft generated from your details and photos.",
     aiDraft: "AI description generated. Review it before saving.",
     toggles: {
@@ -101,12 +104,27 @@ const OWNER_COPY = {
       parking: "Parking",
       lift: "Lift",
       selfCheckin: "Self check-in"
-    }
+    },
+    photoSlots: ["Main living room", "Bedroom", "Kitchen", "Bathroom", "Entrance or facade", "Floor plan"]
   }
 };
 
 const c = (key) => OWNER_COPY[currentLanguage]?.[key] || OWNER_COPY.es[key] || key;
 const toggleKeys = ["wifi", "utilities", "desk", "washer", "dishwasher", "ac", "heating", "kitchen", "terrace", "parking", "lift", "selfCheckin"];
+
+function photoSlotLabels() {
+  return OWNER_COPY[currentLanguage]?.photoSlots || OWNER_COPY.es.photoSlots;
+}
+
+function photoPlaceholder(label, index, addMore = false) {
+  return `
+    <button class="owner-photo-slot${addMore ? " is-add-more" : ""}" type="button" data-photo-slot="${index}">
+      <span class="owner-photo-slot-icon">+</span>
+      <strong>${label}</strong>
+      <small>${addMore ? c("addMorePhotos") : c("emptyPhotos")}</small>
+    </button>
+  `;
+}
 
 function dbOpen() {
   return new Promise((resolve, reject) => {
@@ -155,14 +173,20 @@ function renderPhotos() {
   revokePhotoUrls();
   if (!preview) return;
   if (!photoItems.length) {
-    preview.innerHTML = `<p class="admin-empty-note">${c("emptyPhotos")}</p>`;
+    preview.innerHTML = photoSlotLabels().map((label, index) => photoPlaceholder(label, index)).join("");
     return;
   }
-  preview.innerHTML = photoItems.map((item, index) => {
+  const filled = photoItems.map((item, index) => {
     const url = URL.createObjectURL(item.blob);
     photoUrls.push(url);
-    return `<figure><img src="${url}" alt=""><figcaption>${index + 1}. ${item.name}</figcaption></figure>`;
+    const label = photoSlotLabels()[index] || item.name;
+    return `<figure><img src="${url}" alt=""><figcaption>${index + 1}. ${label}</figcaption></figure>`;
   }).join("");
+  const remaining = photoSlotLabels()
+    .slice(photoItems.length)
+    .map((label, index) => photoPlaceholder(label, photoItems.length + index, true))
+    .join("");
+  preview.innerHTML = filled + remaining;
 }
 
 function fields() {
@@ -274,6 +298,11 @@ photoInput?.addEventListener("change", async () => {
   await savePhotos(photoItems.map((item) => item.blob));
   renderPhotos();
   saveDraft();
+});
+
+preview?.addEventListener("click", (event) => {
+  if (!event.target.closest("[data-photo-slot]")) return;
+  photoInput?.click();
 });
 
 document.querySelector("#generateOwnerDescription")?.addEventListener("click", generateDescription);

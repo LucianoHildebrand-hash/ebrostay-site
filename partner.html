@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=owner-fix-20260614">
+    <link rel="stylesheet" href="styles.css?v=owners-section-fix-20260615">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
   </head>
   <body>
@@ -34,6 +34,27 @@
     <main class="detail-page admin-page">
       <p class="section-kicker" data-i18n="partner.kicker">Portal de propietarios</p>
       <h1 data-i18n="partner.title">Tu cartera, en tiempo real.</h1>
+
+      <section class="owner-publish-board" aria-labelledby="ownerPublishTitle">
+        <div class="owner-publish-copy">
+          <p class="section-kicker" data-i18n="partner.manageKicker">Manage my flat</p>
+          <h2 id="ownerPublishTitle" data-i18n="partner.manageTitle">Publica una vivienda desde fotos, sin llamadas.</h2>
+          <p data-i18n="partner.manageCopy">Empieza subiendo fotos en los huecos del anuncio. Guardamos el borrador, generamos la descripción inicial y te llevamos a iniciar sesión sin perder nada.</p>
+          <a class="button primary" href="owner-listing.html" data-i18n="partner.openDraft">Crear anuncio con fotos</a>
+        </div>
+        <a class="owner-flat-draft-card" href="owner-listing.html" aria-label="Publicar nueva vivienda">
+          <span class="owner-flat-draft-grid" aria-hidden="true">
+            <span><b>+</b><small data-i18n="partner.slotLiving">Salón</small></span>
+            <span><b>+</b><small data-i18n="partner.slotBedroom">Dormitorio</small></span>
+            <span><b>+</b><small data-i18n="partner.slotKitchen">Cocina</small></span>
+            <span><b>+</b><small data-i18n="partner.slotBath">Baño</small></span>
+            <span><b>+</b><small data-i18n="partner.slotExterior">Entrada</small></span>
+            <span><b>+</b><small data-i18n="partner.slotPlan">Plano</small></span>
+          </span>
+          <strong data-i18n="partner.placeholderTitle">Nuevo piso listo para publicar</strong>
+          <em data-i18n="partner.placeholderCopy">Haz clic para completar fotos, servicios, precio y borrador IA.</em>
+        </a>
+      </section>
 
       <p class="account-loading" id="partnerLoading" data-i18n="account.loading">Cargando…</p>
 
@@ -129,8 +150,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=owner-fix-20260614"></script>
+    <script src="data.js?v=owners-section-fix-20260615"></script>
     <script src="backend.js?v=design-6"></script>
-    <script src="partner.js?v=owner-fix-20260614"></script>
+    <script src="partner.js?v=owners-section-fix-20260615"></script>
   </body>
 </html>

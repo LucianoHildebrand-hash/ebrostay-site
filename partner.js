@@ -52,7 +52,17 @@ function renderDashboard() {
             </span>
           </div>
         </li>`).join("")
-    : `<li class="partner-empty"><p>${t("partner.noProps")}</p><a class="button primary" href="owner-listing.html">${t("partner.postFirstProperty")}</a></li>`;
+    : `<li class="partner-empty">
+        <a class="owner-flat-draft-card is-compact" href="owner-listing.html">
+          <span class="owner-flat-draft-grid" aria-hidden="true">
+            <span><b>+</b><small>${t("partner.slotLiving")}</small></span>
+            <span><b>+</b><small>${t("partner.slotBedroom")}</small></span>
+            <span><b>+</b><small>${t("partner.slotKitchen")}</small></span>
+          </span>
+          <strong>${t("partner.postFirstProperty")}</strong>
+          <em>${t("partner.noProps")}</em>
+        </a>
+      </li>`;
 
   const th = (key) => `<th>${t(key)}</th>`;
   const head = `<tr>${["admin.th.property", "admin.th.checkin", "admin.th.checkout", "admin.th.months", "admin.th.amount", "partner.thStatus"].map(th).join("")}</tr>`;
