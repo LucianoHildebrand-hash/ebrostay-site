@@ -950,15 +950,27 @@ a.property-media {
 .property-price {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 2px;
   justify-items: start;
+  line-height: 1.15;
 }
 
 .price-note {
   color: var(--muted);
   font-size: 0.8rem;
   font-weight: 600;
-  white-space: nowrap;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.property-card .price-note {
+  flex-basis: 100%;
+}
+
+[data-theme="dark"] .price-note {
+  color: var(--text-body);
 }
 
 .property-card.is-map-highlight {

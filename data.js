@@ -1235,12 +1235,12 @@ const translations = {
     "properties.pedro2.area": "University - Pedro II el Católico",
     "properties.pedro2.copy": "Second-floor left flat in the same building, practical for professionals, students, or temporary relocations.",
     "properties.pedro2.details": "Furnished home with functional layout, wifi, heating, and local support for arrival and stay.",
-    "properties.movera0.name": "Movera 7 - Segunda Planta",
+    "properties.movera0.name": "Movera 7 - 2nd floor",
     "properties.movera0.area": "Movera",
     "properties.movera0.copy": "Three private bedrooms at Movera 7 (second floor), ideal for company teams, technicians, and project stays.",
     "properties.movera0.details": "Three private bedrooms with shared living, dining, and equipped kitchen, plus a full bathroom. Expenses included with utilities capped at 50 EUR per room, self check-in by lockbox, and 24/7 support. Whole flat or room by room.",
     "properties.movera0.priceNote": "or 450 EUR/room",
-    "properties.movera1.name": "Movera 7 - Primera Planta",
+    "properties.movera1.name": "Movera 7 - 1st floor",
     "properties.movera1.area": "Movera",
     "properties.movera1.copy": "Three private bedrooms at Movera 7, ideal for company teams, technicians, and project stays.",
     "properties.movera1.details": "Three private bedrooms with shared living, dining, and equipped kitchen, full bathroom, and terrace. Expenses included with utilities capped at 50 EUR per room, self check-in by lockbox, and 24/7 support. Whole flat or room by room.",
@@ -1595,8 +1595,8 @@ function ownerRecordToProperty(record) {
   const copy = record.copy || record.description || "";
   const details = record.details || record.description || copy;
 
-  translations.es[`${key}.name`] = name;
-  translations.en[`${key}.name`] = name;
+  translations.es[`${key}.name`] = localizeListingTitle(name, "es");
+  translations.en[`${key}.name`] = localizeListingTitle(name, "en");
   translations.es[`${key}.area`] = area;
   translations.en[`${key}.area`] = area;
   translations.es[`${key}.copy`] = copy;
@@ -1635,6 +1635,26 @@ function ownerRecordToProperty(record) {
     floorplans: uniquePhotoList(record.floorplans),
     unavailable: []
   };
+}
+
+function ordinalFloorLabel(floor) {
+  const value = Number(floor);
+  if (!Number.isFinite(value)) return `${floor}th`;
+  const abs = Math.abs(value);
+  const suffix = abs % 100 >= 11 && abs % 100 <= 13
+    ? "th"
+    : ({ 1: "st", 2: "nd", 3: "rd" }[abs % 10] || "th");
+  return `${value}${suffix}`;
+}
+
+function localizeListingTitle(title, language) {
+  if (language !== "en" || typeof title !== "string") return title;
+  return title
+    .replace(/\bplanta baja\b/gi, "ground floor")
+    .replace(/\bprimera planta\b/gi, "1st floor")
+    .replace(/\bsegunda planta\b/gi, "2nd floor")
+    .replace(/\btercera planta\b/gi, "3rd floor")
+    .replace(/\b(\d+)\s*planta\b/gi, (_, floor) => `${ordinalFloorLabel(floor)} floor`);
 }
 
 function upsertOwnerPublishedRecord(record) {

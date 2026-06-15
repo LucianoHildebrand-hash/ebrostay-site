@@ -42,7 +42,7 @@ const EbrostayBackend = (() => {
       translations.es[`${key}.${suffix}`] = es ?? en ?? "";
       translations.en[`${key}.${suffix}`] = en ?? es ?? "";
     };
-    set("name", row.name, row.name);
+    set("name", row.name, typeof localizeListingTitle === "function" ? localizeListingTitle(row.name, "en") : row.name);
     set("area", row.area_es, row.area_en);
     set("copy", row.copy_es, row.copy_en);
     set("details", row.details_es, row.details_en);
