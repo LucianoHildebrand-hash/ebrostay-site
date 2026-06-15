@@ -15,6 +15,7 @@
   let restoredPublishId = "";
   let extraSlotCount = 0;
   let lastPublishedRecord = null;
+  let descriptionVariantIndex = 0;
 
   const serviceKeys = {
     wifi: "amenity.wifi",
@@ -194,7 +195,7 @@
     title.dataset.generated = "true";
   }
 
-  function generatedDescription() {
+  function descriptionFacts() {
     const address = field("address")?.value.trim();
     const price = field("price")?.value.trim();
     const bedrooms = field("bedrooms")?.value.trim();
@@ -205,8 +206,16 @@
     const rooms = roomSummaryItems();
     const photoNames = flattenedPhotos().map((photo) => photo.name).filter(Boolean).slice(0, 6);
 
+    return { address, price, bedrooms, bathrooms, capacity, available, services, rooms, photoNames };
+  }
+
+  function generatedDescription(variant = 0) {
+    const { address, price, bedrooms, bathrooms, capacity, available, services, rooms, photoNames } = descriptionFacts();
+    const pickedVariant = Math.abs(Number(variant) || 0) % 3;
+
     if (lang() === "en") {
-      return [
+      const variants = [
+        [
         `${address ? `Furnished mid-stay home in ${address}` : "Furnished mid-stay home in Zaragoza"}, prepared for verified tenants and managed by Ebrostay.`,
         bedrooms || bathrooms || capacity
           ? `Layout: ${bedrooms || "0"} bedrooms, ${bathrooms || "0"} bathrooms, and capacity for up to ${capacity || "1"} people.`
@@ -216,26 +225,73 @@
         photoNames.length ? `Uploaded files reviewed: ${photoNames.join(", ")}.` : "",
         price ? `Suggested monthly price: ${price} EUR/month.` : "Add a monthly price to prepare the booking card.",
         available ? `Available from ${available}.` : "Add the available-from date before publishing."
-      ].filter(Boolean).join("\n");
+        ],
+        [
+          `${address ? `This furnished home in ${address}` : "This furnished home in Zaragoza"} is ready for medium-length stays and will be presented under Ebrostay's verified rental process.`,
+          bedrooms || bathrooms || capacity
+            ? `The draft advertises ${bedrooms || "0"} bedrooms, ${bathrooms || "0"} bathrooms, and space for up to ${capacity || "1"} guests.`
+            : "The room distribution can be refined once more photos or owner notes are added.",
+          services.length ? `Strong selling points: ${services.join(", ")}.` : "Select services to make the value proposition clearer.",
+          rooms.length ? `Current photo coverage includes ${rooms.join(", ")}.` : "The six suggested photo types are helpful for trust, but they are not required to publish.",
+          price ? `The listing is being prepared at ${price} EUR per month.` : "Add the monthly price so the customer-facing card is complete.",
+          available ? `Move-in can be offered from ${available}.` : "The available-from date is still pending."
+        ],
+        [
+          `${address ? `Ebrostay can publish this ${address} home` : "Ebrostay can publish this Zaragoza home"} as a furnished, managed option for professionals and relocating teams.`,
+          bedrooms || bathrooms || capacity
+            ? `Key facts: ${bedrooms || "0"} bedrooms, ${bathrooms || "0"} bathrooms, maximum capacity ${capacity || "1"}.`
+            : "Key facts will become sharper as the owner completes the room details.",
+          services.length ? `The home should stand out for ${services.join(", ")}.` : "Add amenities and conditions to improve search confidence.",
+          rooms.length ? `Uploaded photo categories: ${rooms.join(", ")}.` : "More photos can be added later to improve consistency and visibility.",
+          photoNames.length ? `Files considered: ${photoNames.join(", ")}.` : "",
+          price ? `Recommended published rent: ${price} EUR/month.` : "Monthly rent is still missing.",
+          available ? `Availability starts on ${available}.` : "Availability should be added before final publication."
+        ]
+      ];
+      return variants[pickedVariant].filter(Boolean).join("\n");
     }
 
-    return [
-      `${address ? `Vivienda amueblada de media estancia en ${address}` : "Vivienda amueblada de media estancia en Zaragoza"}, preparada para inquilinos verificados y gestionada por Ebrostay.`,
-      bedrooms || bathrooms || capacity
-        ? `Distribucion: ${bedrooms || "0"} dormitorios, ${bathrooms || "0"} banos y capacidad para hasta ${capacity || "1"} personas.`
-        : "La distribucion se completara con las fotos y notas del propietario.",
-      services.length ? `Incluye: ${services.join(", ")}.` : "Anade servicios para completar los puntos destacados del anuncio.",
-      rooms.length ? `Fotos recibidas de: ${rooms.join(", ")}.` : "Las fotos sugeridas son recomendables, pero puedes publicar sin completar todos los espacios.",
-      photoNames.length ? `Archivos revisados: ${photoNames.join(", ")}.` : "",
-      price ? `Precio mensual sugerido: ${price} EUR/mes.` : "Anade el precio mensual para preparar la tarjeta de reserva.",
-      available ? `Disponible desde ${available}.` : "Anade la fecha de disponibilidad antes de publicar."
-    ].filter(Boolean).join("\n");
+    const variants = [
+      [
+        `${address ? `Vivienda amueblada de media estancia en ${address}` : "Vivienda amueblada de media estancia en Zaragoza"}, preparada para inquilinos verificados y gestionada por Ebrostay.`,
+        bedrooms || bathrooms || capacity
+          ? `Distribucion: ${bedrooms || "0"} dormitorios, ${bathrooms || "0"} banos y capacidad para hasta ${capacity || "1"} personas.`
+          : "La distribucion se completara con las fotos y notas del propietario.",
+        services.length ? `Incluye: ${services.join(", ")}.` : "Anade servicios para completar los puntos destacados del anuncio.",
+        rooms.length ? `Fotos recibidas de: ${rooms.join(", ")}.` : "Las fotos sugeridas son recomendables, pero puedes publicar sin completar todos los espacios.",
+        photoNames.length ? `Archivos revisados: ${photoNames.join(", ")}.` : "",
+        price ? `Precio mensual sugerido: ${price} EUR/mes.` : "Anade el precio mensual para preparar la tarjeta de reserva.",
+        available ? `Disponible desde ${available}.` : "Anade la fecha de disponibilidad antes de publicar."
+      ],
+      [
+        `${address ? `Este piso amueblado en ${address}` : "Este piso amueblado en Zaragoza"} esta preparado para estancias de media duracion y para el proceso verificado de Ebrostay.`,
+        bedrooms || bathrooms || capacity
+          ? `El borrador presenta ${bedrooms || "0"} dormitorios, ${bathrooms || "0"} banos y capacidad maxima para ${capacity || "1"} personas.`
+          : "La distribucion puede completarse en cuanto se anadan mas fotos o notas del propietario.",
+        services.length ? `Puntos fuertes del anuncio: ${services.join(", ")}.` : "Selecciona servicios para reforzar la propuesta de valor.",
+        rooms.length ? `La cobertura fotografica actual incluye ${rooms.join(", ")}.` : "Las seis fotos sugeridas ayudan a generar confianza, pero no son obligatorias para publicar.",
+        price ? `El anuncio se esta preparando con un precio de ${price} EUR/mes.` : "Falta anadir el precio mensual para completar la ficha.",
+        available ? `Entrada disponible desde ${available}.` : "La fecha de disponibilidad sigue pendiente."
+      ],
+      [
+        `${address ? `Ebrostay puede publicar esta vivienda en ${address}` : "Ebrostay puede publicar esta vivienda en Zaragoza"} como una opcion amueblada y gestionada para profesionales y equipos desplazados.`,
+        bedrooms || bathrooms || capacity
+          ? `Datos clave: ${bedrooms || "0"} dormitorios, ${bathrooms || "0"} banos y capacidad maxima ${capacity || "1"}.`
+          : "Los datos clave se iran afinando cuando el propietario complete las estancias.",
+        services.length ? `La vivienda destaca por ${services.join(", ")}.` : "Anade comodidades y condiciones para mejorar la confianza en busqueda.",
+        rooms.length ? `Categorias de fotos subidas: ${rooms.join(", ")}.` : "Se pueden anadir mas fotos despues para mejorar consistencia y visibilidad.",
+        photoNames.length ? `Archivos considerados: ${photoNames.join(", ")}.` : "",
+        price ? `Renta recomendada para publicar: ${price} EUR/mes.` : "Falta la renta mensual.",
+        available ? `Disponible a partir de ${available}.` : "Conviene anadir la disponibilidad antes de publicar."
+      ]
+    ];
+    return variants[pickedVariant].filter(Boolean).join("\n");
   }
 
   function updateGeneratedText(force) {
     ensureTitle();
     if (description && (force || !description.value.trim() || description.dataset.generated === "true")) {
-      description.value = generatedDescription();
+      description.value = generatedDescription(descriptionVariantIndex);
       description.dataset.generated = "true";
     }
   }
@@ -291,7 +347,13 @@
       status.classList.remove("is-success");
     }
     const fallback = () => {
-      updateGeneratedText(true);
+      descriptionVariantIndex += 1;
+      if (description) {
+        description.value = generatedDescription(descriptionVariantIndex);
+        description.dataset.generated = "true";
+      } else {
+        updateGeneratedText(true);
+      }
       if (status) status.textContent = tr("ownerPost.aiFallback");
     };
     if (window.EbrostayBackend?.aiGenerateDescription) {
@@ -302,6 +364,12 @@
         ? (fields.details_en || fields.copy_en)
         : (fields.details_es || fields.copy_es);
       if (generated?.ok && text && description) {
+        if (text.trim() === description.value.trim()) {
+          fallback();
+          saveDraft();
+          return;
+        }
+        descriptionVariantIndex += 1;
         description.value = text;
         description.dataset.generated = "true";
         if (status) status.textContent = tr("ownerPost.aiDone");
