@@ -502,30 +502,37 @@ p {
 
 .marketplace-layout {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 50vw);
+  grid-template-areas:
+    "filters filters"
+    "results map";
+  gap: 22px;
   align-items: start;
 }
 
 .filter-panel {
-  grid-column: 1;
-  grid-row: 1 / span 2;
+  position: sticky;
+  top: var(--filter-sticky-top, 72px);
+  z-index: 45;
+  grid-area: filters;
+  margin-top: -8px;
+  padding: 8px 0;
+  background: linear-gradient(180deg, var(--paper) 0%, rgba(250, 249, 246, 0.94) 100%);
+  backdrop-filter: blur(14px);
 }
 
 .map-panel {
-  grid-column: 2;
-  grid-row: 1;
+  position: sticky;
+  top: var(--map-sticky-top, 152px);
+  grid-area: map;
+  height: calc(100vh - var(--map-sticky-top, 152px) - 18px);
+  min-height: 480px;
+  min-width: 0;
 }
 
 .results-column {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.filter-panel,
-.map-panel {
-  position: sticky;
-  top: 92px;
+  grid-area: results;
+  min-width: 0;
 }
 
 .availability-filter,
@@ -538,15 +545,151 @@ p {
 }
 
 .availability-filter {
-  display: grid;
-  gap: 14px;
-  padding: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+  padding: 12px;
+}
+
+.availability-filter > label,
+.availability-filter .date-pair label {
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+.availability-filter input,
+.availability-filter select {
+  min-height: 40px;
+  padding: 8px 10px;
 }
 
 .date-pair {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.filter-field {
+  flex: 1 1 148px;
+  min-width: 138px;
+}
+
+.city-filter-field {
+  flex: 1.1 1 154px;
+}
+
+.compact-filter-field {
+  flex: 0.75 1 128px;
+}
+
+.date-pair.filter-field {
+  flex: 1.55 1 260px;
+  min-width: min(100%, 236px);
+}
+
+.filter-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.area-filter-dropdown,
+.more-filter-dropdown {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.area-filter-dropdown summary,
+.more-filter-dropdown summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  padding: 10px 13px;
+  color: var(--ink);
+  background: var(--surface);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.filter-actions .button,
+.area-filter-dropdown summary,
+.more-filter-dropdown summary {
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.area-filter-dropdown summary::-webkit-details-marker,
+.more-filter-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.area-filter-dropdown summary::after,
+.more-filter-dropdown summary::after {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid var(--muted);
+  transition: transform 160ms var(--ease-out);
+}
+
+.area-filter-dropdown[open] summary,
+.more-filter-dropdown[open] summary {
+  border-color: var(--green);
+  color: var(--text-brand);
+  background: var(--mist);
+}
+
+.area-filter-dropdown[open] summary::after,
+.more-filter-dropdown[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.area-filter-dropdown .map-filter-options,
+.more-filter-content {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 70;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.area-filter-dropdown .map-filter-options {
+  width: min(360px, calc(100vw - 38px));
+  max-height: 330px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.more-filter-dropdown .more-filter-content {
+  right: 0;
+  left: auto;
+  width: min(520px, calc(100vw - 38px));
+  padding: 16px;
+}
+
+.more-filter-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.more-filter-content .checkbox-group {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px 12px;
 }
 
 label {
@@ -626,7 +769,8 @@ textarea {
 
 .property-list {
   display: grid;
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(286px, 1fr));
+  gap: 22px;
 }
 
 .property-card {
@@ -642,7 +786,7 @@ textarea {
 .property-media {
   position: relative;
   min-height: 260px;
-  height: clamp(260px, 34vw, 460px);
+  height: clamp(260px, 24vw, 360px);
   overflow: hidden;
   background:
     linear-gradient(135deg, rgba(47, 107, 85, 0.16), rgba(55, 111, 131, 0.12)),
@@ -777,26 +921,27 @@ a.property-media {
 
 .property-body {
   display: grid;
-  gap: 13px;
-  padding: 18px;
+  gap: 11px;
+  padding: 15px;
 }
 
 .property-title-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
 }
 .property-title-row > div { min-width: 0; }
 
 .property-title-row strong {
   color: var(--ink);
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .property-price {
-  display: grid;
-  gap: 2px;
-  justify-items: end;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  justify-items: start;
 }
 
 .price-note {
@@ -880,18 +1025,18 @@ a.property-media {
 }
 
 .map-card {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.38fr);
-  align-items: stretch;
+  position: relative;
+  display: block;
+  height: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
 .google-map-wrap {
   position: relative;
   width: 100%;
-  min-height: 560px;
-  grid-column: 1;
-  grid-row: 1;
+  height: 100%;
+  min-height: 0;
   background: var(--mist);
 }
 
@@ -948,9 +1093,18 @@ a.property-media {
 
 .map-copy {
   display: grid;
-  grid-column: 1 / -1;
   gap: 4px;
-  padding: 16px;
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
+  z-index: 502;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: var(--glass-strong);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(var(--glass-blur));
 }
 
 .map-filter-drawer {
@@ -1044,6 +1198,17 @@ a.property-media {
   background: var(--green);
 }
 
+.map-filter-options button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.map-filter-options button:disabled:hover {
+  border-color: var(--line);
+  color: var(--muted);
+  background: var(--surface);
+}
+
 .map-filter-drawer p {
   margin: 0;
   color: var(--muted);
@@ -1063,8 +1228,8 @@ a.property-media {
 .map-tools {
   position: absolute;
   left: 12px;
-  right: 12px;
-  bottom: 12px;
+  right: auto;
+  top: 12px;
   z-index: 500;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, max-content));
@@ -1100,6 +1265,16 @@ a.property-media {
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 600;
+}
+
+.map-area-label {
+  border: 1px solid rgba(31, 138, 87, 0.28);
+  border-radius: var(--radius-pill);
+  padding: 3px 8px;
+  color: var(--text-brand);
+  background: rgba(250, 249, 246, 0.92);
+  font: 700 0.74rem/1.2 var(--font-body);
+  box-shadow: 0 5px 14px rgba(24, 33, 29, 0.18);
 }
 
 .listings-map.is-drawing-area {
@@ -2488,28 +2663,19 @@ a.property-media {
 
 @media (max-width: 1080px) {
   .marketplace-layout {
-    grid-template-columns: 240px minmax(0, 1fr);
-  }
-
-  /* Map drops to a full-width row below, so the filter panel must leave
-     sticky flow — otherwise the pinned 260px panel overlaps the wide map. */
-  .filter-panel {
-    grid-column: 1;
-    grid-row: 1 / span 2;
+    grid-template-columns: minmax(0, 1fr) minmax(430px, 48vw);
   }
 
   .map-panel {
-    grid-column: 2;
-    grid-row: 1;
+    min-height: 500px;
   }
 
-  .results-column {
-    grid-column: 2;
-    grid-row: 2;
+  .property-list {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .google-map-wrap {
-    min-height: 500px;
+    min-height: 0;
   }
 }
 
@@ -2542,9 +2708,7 @@ a.property-media {
   }
 
   .hero-search,
-  .marketplace-layout,
   .property-card,
-  .map-card,
   .how-section,
   .steps,
   .owner-band,
@@ -2564,9 +2728,7 @@ a.property-media {
   }
 
   .filter-toggle {
-    display: inline-flex;
-    width: 100%;
-    margin-bottom: 14px;
+    display: none;
   }
 
   .filter-toggle.is-active {
@@ -2575,26 +2737,33 @@ a.property-media {
   }
 
   .filter-panel {
-    display: none;
-  }
-
-  .filter-panel.is-open {
     display: block;
+    position: sticky;
+    top: var(--filter-sticky-top, 58px);
   }
 
-  .filter-panel,
-  .map-panel,
-  .results-column {
-    grid-column: 1;
-    grid-row: auto;
+  .marketplace-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "filters"
+      "map"
+      "results";
   }
 
   .map-panel {
-    grid-row: 2;
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: 0;
   }
 
-  .results-column {
-    grid-row: 3;
+  .map-card {
+    height: auto;
+  }
+
+  .google-map-wrap {
+    height: 430px;
+    min-height: 430px;
   }
 
   .detail-aside {
@@ -2611,8 +2780,32 @@ a.property-media {
     flex-direction: column;
   }
 
-  .filter-panel {
+  .availability-filter {
+    max-height: min(62vh, 520px);
+    overflow: auto;
+  }
+
+  .area-filter-dropdown,
+  .more-filter-dropdown {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .area-filter-dropdown summary,
+  .more-filter-dropdown summary {
+    width: 100%;
+  }
+
+  .area-filter-dropdown .map-filter-options,
+  .more-filter-dropdown .more-filter-content {
     position: static;
+    width: 100%;
+    max-width: 100%;
+    margin-top: 8px;
+  }
+
+  .more-filter-content {
+    grid-template-columns: 1fr;
   }
 
   .property-media {
@@ -2622,29 +2815,17 @@ a.property-media {
     aspect-ratio: 16 / 10;
   }
 
-  .google-map-wrap {
-    grid-column: 1;
-    grid-row: 1;
-    min-height: 420px;
-  }
-
-  .map-filter-drawer {
-    grid-column: 1;
-    grid-row: 2;
-    max-height: none;
-    overflow: visible;
-    border-left: 0;
-    border-top: 1px solid var(--line);
-  }
-
   .map-copy {
-    grid-column: 1;
-    grid-row: 3;
+    position: static;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+    backdrop-filter: none;
   }
 
   .map-addresses {
-    grid-column: 1;
-    grid-row: 4;
     grid-template-columns: 1fr;
   }
 

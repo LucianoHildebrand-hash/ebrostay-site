@@ -333,14 +333,17 @@
       .quick-filters [data-quick="deposit"] { display: none !important; }
       .quick-filters .saved-quick-filter { border-color: var(--green); color: var(--text-brand); }
       .quick-filters .saved-quick-filter.is-active { color: #fff; background: var(--green); }
-      .marketplace-layout { grid-template-columns: minmax(220px, 260px) minmax(0, 1fr); }
-      .filter-panel { grid-column: 1; grid-row: 1 / span 2; }
-      .map-panel { grid-column: 2; grid-row: 1; }
-      .results-column { grid-column: 2; grid-row: 2; }
-      .google-map-wrap { min-height: 560px; background: var(--green-900); }
+      .marketplace-layout { grid-template-columns: minmax(0, 1fr) minmax(480px, 50vw); grid-template-areas: "filters filters" "results map"; }
+      .filter-panel { grid-area: filters; position: sticky; top: var(--filter-sticky-top, 72px); z-index: 45; }
+      .map-panel { grid-area: map; position: sticky; top: var(--map-sticky-top, 152px); height: calc(100vh - var(--map-sticky-top, 152px) - 18px); min-height: 480px; min-width: 0; }
+      .results-column { grid-area: results; min-width: 0; }
+      .property-list { grid-template-columns: repeat(auto-fill, minmax(286px, 1fr)); gap: 22px; }
+      .property-media { height: clamp(260px, 24vw, 360px); }
+      .map-card { position: relative; display: block; height: 100%; min-height: 0; }
+      .google-map-wrap { height: 100%; min-height: 0; background: var(--green-900); }
       .listings-map .leaflet-tile { filter: saturate(.72) hue-rotate(32deg) contrast(.96) brightness(1.02); }
       .listings-map::after, .detail-map::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, rgba(31,138,87,.12), rgba(217,99,42,.05)); z-index: 410; mix-blend-mode: multiply; }
-      .map-copy { border-top: 1px solid var(--line); background: var(--surface); }
+      .map-copy { position: absolute; right: 14px; bottom: 14px; left: 14px; z-index: 502; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--glass-strong); box-shadow: var(--shadow-sm); backdrop-filter: blur(var(--glass-blur)); }
       .map-copy strong { font-size: 1rem; }
       .map-addresses { display: none; }
       .property-card { border-radius: var(--radius-lg); }
@@ -410,8 +413,8 @@
       @keyframes audiencePulse { 0% { box-shadow: 0 0 0 0 rgba(250,249,246,0), 0 14px 34px rgba(10,20,17,.22); transform: translateY(0); } 38% { box-shadow: 0 0 0 8px rgba(250,249,246,.22), 0 20px 48px rgba(10,20,17,.30); transform: translateY(-2px); } 100% { box-shadow: 0 0 0 0 rgba(250,249,246,0), 0 14px 34px rgba(10,20,17,.22); transform: translateY(0); } }
       @keyframes audiencePanelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
       @media (prefers-reduced-motion: reduce) { .audience-switch.is-first-visit, html[data-audience="owner"] .audience-owner-panel, .support-panel.is-open { animation: none; } .audience-toggle-indicator, .audience-toggle button { transition: none; } }
-      @media (max-width: 1180px) { .marketplace-layout { grid-template-columns: 240px minmax(0, 1fr); } .filter-panel { grid-column: 1; grid-row: 1 / span 2; } .map-panel { grid-column: 2; grid-row: 1; } .results-column { grid-column: 2; grid-row: 2; } .google-map-wrap { min-height: 500px; } }
-      @media (max-width: 820px) { .marketplace-layout { grid-template-columns: 1fr; } .filter-panel, .map-panel, .results-column { grid-column: 1; grid-row: auto; } .map-panel { grid-row: 2; } .results-column { grid-row: 3; } .hero .eyebrow { white-space: normal; font-size: clamp(.78rem, 3.2vw, .92rem); padding: 8px 12px; } .audience-switch { grid-template-columns: 1fr; gap: 10px; padding: 10px; } .audience-toggle { min-height: 48px; } .hero-benefits { grid-template-columns: 1fr 1fr; } .enhanced-filter-pair { grid-template-columns: 1fr; } .google-map-wrap { min-height: 420px; } .owner-extra-strip { grid-template-columns: 1fr; } .share-social-row { grid-template-columns: 1fr; } .support-fab { right: 14px; bottom: 14px; } .support-panel { right: 14px; bottom: 72px; } }
+      @media (max-width: 1180px) { .marketplace-layout { grid-template-columns: minmax(0, 1fr) minmax(430px, 48vw); } .property-list { grid-template-columns: minmax(0, 1fr); } .google-map-wrap { min-height: 0; } }
+      @media (max-width: 820px) { .marketplace-layout { grid-template-columns: 1fr; grid-template-areas: "filters" "map" "results"; } .filter-panel { display: block; position: sticky; top: var(--filter-sticky-top, 58px); } .area-filter-dropdown, .more-filter-dropdown { flex: 1 1 100%; width: 100%; } .area-filter-dropdown summary, .more-filter-dropdown summary { width: 100%; } .area-filter-dropdown .map-filter-options, .more-filter-dropdown .more-filter-content { position: static; width: 100%; max-width: 100%; margin-top: 8px; } .more-filter-content { grid-template-columns: 1fr; } .map-panel { position: relative; top: auto; height: auto; min-height: 0; } .map-card { height: auto; } .google-map-wrap { height: 430px; min-height: 430px; } .map-copy { position: static; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; } .hero .eyebrow { white-space: normal; font-size: clamp(.78rem, 3.2vw, .92rem); padding: 8px 12px; } .audience-switch { grid-template-columns: 1fr; gap: 10px; padding: 10px; } .audience-toggle { min-height: 48px; } .hero-benefits { grid-template-columns: 1fr 1fr; } .enhanced-filter-pair { grid-template-columns: 1fr; } .owner-extra-strip { grid-template-columns: 1fr; } .share-social-row { grid-template-columns: 1fr; } .support-fab { right: 14px; bottom: 14px; } .support-panel { right: 14px; bottom: 72px; } }
     `;
     document.head.appendChild(style);
   }
@@ -628,20 +631,22 @@
 
   function enhanceSearchFilters() {
     var form = document.querySelector("#availabilityFilter");
-    if (!form || form.querySelector("[data-enhanced-filters]")) return;
-    var block = document.createElement("div");
-    block.className = "enhanced-filter-row";
-    block.setAttribute("data-enhanced-filters", "");
-    block.innerHTML = `
-      <label><span data-extra-address-label></span><input id="addressQuery" name="addressQuery" type="search" data-extra-address-placeholder></label>
-      <div class="enhanced-filter-pair">
-        <label><span data-extra-bedrooms-label></span><select id="minBedrooms" name="minBedrooms"><option value="0" data-extra-any-bedrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
-        <label><span data-extra-bathrooms-label></span><select id="minBathrooms" name="minBathrooms"><option value="0" data-extra-any-bathrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
-      </div>
-    `;
-    var typeLabel = form.querySelector("#propertyType")?.closest("label");
-    if (typeLabel) typeLabel.insertAdjacentElement("afterend", block);
-    else form.prepend(block);
+    if (!form) return;
+    if (!form.querySelector("#addressQuery") && !form.querySelector("[data-enhanced-filters]")) {
+      var block = document.createElement("div");
+      block.className = "enhanced-filter-row";
+      block.setAttribute("data-enhanced-filters", "");
+      block.innerHTML = `
+        <label><span data-extra-address-label></span><input id="addressQuery" name="addressQuery" type="search" data-extra-address-placeholder></label>
+        <div class="enhanced-filter-pair">
+          <label><span data-extra-bedrooms-label></span><select id="minBedrooms" name="minBedrooms"><option value="0" data-extra-any-bedrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+          <label><span data-extra-bathrooms-label></span><select id="minBathrooms" name="minBathrooms"><option value="0" data-extra-any-bathrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+        </div>
+      `;
+      var typeLabel = form.querySelector("#propertyType")?.closest("label");
+      if (typeLabel) typeLabel.insertAdjacentElement("afterend", block);
+      else form.prepend(block);
+    }
 
     var amenities = form.querySelector(".checkbox-group");
     if (amenities) {

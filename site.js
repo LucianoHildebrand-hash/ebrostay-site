@@ -48,6 +48,7 @@ let markersById = new Map();
 let mapNeedsFit = true;
 let highlightTimer = null;
 let propertyPhotoIndexes = {};
+let selectedAreaLayer = null;
 let mapBoundsFilter = null;
 let drawnMapPolygon = null;
 let drawnMapShape = null;
@@ -127,6 +128,58 @@ const zaragozaNeighborhoods = [
   "Parque Goya", "Romareda", "San Jose", "Santa Isabel", "Torrero-La Paz", "Universidad"
 ];
 
+const AREA_SELECTION_LIMIT = 3;
+
+const zaragozaPostcodeAreas = {
+  "50001": [41.652, -0.876, 0.010, 0.012],
+  "50002": [41.650, -0.862, 0.012, 0.014],
+  "50003": [41.656, -0.884, 0.010, 0.012],
+  "50004": [41.650, -0.889, 0.011, 0.013],
+  "50005": [41.646, -0.894, 0.011, 0.013],
+  "50006": [41.639, -0.896, 0.012, 0.014],
+  "50007": [41.629, -0.877, 0.014, 0.016],
+  "50008": [41.642, -0.870, 0.012, 0.014],
+  "50009": [41.648, -0.904, 0.014, 0.018],
+  "50010": [41.650, -0.916, 0.012, 0.014],
+  "50011": [41.637, -0.925, 0.014, 0.016],
+  "50012": [41.640, -0.934, 0.014, 0.016],
+  "50013": [41.644, -0.848, 0.014, 0.016],
+  "50014": [41.666, -0.862, 0.014, 0.016],
+  "50015": [41.673, -0.881, 0.016, 0.018],
+  "50016": [41.682, -0.844, 0.018, 0.020],
+  "50017": [41.651, -0.913, 0.014, 0.016],
+  "50018": [41.678, -0.895, 0.016, 0.020],
+  "50019": [41.627, -0.908, 0.016, 0.018],
+  "50021": [41.663, -0.909, 0.014, 0.016],
+  "50022": [41.632, -0.861, 0.014, 0.016],
+  "50059": [41.654, -0.881, 0.020, 0.024],
+  "50190": [41.700, -0.905, 0.020, 0.024],
+  "50191": [41.705, -0.842, 0.020, 0.024],
+  "50192": [41.616, -0.825, 0.020, 0.024],
+  "50194": [41.650, -0.822, 0.018, 0.024]
+};
+
+const zaragozaNeighborhoodAreas = {
+  "Actur-Rey Fernando": [41.675, -0.895, 0.015, 0.020],
+  "Arrabal": [41.664, -0.875, 0.012, 0.016],
+  "Casablanca": [41.625, -0.898, 0.015, 0.018],
+  "Casco Historico": [41.655, -0.879, 0.010, 0.012],
+  "Centro": [41.650, -0.884, 0.011, 0.014],
+  "Delicias": [41.649, -0.911, 0.014, 0.017],
+  "El Rabal": [41.665, -0.864, 0.014, 0.017],
+  "La Almozara": [41.661, -0.896, 0.012, 0.015],
+  "Las Fuentes": [41.645, -0.862, 0.012, 0.015],
+  "Miralbueno": [41.653, -0.939, 0.016, 0.019],
+  "Movera": [41.650, -0.822, 0.016, 0.022],
+  "Oliver-Valdefierro": [41.641, -0.925, 0.016, 0.018],
+  "Parque Goya": [41.698, -0.898, 0.014, 0.018],
+  "Romareda": [41.638, -0.903, 0.012, 0.015],
+  "San Jose": [41.637, -0.864, 0.014, 0.017],
+  "Santa Isabel": [41.675, -0.833, 0.014, 0.018],
+  "Torrero-La Paz": [41.625, -0.872, 0.016, 0.019],
+  "Universidad": [41.650, -0.904, 0.014, 0.018]
+};
+
 if (typeof hydrateOwnerPublishedProperties === "function") {
   hydrateOwnerPublishedProperties();
 }
@@ -174,6 +227,9 @@ function getFilterFromForm(form, requireValidRange = false) {
     guests: Number(formData.get("guestCount")) || 1,
     propertyType: formData.get("propertyType") || "all",
     maxBudget: Number(formData.get("maxBudget")) || null,
+    addressQuery: formData.get("addressQuery")?.toString().trim().toLowerCase() || "",
+    minBedrooms: Number(formData.get("minBedrooms")) || 0,
+    minBathrooms: Number(formData.get("minBathrooms")) || 0,
     amenities: getAmenities(formData),
     sortBy: formData.get("sortBy") || sortBy?.value || "best"
   };
@@ -198,7 +254,52 @@ function passesLocationFilters(property) {
   return true;
 }
 
+function propertySearchText(property) {
+  return [
+    property.address,
+    property.addressKey,
+    property.city,
+    property.postcode,
+    property.neighborhood,
+    t(property.areaKey),
+    t(property.nameKey),
+    t(property.copyKey),
+    t(property.detailsKey)
+  ].filter(Boolean).join(" ").toLowerCase();
+}
+
+function currentCityAllowsZaragozaAreas() {
+  const city = availabilityFilter?.elements.city?.value?.toString().trim().toLowerCase() || "zaragoza";
+  return !city || "zaragoza".includes(city) || city.includes("zaragoza");
+}
+
+function clearAreaSelectionsForCity() {
+  if (currentCityAllowsZaragozaAreas()) return false;
+  if (!activePostcodes.size && !activeNeighborhoods.size) return false;
+  activePostcodes.clear();
+  activeNeighborhoods.clear();
+  clearMapArea({ skipRender: true });
+  clearSelectedAreaLayer();
+  return true;
+}
+
+function clearSelectedAreaLayer() {
+  selectedAreaLayer?.clearLayers();
+  document.querySelectorAll(".map-area-label").forEach((element) => element.remove());
+}
+
+function syncStickySearchOffsets() {
+  const headerHeight = Math.round(document.querySelector(".site-header")?.getBoundingClientRect().height || 56);
+  const filterHeight = Math.round(document.querySelector(".filter-panel")?.getBoundingClientRect().height || 0);
+  const filterTop = Math.max(58, headerHeight + 12);
+  const mapTop = filterTop + filterHeight + 22;
+  document.documentElement.style.setProperty("--filter-sticky-top", `${filterTop}px`);
+  document.documentElement.style.setProperty("--map-sticky-top", `${mapTop}px`);
+  window.setTimeout(() => leafletMap?.invalidateSize(), 0);
+}
+
 function orderedFilterValues(seedValues, propertyField) {
+  if (!currentCityAllowsZaragozaAreas()) return [];
   const values = new Set(seedValues);
   properties.forEach((property) => {
     const value = (property[propertyField] || "").toString().trim();
@@ -209,14 +310,21 @@ function orderedFilterValues(seedValues, propertyField) {
 
 function renderFilterButtons(container, values, activeSet, kind) {
   if (!container) return;
+  const totalSelected = activePostcodes.size + activeNeighborhoods.size;
   container.innerHTML = values.map((value) => `
-    <button class="${activeSet.has(value) ? "is-active" : ""}" type="button" data-location-kind="${kind}" data-location-value="${value}" aria-pressed="${activeSet.has(value)}">${value}</button>
+    <button class="${activeSet.has(value) ? "is-active" : ""}" type="button" data-location-kind="${kind}" data-location-value="${value}" aria-pressed="${activeSet.has(value)}" ${!activeSet.has(value) && totalSelected >= AREA_SELECTION_LIMIT ? "disabled" : ""}>${value}</button>
   `).join("");
 }
 
 function renderMapLocationFilters() {
+  clearAreaSelectionsForCity();
   renderFilterButtons(postcodeFiltersElement, orderedFilterValues(zaragozaPostcodes, "postcode"), activePostcodes, "postcode");
   renderFilterButtons(neighborhoodFiltersElement, orderedFilterValues(zaragozaNeighborhoods, "neighborhood"), activeNeighborhoods, "neighborhood");
+  const postcodeCount = document.querySelector("[data-postcode-count]");
+  const neighborhoodCount = document.querySelector("[data-neighborhood-count]");
+  if (postcodeCount) postcodeCount.textContent = activePostcodes.size ? `(${activePostcodes.size})` : "";
+  if (neighborhoodCount) neighborhoodCount.textContent = activeNeighborhoods.size ? `(${activeNeighborhoods.size})` : "";
+  syncStickySearchOffsets();
 }
 
 function isAvailable(property, filter) {
@@ -225,6 +333,9 @@ function isAvailable(property, filter) {
   if (filter.city && !property.city.includes(filter.city)) return false;
   if (filter.propertyType !== "all" && property.type !== filter.propertyType) return false;
   if (filter.maxBudget && property.priceNumber > filter.maxBudget) return false;
+  if (filter.addressQuery && !propertySearchText(property).includes(filter.addressQuery)) return false;
+  if (filter.minBedrooms && Number(property.bedrooms || 0) < filter.minBedrooms) return false;
+  if (filter.minBathrooms && Number(property.bathrooms || 0) < filter.minBathrooms) return false;
   if (property.guests < filter.guests) return false;
   if (filter.amenities.some((amenity) => !property.amenities.includes(amenity))) return false;
 
@@ -256,6 +367,54 @@ function propertyInMapArea(property) {
   }
   if (!mapBoundsFilter || typeof mapBoundsFilter.contains !== "function") return true;
   return mapBoundsFilter.contains([property.lat, property.lng]);
+}
+
+function areaBox(value, kind) {
+  const source = kind === "postcode" ? zaragozaPostcodeAreas : zaragozaNeighborhoodAreas;
+  const [lat, lng, latRadius, lngRadius] = source[value] || [41.6516, -0.8809, 0.012, 0.014];
+  return {
+    label: value,
+    points: [
+      [lat - latRadius, lng - lngRadius],
+      [lat - latRadius, lng + lngRadius],
+      [lat + latRadius, lng + lngRadius],
+      [lat + latRadius, lng - lngRadius]
+    ]
+  };
+}
+
+function selectedAreaBoxes() {
+  return [
+    ...[...activePostcodes].map((value) => areaBox(value, "postcode")),
+    ...[...activeNeighborhoods].map((value) => areaBox(value, "neighborhood"))
+  ];
+}
+
+function selectedAreaBounds() {
+  if (!leafletMap || typeof L === "undefined") return null;
+  const areas = selectedAreaBoxes();
+  if (!areas.length) return null;
+  return L.latLngBounds(areas.flatMap((area) => area.points));
+}
+
+function drawSelectedAreas() {
+  if (!leafletMap || !selectedAreaLayer || typeof L === "undefined") return null;
+  clearSelectedAreaLayer();
+  const areas = selectedAreaBoxes();
+  areas.forEach((area) => {
+    const polygon = L.polygon(area.points, {
+      color: "#1f8a57",
+      weight: 2,
+      fillColor: "#1f8a57",
+      fillOpacity: 0.13
+    }).addTo(selectedAreaLayer);
+    polygon.bindTooltip(area.label, {
+      permanent: true,
+      direction: "center",
+      className: "map-area-label"
+    });
+  });
+  return areas.length ? selectedAreaBounds() : null;
 }
 
 function propertyCardPhotos(property) {
@@ -311,6 +470,7 @@ function initListingsMap() {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(leafletMap);
+  selectedAreaLayer = L.layerGroup().addTo(leafletMap);
   markerLayer = L.layerGroup().addTo(leafletMap);
   leafletMap.setView([41.6516, -0.865], 12);
   ensureMapTools();
@@ -332,12 +492,22 @@ function ensureMapTools() {
   const wrap = mapCard.querySelector(".google-map-wrap");
   if (wrap) wrap.appendChild(tools);
   else mapCard.appendChild(tools);
-  tools.querySelector("[data-map-draw]")?.addEventListener("click", () => {
+  tools.querySelector("[data-map-draw]")?.addEventListener("click", (event) => preservePageScroll(() => {
+    event.preventDefault();
+    event.currentTarget.blur();
     if (isDrawingMapArea) cancelMapDraw();
     else startMapDraw();
-  });
-  tools.querySelector("[data-map-finish]")?.addEventListener("click", finishMapDraw);
-  tools.querySelector("[data-map-clear]")?.addEventListener("click", () => clearMapArea());
+  }));
+  tools.querySelector("[data-map-finish]")?.addEventListener("click", (event) => preservePageScroll(() => {
+    event.preventDefault();
+    event.currentTarget.blur();
+    finishMapDraw();
+  }));
+  tools.querySelector("[data-map-clear]")?.addEventListener("click", (event) => preservePageScroll(() => {
+    event.preventDefault();
+    event.currentTarget.blur();
+    clearMapArea();
+  }));
 }
 
 function syncMapTools() {
@@ -370,7 +540,8 @@ function suppressUpcomingMapMove() {
   window.setTimeout(() => { suppressMapMove = false; }, 700);
 }
 
-function markMapViewportIntent() {
+function markMapViewportIntent(event) {
+  if (!event?.originalEvent) return;
   if (suppressMapMove || isDrawingMapArea || drawnMapPolygon) return;
   mapViewportFilteringEnabled = true;
 }
@@ -391,6 +562,16 @@ function stopLeafletEvent(event) {
   if (event?.originalEvent && typeof L !== "undefined") {
     L.DomEvent.stop(event.originalEvent);
   }
+}
+
+function preservePageScroll(action) {
+  const left = window.scrollX;
+  const top = window.scrollY;
+  const restore = () => window.scrollTo(left, top);
+  action();
+  window.requestAnimationFrame(restore);
+  window.setTimeout(restore, 0);
+  window.setTimeout(restore, 120);
 }
 
 function startMapDraw() {
@@ -529,6 +710,7 @@ function setPinEmphasis(propertyId, emphasized) {
 function updateMapMarkers(list, options = {}) {
   if (!leafletMap || !markerLayer) return;
 
+  const areaBounds = drawSelectedAreas();
   markerLayer.clearLayers();
   markersById = new Map();
 
@@ -552,7 +734,14 @@ function updateMapMarkers(list, options = {}) {
     markersById.set(property.id, marker);
   });
 
-  if (list.length && mapNeedsFit && !options.keepMapView) {
+  if (areaBounds && mapNeedsFit && !options.keepMapView) {
+    suppressUpcomingMapMove();
+    leafletMap.fitBounds(areaBounds, {
+      padding: [38, 38],
+      maxZoom: activePostcodes.size + activeNeighborhoods.size === 1 ? 14 : 13
+    });
+    mapNeedsFit = false;
+  } else if (list.length && mapNeedsFit && !options.keepMapView) {
     suppressUpcomingMapMove();
     leafletMap.fitBounds(L.latLngBounds(list.map((property) => [property.lat, property.lng])), {
       padding: [42, 42],
@@ -575,7 +764,6 @@ function focusProperty(propertyId) {
   }
 
   syncAddressButtons(property.addressKey);
-  document.querySelector(".map-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function syncAddressButtons(addressKey) {
@@ -731,6 +919,10 @@ function applyLanguage(language) {
 
 if (year) year.textContent = new Date().getFullYear();
 
+window.addEventListener("resize", syncStickySearchOffsets);
+window.addEventListener("load", syncStickySearchOffsets);
+window.setTimeout(syncStickySearchOffsets, 300);
+
 languageButtons.forEach((button) => {
   button.addEventListener("click", () => applyLanguage(button.dataset.lang));
 });
@@ -754,10 +946,18 @@ function handleLocationFilterClick(event) {
   if (!button) return;
   const value = button.dataset.locationValue;
   const targetSet = button.dataset.locationKind === "postcode" ? activePostcodes : activeNeighborhoods;
-  targetSet.has(value) ? targetSet.delete(value) : targetSet.add(value);
+  const isSelected = targetSet.has(value);
+  if (!isSelected && activePostcodes.size + activeNeighborhoods.size >= AREA_SELECTION_LIMIT) {
+    statusOverride = t("mapFilters.limit");
+    renderProperties({ keepMapView: true });
+    return;
+  }
+  isSelected ? targetSet.delete(value) : targetSet.add(value);
+  statusOverride = null;
+  clearMapArea({ skipRender: true });
   mapNeedsFit = true;
   renderMapLocationFilters();
-  renderProperties({ keepMapView: true });
+  renderProperties();
 }
 
 postcodeFiltersElement?.addEventListener("click", handleLocationFilterClick);
@@ -812,6 +1012,26 @@ if (heroSearch && availabilityFilter) {
 }
 
 if (availabilityFilter) {
+  let filterInputTimer = null;
+  const syncFiltersFromForm = () => {
+    statusOverride = null;
+    activeFilter = getFilterFromForm(availabilityFilter);
+    clearAreaSelectionsForCity();
+    mapNeedsFit = true;
+    renderMapLocationFilters();
+    renderProperties();
+  };
+
+  availabilityFilter.addEventListener("change", () => {
+    syncFiltersFromForm();
+  });
+
+  availabilityFilter.addEventListener("input", (event) => {
+    if (!event.target.matches("#cityFilter, #guestCount, #maxBudget, #addressQuery")) return;
+    clearTimeout(filterInputTimer);
+    filterInputTimer = window.setTimeout(syncFiltersFromForm, 180);
+  });
+
   availabilityFilter.addEventListener("submit", (event) => {
     event.preventDefault();
     statusOverride = null;

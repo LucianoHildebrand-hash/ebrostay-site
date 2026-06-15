@@ -48,7 +48,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Hanken+Grotesque:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=owner-publish-5">
+    <link rel="stylesheet" href="styles.css?v=airbnb-map-1">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
       <script>(function(){try{if(localStorage.getItem("ebrostay-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
   </head>
@@ -123,16 +123,14 @@
           </div>
         </div>
 
-        <button class="button ghost filter-toggle" id="filterToggle" type="button" aria-controls="availabilityFilter" data-i18n="filters.show">Filtros</button>
-
         <div class="marketplace-layout">
           <aside class="filter-panel" aria-label="Search filters">
             <form class="availability-filter" id="availabilityFilter">
-              <label>
+              <label class="filter-field city-filter-field">
                 <span data-i18n="filters.city">Ciudad</span>
                 <input id="cityFilter" name="city" value="Zaragoza" placeholder="Zaragoza" data-i18n-attr="placeholder:search.cityPlaceholder">
               </label>
-              <div class="date-pair">
+              <div class="date-pair filter-field">
                 <label>
                   <span data-i18n="filters.checkIn">Entrada</span>
                   <input id="checkIn" name="checkIn" type="text">
@@ -142,11 +140,11 @@
                   <input id="checkOut" name="checkOut" type="text">
                 </label>
               </div>
-              <label>
+              <label class="filter-field">
                 <span data-i18n="filters.guests">Personas</span>
                 <input id="guestCount" name="guestCount" type="number" min="1" max="8" value="2">
               </label>
-              <label>
+              <label class="filter-field">
                 <span data-i18n="filters.type">Tipo de vivienda</span>
                 <select id="propertyType" name="propertyType">
                   <option value="all" data-i18n="filters.typeAll">Todos</option>
@@ -155,10 +153,44 @@
                   <option value="home" data-i18n="filters.typeHome">Casa</option>
                 </select>
               </label>
-              <label>
+              <label class="filter-field compact-filter-field">
+                <span data-i18n="filters.bedrooms">Dormitorios</span>
+                <select id="minBedrooms" name="minBedrooms">
+                  <option value="0" data-i18n="filters.any">Cualquiera</option>
+                  <option value="1">1+</option>
+                  <option value="2">2+</option>
+                  <option value="3">3+</option>
+                  <option value="4">4+</option>
+                </select>
+              </label>
+              <label class="filter-field">
                 <span data-i18n="filters.budget">Presupuesto mensual máximo</span>
                 <input id="maxBudget" name="maxBudget" type="number" min="0" step="1" placeholder="Sin límite" data-i18n-attr="placeholder:filters.anyBudget">
               </label>
+              <details class="area-filter-dropdown">
+                <summary><span data-i18n="mapFilters.postcodes">Códigos postales</span><b data-postcode-count></b></summary>
+                <div class="map-filter-options" id="postcodeFilters"></div>
+              </details>
+              <details class="area-filter-dropdown">
+                <summary><span data-i18n="mapFilters.neighborhoods">Barrios</span><b data-neighborhood-count></b></summary>
+                <div class="map-filter-options" id="neighborhoodFilters"></div>
+              </details>
+              <details class="more-filter-dropdown">
+                <summary data-i18n="filters.more">Más filtros</summary>
+                <div class="more-filter-content">
+                  <label>
+                    <span data-i18n="filters.address">Zona o dirección</span>
+                    <input id="addressQuery" name="addressQuery" type="search" placeholder="Movera, Universidad, Pedro II..." data-i18n-attr="placeholder:filters.addressPlaceholder">
+                  </label>
+                  <label>
+                    <span data-i18n="filters.bathrooms">Baños</span>
+                    <select id="minBathrooms" name="minBathrooms">
+                      <option value="0" data-i18n="filters.any">Cualquiera</option>
+                      <option value="1">1+</option>
+                      <option value="2">2+</option>
+                      <option value="3">3+</option>
+                    </select>
+                  </label>
               <fieldset class="checkbox-group">
                 <legend data-i18n="filters.mustHave">Imprescindible</legend>
                 <label><input type="checkbox" name="amenities" value="wifi"> <span data-i18n="amenity.wifi">wifi</span></label>
@@ -168,8 +200,12 @@
                 <label><input type="checkbox" name="amenities" value="washer"> <span data-i18n="amenity.washer">lavadora</span></label>
                 <label><input type="checkbox" name="amenities" value="parking"> <span data-i18n="amenity.parking">parking</span></label>
               </fieldset>
-              <button class="button primary" type="submit" data-i18n="filters.apply">Aplicar filtros</button>
-              <button class="button ghost" id="resetAvailability" type="button" data-i18n="filters.reset">Reiniciar</button>
+                </div>
+              </details>
+              <div class="filter-actions">
+                <button class="button primary" type="submit" data-i18n="filters.apply">Aplicar filtros</button>
+                <button class="button ghost" id="resetAvailability" type="button" data-i18n="filters.reset">Reiniciar</button>
+              </div>
             </form>
           </aside>
 
@@ -193,21 +229,6 @@
                   referrerpolicy="no-referrer-when-downgrade"
                   hidden
                 ></iframe>
-              </div>
-              <div class="map-filter-drawer" aria-label="Map location filters">
-                <div class="map-filter-head">
-                  <strong data-i18n="mapFilters.title">Filtros del mapa</strong>
-                  <button class="map-filter-clear" type="button" data-location-clear data-i18n="mapFilters.clear">Limpiar zona</button>
-                </div>
-                <details class="map-filter-group" open>
-                  <summary><span data-i18n="mapFilters.postcodes">Codigos postales</span></summary>
-                  <div class="map-filter-options" id="postcodeFilters"></div>
-                </details>
-                <details class="map-filter-group" open>
-                  <summary><span data-i18n="mapFilters.neighborhoods">Barrios</span></summary>
-                  <div class="map-filter-options" id="neighborhoodFilters"></div>
-                </details>
-                <p data-i18n="mapFilters.hint">Puedes combinar codigo postal, barrio y dibujo en el mapa.</p>
               </div>
               <div class="map-copy">
                 <strong data-i18n="map.title">Mapa de viviendas</strong>
@@ -649,12 +670,12 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=owner-publish-5"></script>
-    <script src="backend.js?v=owner-publish-5"></script>
+    <script src="data.js?v=airbnb-map-1"></script>
+    <script src="backend.js?v=airbnb-map-1"></script>
     <script src="nav.js?v=design-6"></script>
-    <script src="site.js?v=owner-publish-5"></script>
+    <script src="site.js?v=airbnb-map-1"></script>
       <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
-    <script src="owner-composer.js?v=owner-publish-5"></script>
-    <script src="enhance.js?v=owner-publish-5"></script>
+    <script src="owner-composer.js?v=airbnb-map-1"></script>
+    <script src="enhance.js?v=airbnb-map-1"></script>
   </body>
 </html>
