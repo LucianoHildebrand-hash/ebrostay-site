@@ -14,7 +14,7 @@
     <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/ebrostay-icon-180.png">
     <link rel="manifest" href="site.webmanifest">
-    <meta name="theme-color" content="#0e9f6e">
+    <meta name="theme-color" content="#1f8a57">
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -24,22 +24,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=owner-fix-20260614">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Hanken+Grotesque:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=owner-preview-2">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
+      <script>(function(){try{if(localStorage.getItem("ebrostay-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
   </head>
   <body>
     <header class="site-header">
       <a class="brand" href="index.html" aria-label="Ebrostay home">
-        <img class="brand-mark" src="assets/ebrostay-icon.svg" alt="" width="36" height="36"><span class="brand-wordmark">Ebrostay</span>
+        <img class="brand-mark" src="assets/ebrostay-mark.svg" alt="" width="32" height="32"><span class="brand-wordmark">Ebro<span class="stay">stay</span></span>
       </a>
-      <nav class="nav-links" aria-label="Primary navigation">
-        <a href="index.html#search" data-i18n="nav.search">Buscar</a>
-        <a href="index.html#how" data-i18n="nav.how">Cómo funciona</a>
-        <a href="index.html#contact" data-i18n="nav.contact">Contacto</a>
-      </nav>
       <div class="header-actions">
-        <button class="nav-toggle" type="button" aria-label="Menú" data-i18n-attr="aria-label:nav.menu" aria-expanded="false">&#9776;</button>
         <div class="language-switch" aria-label="Language selector">
           <button class="language-option is-active" type="button" data-lang="es">ES</button>
           <button class="language-option" type="button" data-lang="en">EN</button>
@@ -54,8 +49,19 @@
 
       <div class="detail-media" id="detailMedia">
         <span class="availability-pill" data-i18n="listing.available">Disponible</span>
+        <button class="detail-media-open" id="detailMediaOpen" type="button" data-i18n="detail.openGallery">Haz clic en la foto para abrir la galería</button>
       </div>
       <div class="detail-gallery" id="detailGallery" hidden></div>
+      <dialog class="detail-lightbox" id="detailLightbox" aria-label="Galería de fotos" data-i18n-attr="aria-label:detail.galleryLabel">
+        <div class="detail-lightbox-inner">
+          <button class="detail-lightbox-close" type="button" data-gallery-close aria-label="Cerrar" data-i18n-attr="aria-label:auth.close">&times;</button>
+          <button class="detail-lightbox-nav is-prev" type="button" data-gallery-step="-1" data-i18n-attr="aria-label:listing.prevPhoto">&lsaquo;</button>
+          <img id="detailLightboxImage" alt="">
+          <button class="detail-lightbox-nav is-next" type="button" data-gallery-step="1" data-i18n-attr="aria-label:listing.nextPhoto">&rsaquo;</button>
+          <div class="detail-lightbox-caption" id="detailLightboxCaption"></div>
+          <div class="detail-lightbox-thumbs" id="detailLightboxThumbs"></div>
+        </div>
+      </dialog>
 
       <div class="detail-layout">
         <article class="detail-content">
@@ -97,14 +103,10 @@
 
           <section class="detail-section">
             <h2 data-i18n="detail.location">Ubicación</h2>
-            <p class="detail-address" id="detailAddress" hidden></p>
-            <ul class="distance-list" id="distanceList"></ul>
-            <form class="distance-form" id="distanceForm">
-              <input id="distanceInput" type="text" placeholder="Tu trabajo, una dirección, un lugar..." data-i18n-attr="placeholder:dist.placeholder">
-              <button class="details-button" type="submit" data-i18n="dist.calc">Calcular distancia</button>
-            </form>
-            <p class="admin-hint" id="distanceStatus" hidden></p>
-            <p class="calendar-legend" data-i18n="detail.distancesNote">Tiempos de trayecto aproximados desde la vivienda.</p>
+            <p class="detail-address" id="detailAddress" hidden>
+              <span class="detail-address-label"><i data-lucide="map-pin" aria-hidden="true"></i><span data-i18n="detail.addressLabel">Dirección de la vivienda</span></span>
+              <span class="detail-address-value" id="detailAddressValue"></span>
+            </p>
             <p data-i18n="detail.locationCopy">Ubicación aproximada de la vivienda en Zaragoza.</p>
             <div class="detail-map" id="detailMap"></div>
           </section>
@@ -117,13 +119,13 @@
               <span class="price-note" id="detailPriceNote" hidden></span>
             </div>
             <span class="detail-available" id="detailAvailable"></span>
-            <button class="details-button share-button" id="shareButton" type="button">&#128279; <span data-i18n="share.button">Compartir</span></button>
+            <button class="details-button share-button" id="shareButton" type="button" aria-label="Compartir" data-i18n-attr="aria-label:share.button"><i data-lucide="share-2" aria-hidden="true"></i></button>
             <div class="movein-box" id="detailMoveIn" hidden>
               <h4 data-i18n="movein.title">Coste de entrada</h4>
               <ul id="detailMoveInRows"></ul>
             </div>
             <div class="booking-widget" id="bookingWidget" hidden>
-              <h4 data-i18n="book.title">Reserva online</h4>
+              <h4 data-i18n="book.title">Solicita tu reserva</h4>
               <label>
                 <span data-i18n="book.start">Entrada</span>
                 <input id="bookingStart" type="text">
@@ -140,16 +142,11 @@
               <p class="booking-note booking-split" id="bookingSplit" hidden></p>
               <ul class="movein-rows" id="bookingSummary"></ul>
               <p class="booking-note" id="bookingVatTip"></p>
-              <button class="button primary" id="bookingButton" type="button" data-i18n="book.button">Reservar y pagar</button>
-              <p class="booking-note" data-i18n="book.note">Pagas ahora la estancia completa, la comisión de gestión y la fianza. La fianza es reembolsable al finalizar la estancia.</p>
-              <p class="auth-message" id="bookingMessage" role="status"></p>
             </div>
-            <h3 data-i18n="detail.requestTitle">¿Te interesa esta vivienda?</h3>
-            <p data-i18n="detail.requestCopy">Escríbenos y confirmamos disponibilidad, condiciones y siguiente paso.</p>
-            <a class="button primary" id="detailEmailButton" href="#"><span data-i18n="detail.emailButton">Solicitar por email</span></a>
-            <a class="button whatsapp-button" id="detailWhatsappButton" href="#" target="_blank" rel="noopener"><span data-i18n="detail.whatsapp">WhatsApp</span></a>
+            <a class="button primary" id="bookingEmailButton" href="#"><span data-i18n="detail.emailButton">Solicitar por email</span></a>
+            <a class="button whatsapp-button" id="bookingWhatsappButton" href="#" target="_blank" rel="noopener"><span data-i18n="detail.whatsappButton">Solicitar por WhatsApp</span></a>
             <a class="button ghost" id="detailVideoButton" href="#" target="_blank" rel="noopener" hidden><span data-i18n="detail.video">Ver vídeo de la vivienda</span></a>
-            <a class="detail-form-link" href="index.html#contact" data-i18n="detail.formLink">O usa el formulario de contacto</a>
+            <p class="booking-note" data-i18n="book.note">Envíanos tu solicitud sin pagar nada ahora. Revisamos la disponibilidad y te respondemos en breve para confirmar la reserva. El total es solo una estimación (estancia completa, comisión de gestión y fianza reembolsable).</p>
           </div>
         </aside>
       </div>
@@ -157,11 +154,17 @@
 
     <footer class="site-footer">
       <span class="footer-brand">
-        <img class="footer-logo" src="assets/ebrostay-icon.svg" alt="Ebrostay" width="44" height="44">
+        <img class="footer-logo" src="assets/ebrostay-mark.svg" alt="Ebrostay" width="40" height="40">
         <span>&copy; <span id="year"></span> Ebrostay</span>
       </span>
-      <a href="privacy.html" data-i18n="nav.privacy">Privacidad</a>
-      <a href="mailto:info@ebrostay.com">info@ebrostay.com</a>
+      <nav class="footer-nav" aria-label="Footer navigation">
+        <a href="index.html" data-i18n="nav.home">Inicio</a>
+        <a href="index.html#how" data-i18n="nav.how">Cómo funciona</a>
+        <a href="index.html#owner" data-i18n="nav.owners">Propietarios</a>
+        <a href="about.html" data-i18n="nav.about">Nosotros</a>
+        <a href="privacy.html" data-i18n="nav.privacy">Privacidad</a>
+      </nav>
+      <a class="footer-email" href="mailto:info@ebrostay.com">info@ebrostay.com</a>
     </footer>
 
     <script
@@ -173,10 +176,11 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=owner-fix-20260614"></script>
+    <script src="data.js?v=owner-preview-2"></script>
     <script src="backend.js?v=design-6"></script>
     <script src="nav.js?v=design-6"></script>
-    <script src="property.js?v=owner-fix-20260614"></script>
-    <script src="enhance.js?v=owner-fix-20260614"></script>
+    <script src="property.js?v=owner-preview-2"></script>
+      <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
+    <script src="enhance.js?v=owner-preview-2"></script>
   </body>
 </html>

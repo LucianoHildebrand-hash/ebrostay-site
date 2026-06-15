@@ -1,1307 +1,1262 @@
-// Ebrostay — progressive enhancement: hero readability, audience switch, filters, maps, support and detail-page polish.
+// Ebrostay — progressive enhancement: hero readability, audience switch, filters, support and listing UX.
 // Self-contained, dependency-light, and respects reduced-motion.
 (function () {
   "use strict";
 
   var AUDIENCE_KEY = "ebrostay-audience";
-  var AUDIENCES = ["tenant", "owner"];
-  var SAVED_HASH = "#saved";
+  var AUDIENCE_SEEN_KEY = "ebrostay-audience-seen";
+  var SAVED_ONLY_KEY = "ebrostay-saved-only";
 
-  var COPY = {
+  var copy = {
     es: {
-      navHome: "Inicio",
-      saved: "Guardadas",
-      savedEmpty: "Todavía no has guardado viviendas.",
-      savedShowing: "Viviendas guardadas",
-      allHomes: "Ver todas",
-      clearFilters: "Limpiar filtros",
-      extraFilters: "Más filtros",
-      address: "Dirección o zona",
-      addressPlaceholder: "Movera, Universidad, Pedro II...",
-      bedrooms: "Habitaciones mínimas",
-      bathrooms: "Baños mínimos",
-      any: "Cualquiera",
-      audienceLabel: "Versión del sitio",
-      chooser: "Elige cómo quieres usar Ebrostay",
-      tenant: "Inquilino",
-      tenantHint: "Busco vivienda",
-      owner: "Propietario",
-      ownerHint: "Quiero alquilar",
-      tenantChip: "Versión inquilino activa",
-      ownerChip: "Versión propietario seleccionada",
-      tenantStatus: "Estás viendo la versión para inquilinos.",
-      tenantCopy: "Busca viviendas verificadas, compara condiciones y solicita tu estancia en Zaragoza.",
-      tenantCta: "Empezar búsqueda",
-      ownerStatus: "Has cambiado a la ruta para propietarios.",
-      ownerCopy: "Descubre cómo Ebrostay gestiona tu vivienda de principio a fin y te paga en tu cuenta.",
-      ownerCta: "Abrir página para propietarios",
+      homeNav: "Inicio",
+      favorites: "Guardados",
+      favoritesEmpty: "Todavía no has guardado viviendas.",
+      favoritesShowing: "Mostrando viviendas guardadas.",
+      switchLabel: "Elige tu perfil",
+      tenant: "Buscar alojamiento",
+      tenantSub: "Alojo a mi equipo",
+      owner: "Gestiona mi piso",
+      ownerSub: "Quiero publicar",
+      tenantStatus: "Versión empresas activa",
+      ownerStatus: "Versión propietario activa",
+      tenantHint: "Estancias de media duración para empleados y equipos desplazados.",
+      ownerHint: "Publica tu vivienda y delega toda la gestión.",
+      ownerKicker: "Gestión para propietarios, 100% digital",
+      ownerTitle: "Tu vivienda, gestionada de principio a fin.",
+      ownerCopy: "Publicamos tu vivienda, encontramos inquilinos, verificamos perfiles, gestionamos contratos, cobros, fianza, soporte y pagos a tu cuenta. Tú ves llegar los ingresos; nosotros hacemos el trabajo.",
+      ownerTrust1: "Gestión sin involucración",
+      ownerTrust2: "Demanda corporativa",
+      ownerTrust3: "Pagos claros a tu IBAN",
+      ownerCta: "Publicar mi vivienda →",
+      ownerPanelKicker: "Modo propietario",
+      ownerPanelTitle: "Convierte tu vivienda en ingresos sin gestionar llamadas, anuncios ni incidencias.",
+      ownerPanelCopy: "Ebrostay se ocupa de todo el ciclo de alquiler de media estancia: preparación, publicación, inquilinos, contrato, cobros y soporte.",
+      ownerPanelPrimary: "Quiero que gestionéis mi vivienda",
+      ownerPanelSecondary: "Ver ventajas para propietarios",
+      tenantNavCta: "Buscar vivienda",
+      ownerNavCta: "Publicar vivienda",
       benefits: [
-        ["home", "Totalmente amueblado"],
+        ["armchair", "Pisos amueblados"],
         ["headphones", "Soporte 24/7"],
-        ["file-check", "Contrato redactado"],
+        ["file-signature", "Contrato claro"],
         ["sparkles", "Limpieza y entrada"],
-        ["shield-check", "Incidencias gestionadas"],
-        ["wallet-cards", "Pago claro"]
+        ["shield-check", "Gestión de incidencias"],
+        ["credit-card", "Pago digital"]
       ],
+      whyTitle: "Tan fácil como reservar un hotel, pero para estancias de meses.",
+      whyLead: "Elige fechas, compara viviendas verificadas y solicita tu estancia con precio claro, soporte humano y condiciones preparadas para empresas y profesionales.",
+      howKicker: "Cómo funciona",
       howTitle: "Elige, solicita y entra.",
-      howCopy: "Como reservar un hotel, pero para estancias de 1 a 12 meses: fechas claras, vivienda lista y soporte durante toda la estancia.",
-      whyTitle: "Alquiler de media estancia, tan sencillo como reservar un hotel.",
-      whyLead: "Viviendas listas para entrar, condiciones claras y ayuda humana cuando la necesitas. Menos texto, menos fricción, más certezas.",
-      contactKicker: "Chat directo",
-      contactTitle: "Habla con Ebrostay ahora.",
-      contactCopy: "Déjanos nombre, email y mensaje. Abrimos WhatsApp o email con todo preparado para que no tengas que esperar.",
-      name: "Nombre",
-      email: "Email",
-      message: "¿Qué necesitas?",
-      messagePlaceholder: "Fechas, personas, presupuesto, vivienda o gestión de propiedad...",
+      howSteps: [
+        ["search", "Elige", "Filtra por zona, fechas, capacidad y comodidades."],
+        ["send", "Solicita", "Envía tu solicitud sin llamadas ni visitas innecesarias."],
+        ["key-round", "Entra", "Recibe confirmación, contrato y soporte de llegada."]
+      ],
+      filtersAddress: "Zona o dirección",
+      filtersAddressPlaceholder: "Movera, Universidad, Pedro II...",
+      filtersBedrooms: "Habitaciones mínimas",
+      filtersBathrooms: "Baños mínimos",
+      filtersAny: "Cualquiera",
+      filtersClear: "Limpiar filtros",
+      filtersSaved: "Ver guardados",
+      mapTitle: "Mapa interactivo",
+      mapCopy: "Acércate, muévete por Zaragoza y toca un precio para ver la vivienda. Los pins se actualizan con los anuncios publicados.",
+      chatTitle: "Cuéntanos qué necesitas",
+      chatIntro: "Escríbenos como en un chat. Dejamos tu solicitud preparada para WhatsApp o email.",
+      chatName: "Tu nombre",
+      chatEmail: "Tu email",
+      chatMessage: "Fechas, personas, zona o vivienda...",
       chatWhatsapp: "Enviar por WhatsApp",
-      chatEmail: "Enviar por email",
+      chatEmailCta: "Enviar por email",
+      assistantOpen: "¿Necesitas ayuda?",
       assistantTitle: "Asistente Ebrostay",
-      assistantOpen: "Ayuda",
-      assistantClose: "Cerrar",
-      assistantLead: "¿Tienes dudas al reservar o publicar una vivienda? Te ayudamos por WhatsApp o email.",
-      legal: "Ebrostay trata tus datos solo para responder a tu solicitud y gestionar reservas o servicios. Consulta la política de privacidad para información legal, GDPR y derechos.",
+      assistantCopy: "Dinos tu duda y te abrimos un WhatsApp con el mensaje preparado.",
+      assistantPlaceholder: "Estoy intentando reservar y necesito ayuda con...",
+      assistantSend: "Pedir ayuda",
+      legal: "Ebrostay trata tus datos solo para responder solicitudes y gestionar reservas. Consulta nuestra política de privacidad y derechos GDPR.",
+      highDemand: "Alta demanda",
+      visitsToday: "15 visitas hoy",
+      transparentReviews: "Reseñas verificadas próximamente",
+      trustPilot: "Opiniones públicas en preparación",
+      mediaPhotos: "Fotos",
+      mediaFloorplan: "Plano",
+      mediaVideo: "Vídeo",
+      mediaShare: "Compartir",
       galleryHint: "Doble clic en la foto para abrir la galería",
-      photos: "Fotos",
-      floorplans: "Planos",
-      video: "Vídeo",
-      urgency: "Alta demanda",
-      urgencyCopy: "Vivienda visitada varias veces recientemente. Solicita disponibilidad antes de que se bloquee.",
-      reviews: "Transparencia",
-      reviewsCopy: "Viviendas verificadas, condiciones claras y soporte documentado. Reseñas públicas próximamente.",
-      trustpilot: "Trustpilot / Google Reviews próximamente",
-      shareWhatsapp: "WhatsApp",
       shareLinkedin: "LinkedIn",
-      shareCopy: "Copiar enlace",
-      furnishing: "Servicio de amueblamiento para propietarios",
-      moving: "Asistencia de entrada y salida"
+      shareWhatsapp: "WhatsApp",
+      shareEmail: "Email",
+      ownerExtraFurnish: "Amueblamiento",
+      ownerExtraFurnishCopy: "Podemos preparar y amueblar tu vivienda para alquiler corporativo.",
+      ownerExtraMove: "Entrada y salida",
+      ownerExtraMoveCopy: "Coordinamos check-in, check-out, limpieza y asistencia al huésped.",
+      ownerExtraStats: "Estadísticas",
+      ownerExtraStatsCopy: "Seguimiento de demanda, ocupación, ingresos y próximos pagos.",
+      noPortalTop: "El portal queda integrado en la experiencia de propietario, no como distracción principal."
     },
     en: {
-      navHome: "Home",
-      saved: "Saved",
-      savedEmpty: "You have not saved any homes yet.",
-      savedShowing: "Saved homes",
-      allHomes: "Show all",
-      clearFilters: "Clear filters",
-      extraFilters: "More filters",
-      address: "Address or area",
-      addressPlaceholder: "Movera, University, Pedro II...",
-      bedrooms: "Min. bedrooms",
-      bathrooms: "Min. bathrooms",
-      any: "Any",
-      audienceLabel: "Website version",
-      chooser: "Choose how you want to use Ebrostay",
-      tenant: "Tenant",
-      tenantHint: "I need a home",
-      owner: "Owner",
-      ownerHint: "I want to rent out",
-      tenantChip: "Tenant version active",
-      ownerChip: "Owner version selected",
-      tenantStatus: "You are viewing the tenant version.",
-      tenantCopy: "Search verified homes, compare conditions and request your stay in Zaragoza.",
-      tenantCta: "Start searching",
-      ownerStatus: "You switched to the owner path.",
-      ownerCopy: "See how Ebrostay manages your property end to end and pays you directly.",
-      ownerCta: "Open owner page",
+      homeNav: "Home",
+      favorites: "Saved",
+      favoritesEmpty: "You have not saved any homes yet.",
+      favoritesShowing: "Showing saved homes.",
+      switchLabel: "Choose your profile",
+      tenant: "Find a stay",
+      tenantSub: "Housing for my team",
+      owner: "Manage my flat",
+      ownerSub: "I want to list",
+      tenantStatus: "Company version active",
+      ownerStatus: "Owner version active",
+      tenantHint: "Mid-stay homes for relocating employees and teams.",
+      ownerHint: "List your property and delegate the management.",
+      ownerKicker: "Property management, 100% digital",
+      ownerTitle: "Your property, managed end to end.",
+      ownerCopy: "We list your home, find tenants, verify profiles, handle contracts, payments, deposits, support and payouts to your account. You see the income; we do the work.",
+      ownerTrust1: "Hands-off management",
+      ownerTrust2: "Corporate demand",
+      ownerTrust3: "Clear IBAN payouts",
+      ownerCta: "List my property →",
+      ownerPanelKicker: "Owner mode",
+      ownerPanelTitle: "Turn your property into income without managing calls, listings or issues.",
+      ownerPanelCopy: "Ebrostay handles the full mid-stay rental cycle: preparation, listing, tenants, contract, payments and support.",
+      ownerPanelPrimary: "I want you to manage my property",
+      ownerPanelSecondary: "See owner benefits",
+      tenantNavCta: "Find a home",
+      ownerNavCta: "List a home",
       benefits: [
-        ["home", "Fully furnished"],
+        ["armchair", "Fully furnished"],
         ["headphones", "24/7 support"],
-        ["file-check", "Contract drafting"],
-        ["sparkles", "Cleaning & move-in"],
-        ["shield-check", "Issues managed"],
-        ["wallet-cards", "Clear payment"]
+        ["file-signature", "Clear contract"],
+        ["sparkles", "Cleaning & arrival"],
+        ["shield-check", "Issue management"],
+        ["credit-card", "Digital payment"]
       ],
+      whyTitle: "As easy as booking a hotel, but for stays of months.",
+      whyLead: "Pick dates, compare verified homes and request your stay with clear pricing, human support and conditions ready for companies and professionals.",
+      howKicker: "How it works",
       howTitle: "Pick, request, move in.",
-      howCopy: "As simple as booking a hotel, but for 1–12 month stays: clear dates, move-in-ready homes and support throughout.",
-      whyTitle: "Mid-stay renting, as simple as booking a hotel.",
-      whyLead: "Move-in-ready homes, clear conditions and human help when you need it. Less text, less friction, more certainty.",
-      contactKicker: "Direct chat",
-      contactTitle: "Talk to Ebrostay now.",
-      contactCopy: "Leave your name, email and message. We open WhatsApp or email with everything prepared so you do not have to wait.",
-      name: "Name",
-      email: "Email",
-      message: "What do you need?",
-      messagePlaceholder: "Dates, people, budget, home or property management...",
+      howSteps: [
+        ["search", "Pick", "Filter by area, dates, capacity and amenities."],
+        ["send", "Request", "Send your request without calls or unnecessary viewings."],
+        ["key-round", "Move in", "Receive confirmation, contract and arrival support."]
+      ],
+      filtersAddress: "Area or address",
+      filtersAddressPlaceholder: "Movera, University, Pedro II...",
+      filtersBedrooms: "Minimum bedrooms",
+      filtersBathrooms: "Minimum bathrooms",
+      filtersAny: "Any",
+      filtersClear: "Clear filters",
+      filtersSaved: "Show saved",
+      mapTitle: "Interactive map",
+      mapCopy: "Zoom, move around Zaragoza and tap a price to view the home. Pins update from the published listings.",
+      chatTitle: "Tell us what you need",
+      chatIntro: "Write as if it were a chat. We prepare your request for WhatsApp or email.",
+      chatName: "Your name",
+      chatEmail: "Your email",
+      chatMessage: "Dates, people, area or property...",
       chatWhatsapp: "Send by WhatsApp",
-      chatEmail: "Send by email",
+      chatEmailCta: "Send by email",
+      assistantOpen: "Need help?",
       assistantTitle: "Ebrostay assistant",
-      assistantOpen: "Help",
-      assistantClose: "Close",
-      assistantLead: "Need help booking or listing a property? We can help by WhatsApp or email.",
-      legal: "Ebrostay uses your data only to answer your request and manage bookings or services. See the privacy policy for legal, GDPR and rights information.",
+      assistantCopy: "Tell us the issue and we will open WhatsApp with the message ready.",
+      assistantPlaceholder: "I am trying to book and need help with...",
+      assistantSend: "Ask for help",
+      legal: "Ebrostay uses your data only to answer requests and manage bookings. See our privacy policy and GDPR rights.",
+      highDemand: "High demand",
+      visitsToday: "15 visits today",
+      transparentReviews: "Verified reviews coming soon",
+      trustPilot: "Public reviews in preparation",
+      mediaPhotos: "Photos",
+      mediaFloorplan: "Floor plan",
+      mediaVideo: "Video",
+      mediaShare: "Share",
       galleryHint: "Double-click the photo to open the gallery",
-      photos: "Photos",
-      floorplans: "Floor plans",
-      video: "Video",
-      urgency: "High demand",
-      urgencyCopy: "This home has been viewed several times recently. Request availability before it is blocked.",
-      reviews: "Transparency",
-      reviewsCopy: "Verified homes, clear conditions and documented support. Public reviews coming soon.",
-      trustpilot: "Trustpilot / Google Reviews coming soon",
-      shareWhatsapp: "WhatsApp",
       shareLinkedin: "LinkedIn",
-      shareCopy: "Copy link",
-      furnishing: "Furnishing service for owners",
-      moving: "Move-in and move-out support"
+      shareWhatsapp: "WhatsApp",
+      shareEmail: "Email",
+      ownerExtraFurnish: "Furnishing",
+      ownerExtraFurnishCopy: "We can prepare and furnish your home for corporate rentals.",
+      ownerExtraMove: "Move-in/out",
+      ownerExtraMoveCopy: "We coordinate check-in, check-out, cleaning and guest assistance.",
+      ownerExtraStats: "Statistics",
+      ownerExtraStatsCopy: "Track demand, occupancy, income and upcoming payouts.",
+      noPortalTop: "The portal remains part of the owner experience, not the main distraction."
     }
   };
 
-  function getLanguage() {
-    var activeButton = document.querySelector(".language-option.is-active[data-lang]");
-    var language = activeButton?.dataset.lang || document.documentElement.lang || localStorage.getItem("ebrostay-language") || "es";
-    return COPY[language] ? language : "es";
+  function lang() {
+    var stored = "";
+    try { stored = localStorage.getItem("ebrostay-language") || ""; } catch { stored = ""; }
+    var current = stored || document.documentElement.lang || "es";
+    return String(current).toLowerCase().startsWith("en") ? "en" : "es";
   }
 
-  function c(key) {
-    var language = getLanguage();
-    return COPY[language][key] || COPY.es[key] || key;
+  function text(key) {
+    return (copy[lang()] && copy[lang()][key]) || copy.es[key] || key;
   }
 
-  function dict(key) {
+  function siteText(key) {
     try {
-      var language = getLanguage();
-      if (typeof translations !== "undefined") return translations[language]?.[key] || translations.es?.[key] || key;
-    } catch (error) {
-      // Ignore missing dictionaries on static fallback pages.
-    }
+      if (typeof translations !== "undefined") {
+        var language = lang();
+        return (translations[language] && translations[language][key]) || (translations.es && translations.es[key]) || key;
+      }
+    } catch { /* translation dictionary unavailable */ }
     return key;
   }
 
-  function setText(selectorOrElement, text) {
-    var element = typeof selectorOrElement === "string" ? document.querySelector(selectorOrElement) : selectorOrElement;
-    if (element) element.textContent = text;
+  function setText(target, value) {
+    var element = typeof target === "string" ? document.querySelector(target) : target;
+    if (element) element.textContent = value;
   }
 
-  function getStoredAudience() {
-    var stored = localStorage.getItem(AUDIENCE_KEY);
-    return AUDIENCES.indexOf(stored) >= 0 ? stored : "tenant";
+  function icon(name) {
+    return `<i data-lucide="${name}" aria-hidden="true"></i>`;
+  }
+
+  // Translate static [data-i18n] content + sync the language buttons. Runs on
+  // every page (idempotent); the safety net for pages without a page-specific
+  // script (e.g. about, privacy) so the English/Spanish versions both work.
+  function applyKeyedTranslations(language) {
+    if (typeof translations === "undefined") return;
+    var lng = translations[language] ? language : "es";
+    document.documentElement.lang = lng;
+    try { localStorage.setItem("ebrostay-language", lng); } catch (e) { /* ignore */ }
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = siteText(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-attr]").forEach(function (el) {
+      el.dataset.i18nAttr.split(";").forEach(function (pair) {
+        var p = pair.split(":");
+        if (p[0] && p[1]) el.setAttribute(p[0].trim(), siteText(p[1].trim()));
+      });
+    });
+    document.querySelectorAll("[data-lang]").forEach(function (b) {
+      b.classList.toggle("is-active", b.dataset.lang === lng);
+    });
+    // Show the matching language block for rich content that can't be
+    // translated via textContent (e.g. the privacy/legal page).
+    document.querySelectorAll("[data-lang-content]").forEach(function (block) {
+      block.hidden = block.dataset.langContent !== lng;
+    });
+  }
+
+  function refreshIcons() {
+    window.lucide?.createIcons?.();
+  }
+
+  function whatsappLink(message) {
+    var number = typeof WHATSAPP_NUMBER !== "undefined" ? WHATSAPP_NUMBER : "34678715418";
+    return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
+  }
+
+  function contactEmail() {
+    return typeof CONTACT_EMAIL !== "undefined" ? CONTACT_EMAIL : "info@ebrostay.com";
+  }
+
+  function toast(message) {
+    var existing = document.querySelector(".ebro-toast");
+    if (existing) existing.remove();
+    var node = document.createElement("p");
+    node.className = "ebro-toast";
+    node.setAttribute("role", "status");
+    node.textContent = message;
+    document.body.appendChild(node);
+    setTimeout(function () { node.remove(); }, 3500);
+  }
+
+  function addGlobalStyles() {
+    if (document.getElementById("ebro-enhancement-styles")) return;
+    var style = document.createElement("style");
+    style.id = "ebro-enhancement-styles";
+    style.textContent = `
+      :root { --ebro-glass: rgba(250, 249, 246, 0.94); }
+      body, button, input, select, textarea { font-family: "Hanken Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif !important; }
+      h1, h2, h3, .brand-wordmark { font-family: "Hanken Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif !important; }
+      .section-kicker { color: var(--text-brand); font-size: 0.86rem; letter-spacing: 0.045em; }
+      .hero-overlay { background: linear-gradient(90deg, rgba(10, 51, 36, 0.94), rgba(13, 29, 24, 0.60) 52%, rgba(13, 29, 24, 0.18)), linear-gradient(0deg, rgba(10, 20, 17, 0.84), rgba(10, 20, 17, 0.16) 54%); }
+      .hero .eyebrow { display: inline-flex; align-items: center; gap: 8px; width: fit-content; max-width: 100%; margin-bottom: 12px; border: 1px solid rgba(250, 249, 246, 0.72); border-radius: var(--radius-pill); padding: 8px 12px; background: rgba(250, 249, 246, 0.94); color: var(--green-900); font-size: clamp(0.82rem, 1vw, 0.94rem); line-height: 1.08; letter-spacing: 0.045em; box-shadow: 0 10px 28px rgba(10, 20, 17, 0.20); text-shadow: none; }
+      .hero .eyebrow::before { content: ""; flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: var(--clay); box-shadow: 0 0 0 4px rgba(217, 99, 42, 0.16); }
+      .hero h1, .hero-copy { text-shadow: 0 2px 18px rgba(10, 20, 17, 0.38); }
+      .hero-copy { color: rgba(255, 255, 255, 0.94); }
+      .audience-switch { display: grid; grid-template-columns: minmax(0, 1fr) minmax(270px, 0.72fr); gap: 12px; align-items: center; width: min(760px, 100%); margin: 18px 0 14px; border: 1px solid rgba(250, 249, 246, 0.42); border-radius: 16px; padding: 10px; background: var(--ebro-glass); color: var(--ink); box-shadow: 0 14px 34px rgba(10, 20, 17, 0.22); backdrop-filter: blur(14px); }
+      .audience-switch.is-first-visit { animation: audiencePulse 1.8s var(--ease-out) 1; }
+      .audience-switch-copy { display: grid; gap: 2px; min-width: 0; }
+      .audience-switch-copy span { color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+      .audience-switch-copy strong { color: var(--green-900); font-size: clamp(0.96rem, 1.45vw, 1.12rem); line-height: 1.08; }
+      .audience-switch-note { grid-column: 1 / -1; margin: -2px 2px 0; color: var(--muted); font-size: 0.86rem; font-weight: 600; }
+      .audience-toggle { position: relative; display: grid; grid-template-columns: 1fr 1fr; min-height: 50px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px; background: var(--sunken); box-shadow: inset 0 1px 2px rgba(42,39,34,.08); }
+      .audience-toggle-indicator { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: var(--radius-pill); background: var(--green); box-shadow: var(--shadow-brand); transition: transform 360ms var(--ease-spring), background 220ms var(--ease-out); }
+      .audience-switch[data-audience="owner"] .audience-toggle-indicator { transform: translateX(100%); background: var(--clay); box-shadow: 0 6px 20px rgba(217, 99, 42, 0.28); }
+      .audience-toggle button { position: relative; z-index: 1; display: grid; gap: 0; place-items: center; border: 0; border-radius: var(--radius-pill); padding: 7px 10px; color: var(--muted); background: transparent; font-weight: 600; line-height: 1.08; cursor: pointer; transition: color 220ms var(--ease-out), transform 220ms var(--ease-out); }
+      .audience-toggle button:hover { transform: translateY(-1px); }
+      .audience-toggle button.is-active { color: #fff; }
+      .audience-toggle small { font-size: 0.68rem; font-weight: 600; opacity: .88; }
+      /* Compact, subtle variant docked in the top bar next to the logo */
+      .audience-switch--compact { width: auto; margin: 0 0 0 4px; padding: 0; border: 0; background: none; box-shadow: none; backdrop-filter: none; display: inline-flex; align-items: center; flex: 0 0 auto; }
+      .audience-switch--compact .audience-toggle { min-height: 36px; padding: 3px; gap: 2px; background: transparent; border: 1px solid var(--line); box-shadow: none; }
+      .audience-switch--compact .audience-toggle-indicator { top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); background: var(--surface-brand-soft); box-shadow: none; }
+      .audience-switch--compact[data-audience="owner"] .audience-toggle-indicator { transform: translateX(100%); background: var(--surface-accent-soft); box-shadow: none; }
+      .audience-switch--compact .audience-toggle button { padding: 4px 14px; font-size: 0.82rem; white-space: nowrap; color: var(--muted); }
+      .audience-switch--compact .audience-toggle button.is-active { color: var(--text-brand); }
+      .audience-switch--compact[data-audience="owner"] .audience-toggle button[data-audience-option="owner"].is-active { color: var(--accent); }
+      @media (max-width: 600px) {
+        .site-header { flex-wrap: wrap; row-gap: 0; }
+        .audience-switch--compact { display: inline-flex; order: 9; flex-basis: 100%; margin: 8px 0 2px; }
+        .audience-switch--compact .audience-toggle { width: 100%; }
+      }
+      .audience-owner-panel { display: none; width: min(760px, 100%); margin-top: 16px; border: 1px solid rgba(250, 249, 246, 0.35); border-radius: var(--radius-lg); padding: clamp(16px, 2.4vw, 22px); background: var(--ebro-glass); color: var(--ink); box-shadow: 0 16px 40px rgba(10, 20, 17, 0.22); backdrop-filter: blur(14px); }
+      html[data-audience="owner"] .audience-owner-panel { display: grid; gap: 16px; animation: audiencePanelIn 300ms var(--ease-out); }
+      html[data-audience="owner"] .hero-search { display: none; }
+      html[data-audience="owner"] .marketplace { display: none; }
+      .audience-owner-panel span { color: var(--clay-600); font-size: 0.76rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+      .audience-owner-panel strong { display: block; margin-top: 4px; color: var(--green-900); font-size: clamp(1.12rem, 2.2vw, 1.55rem); line-height: 1.05; }
+      .audience-owner-panel p { margin: 8px 0 0; color: var(--ink-soft); font-size: .98rem; font-weight: 600; }
+      .audience-owner-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .audience-owner-actions .button { text-decoration: none; }
+      .hero-benefits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; width: min(760px, 100%); margin: 0 0 16px; }
+      .hero-benefit { display: flex; align-items: center; gap: 8px; border: 1px solid rgba(250,249,246,.24); border-radius: 14px; padding: 8px 10px; color: #fff; background: rgba(250,249,246,.10); font-weight: 600; font-size: .88rem; backdrop-filter: blur(10px); }
+      .hero-benefit svg { width: 17px; height: 17px; color: #f3c2a6; flex: 0 0 auto; }
+      .trust-row { gap: 12px; }
+      .trust-row span { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 0; padding: 0; background: transparent; color: rgba(255,255,255,.93); font-size: .92rem; }
+      .trust-row span svg { width: 17px; height: 17px; color: #f3c2a6; }
+      .saved-flats-link { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 8px 12px; background: var(--surface); color: var(--text-brand); font-weight: 600; text-decoration: none; white-space: nowrap; }
+      .saved-flats-link svg { width: 16px; height: 16px; }
+      .filter-panel .button.ghost, #resetAvailability { border-color: var(--green); color: var(--text-brand); font-weight: 600; }
+      .enhanced-filter-row { display: grid; gap: 14px; }
+      .enhanced-filter-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      .quick-filters [data-quick="deposit"] { display: none !important; }
+      .quick-filters .saved-quick-filter { border-color: var(--green); color: var(--text-brand); }
+      .quick-filters .saved-quick-filter.is-active { color: #fff; background: var(--green); }
+      .marketplace-layout { grid-template-columns: 260px minmax(0, 1.3fr) minmax(330px, 0.9fr); }
+      .google-map-wrap { min-height: 560px; background: var(--green-900); }
+      .listings-map .leaflet-tile { filter: saturate(.72) hue-rotate(32deg) contrast(.96) brightness(1.02); }
+      .listings-map::after, .detail-map::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(135deg, rgba(31,138,87,.12), rgba(217,99,42,.05)); z-index: 410; mix-blend-mode: multiply; }
+      .map-copy { border-top: 1px solid var(--line); background: var(--surface); }
+      .map-copy strong { font-size: 1rem; }
+      .map-addresses { display: none; }
+      .property-card { border-radius: var(--radius-lg); }
+      .property-body { gap: 11px; }
+      .property-title-row .section-kicker, #detailKicker { color: var(--text-brand); font-size: .82rem; letter-spacing: .055em; }
+      .property-body > p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+      .amenity-list span { display: inline-flex; align-items: center; gap: 5px; }
+      .amenity-list span svg { width: 14px; height: 14px; color: var(--green); }
+      .property-meta span { display: inline-flex; align-items: center; gap: 5px; }
+      .property-meta span svg { width: 14px; height: 14px; }
+      .how-section.is-slogan { grid-template-columns: .8fr 1.2fr; align-items: center; }
+      .how-section.is-slogan .steps article { min-height: 150px; }
+      .how-section.is-slogan .steps article svg { width: 22px; height: 22px; color: var(--green); }
+      .contact-chat { display: grid; gap: 14px; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: clamp(18px, 4vw, 28px); background: var(--surface); box-shadow: var(--shadow-md); }
+      .contact-chat-thread { display: grid; gap: 10px; }
+      .chat-bubble { width: fit-content; max-width: 86%; border-radius: 18px; padding: 10px 13px; font-weight: 600; }
+      .chat-bubble.agent { background: var(--mist); color: var(--text-strong); }
+      .chat-bubble.user { justify-self: end; background: var(--green); color: #fff; }
+      .contact-chat-fields { display: grid; gap: 10px; }
+      .contact-chat-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .inquiry-form.is-replaced-by-chat { display: none; }
+      .site-footer { flex-wrap: wrap; }
+      .footer-legal-note { flex-basis: 100%; margin: 2px 0 0; color: var(--muted); font-size: .82rem; }
+      .footer-legal-note a { color: var(--text-brand); font-weight: 600; }
+      .ebro-toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 80; max-width: calc(100vw - 40px); border: 1px solid var(--green); border-left: 4px solid var(--green); border-radius: 8px; padding: 12px 14px; background: var(--surface); color: var(--ink); font-weight: 600; box-shadow: var(--shadow); }
+      .support-fab { position: fixed; right: 22px; bottom: 22px; z-index: 70; display: inline-flex; align-items: center; gap: 9px; border: 0; border-radius: var(--radius-pill); padding: 12px 16px; color: #fff; background: var(--green); font-weight: 600; box-shadow: var(--shadow-brand); cursor: pointer; }
+      .support-fab svg { width: 18px; height: 18px; }
+      .support-panel { position: fixed; right: 22px; bottom: 82px; z-index: 70; display: none; width: min(360px, calc(100vw - 32px)); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 18px; background: var(--surface); box-shadow: var(--shadow); }
+      .support-panel.is-open { display: grid; gap: 12px; animation: audiencePanelIn 180ms var(--ease-out); }
+      .support-panel h3, .support-panel p { margin: 0; }
+      .support-panel textarea { min-height: 92px; }
+      .support-panel-actions { display: flex; gap: 8px; }
+      .detail-media { background-size: cover !important; background-repeat: no-repeat !important; background-position: center !important; background-color: var(--sunken); cursor: zoom-in; }
+      .detail-media::after { content: attr(data-gallery-hint); position: absolute; right: 12px; bottom: 12px; border-radius: var(--radius-pill); padding: 7px 10px; color: #fff; background: rgba(10,51,36,.78); font-size: .82rem; font-weight: 600; }
+      .detail-gallery { display: flex; gap: 8px; overflow-x: auto; padding: 10px 0 0; }
+      .gallery-thumb { flex: 0 0 92px; height: 66px; background-size: cover; }
+      .detail-media-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .detail-media-tabs a, .detail-media-tabs button { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 9px 12px; background: var(--surface); color: var(--text-brand); font-weight: 600; text-decoration: none; cursor: pointer; }
+      .detail-media-tabs svg { width: 16px; height: 16px; }
+      .detail-highlights, .trust-detail-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0; }
+      .detail-highlight, .trust-detail-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: var(--surface); font-weight: 600; color: var(--ink); }
+      .detail-highlight svg, .trust-detail-card svg { width: 18px; height: 18px; color: var(--green); margin-bottom: 6px; }
+      .share-social-row { display: flex; flex-wrap: nowrap; gap: 8px; margin-top: 10px; }
+      .share-social-row a { display: inline-flex; justify-content: center; align-items: center; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: var(--radius-sm); text-decoration: none; color: var(--text-muted); background: var(--surface); transition: color 120ms var(--ease-out), border-color 120ms var(--ease-out); }
+      .share-social-row a:hover { color: var(--text-brand); border-color: var(--line-strong); }
+      .share-social-row svg { width: 18px; height: 18px; }
+      .booking-widget { gap: 10px; }
+      .booking-widget h4, .movein-box h4 { margin-bottom: 2px; color: var(--text-brand); font-size: .92rem; letter-spacing: .045em; }
+      .booking-widget label { font-size: .82rem; gap: 5px; }
+      .booking-widget input, .booking-widget textarea { min-height: 42px; font-size: .96rem; }
+      .movein-rows li, #detailMoveInRows li { gap: 12px; font-size: .92rem; }
+      .booking-note { font-size: .82rem; line-height: 1.35; }
+      .booking-tip { align-items: flex-start; }
+      .gallery-lightbox { position: fixed; inset: 0; z-index: 120; display: none; place-items: center; padding: 28px; background: rgba(10, 20, 17, .86); }
+      .gallery-lightbox.is-open { display: grid; }
+      .gallery-lightbox img { max-width: min(1100px, 92vw); max-height: 82vh; object-fit: contain; border-radius: 18px; box-shadow: var(--shadow); background: var(--sunken); }
+      .gallery-lightbox button { position: absolute; border: 0; border-radius: var(--radius-pill); padding: 10px 13px; color: var(--ink); background: var(--surface); font-weight: 600; cursor: pointer; }
+      .gallery-close { top: 20px; right: 20px; }
+      .gallery-prev { left: 20px; top: 50%; transform: translateY(-50%); }
+      .gallery-next { right: 20px; top: 50%; transform: translateY(-50%); }
+      .owner-extra-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: min(1240px, calc(100% - 38px)); margin: 20px auto 0; }
+      .owner-extra-card { border: 1px solid var(--line); border-radius: 16px; padding: 18px; background: var(--surface); box-shadow: var(--shadow-xs); }
+      .owner-extra-card svg { width: 22px; height: 22px; color: var(--green); }
+      .owner-extra-card h3 { margin-top: 8px; }
+      .owner-extra-card p { margin-bottom: 0; }
+      body.owner-page .header-actions .admin-link[href="partner.html"] { display: none; }
+      @keyframes audiencePulse { 0% { box-shadow: 0 0 0 0 rgba(250,249,246,0), 0 14px 34px rgba(10,20,17,.22); transform: translateY(0); } 38% { box-shadow: 0 0 0 8px rgba(250,249,246,.22), 0 20px 48px rgba(10,20,17,.30); transform: translateY(-2px); } 100% { box-shadow: 0 0 0 0 rgba(250,249,246,0), 0 14px 34px rgba(10,20,17,.22); transform: translateY(0); } }
+      @keyframes audiencePanelIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      @media (prefers-reduced-motion: reduce) { .audience-switch.is-first-visit, html[data-audience="owner"] .audience-owner-panel, .support-panel.is-open { animation: none; } .audience-toggle-indicator, .audience-toggle button { transition: none; } }
+      @media (max-width: 1180px) { .marketplace-layout { grid-template-columns: 260px minmax(0, 1fr); } .map-panel { grid-column: 1 / -1; } .google-map-wrap { min-height: 500px; } }
+      @media (max-width: 820px) { .marketplace-layout { grid-template-columns: 1fr; } .hero .eyebrow { white-space: normal; font-size: clamp(.78rem, 3.2vw, .92rem); padding: 8px 12px; } .audience-switch { grid-template-columns: 1fr; gap: 10px; padding: 10px; } .audience-toggle { min-height: 48px; } .hero-benefits { grid-template-columns: 1fr 1fr; } .enhanced-filter-pair { grid-template-columns: 1fr; } .google-map-wrap { min-height: 420px; } .owner-extra-strip { grid-template-columns: 1fr; } .share-social-row { grid-template-columns: 1fr; } .support-fab { right: 14px; bottom: 14px; } .support-panel { right: 14px; bottom: 72px; } }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function preferredAudience() {
+    try { return localStorage.getItem(AUDIENCE_KEY) === "owner" ? "owner" : "tenant"; } catch { return "tenant"; }
+  }
+
+  function isFirstAudienceVisit() {
+    try { return localStorage.getItem(AUDIENCE_SEEN_KEY) !== "true"; } catch { return false; }
+  }
+
+  function markAudienceSeen() {
+    try { localStorage.setItem(AUDIENCE_SEEN_KEY, "true"); } catch { /* ignore */ }
+  }
+
+  function createAudienceSwitch() {
+    var existing = document.querySelector("[data-audience-switch]");
+    if (existing) return existing;
+    // Homepage-only (the mode drives the hero); rendered subtly in the top bar.
+    var hero = document.querySelector(".hero");
+    var header = document.querySelector(".site-header");
+    var brand = header && header.querySelector(".brand");
+    if (!hero || !header || !brand) return null;
+    var node = document.createElement("div");
+    node.className = "audience-switch audience-switch--compact";
+    node.setAttribute("data-audience-switch", "");
+    node.setAttribute("aria-label", "Website audience selector");
+    node.innerHTML = `
+      <div class="audience-toggle" role="radiogroup" aria-label="Choose company or owner version">
+        <span class="audience-toggle-indicator" aria-hidden="true"></span>
+        <button type="button" role="radio" data-audience-option="tenant"><span data-audience-tenant></span></button>
+        <button type="button" role="radio" data-audience-option="owner"><span data-audience-owner></span></button>
+      </div>
+    `;
+    brand.insertAdjacentElement("afterend", node);
+    node.addEventListener("click", function (event) {
+      var button = event.target.closest("[data-audience-option]");
+      if (!button) return;
+      applyAudience(button.dataset.audienceOption === "owner" ? "owner" : "tenant", true);
+      playBrandChime();
+    });
+    return node;
+  }
+
+  function createHeroBenefits() {
+    if (document.querySelector("[data-hero-benefits]")) return;
+    var heroSearch = document.querySelector(".hero-search");
+    if (!heroSearch) return;
+    var benefits = document.createElement("div");
+    benefits.className = "hero-benefits";
+    benefits.setAttribute("data-hero-benefits", "");
+    heroSearch.insertAdjacentElement("beforebegin", benefits);
+    updateHeroBenefits();
+  }
+
+  function updateHeroBenefits() {
+    var node = document.querySelector("[data-hero-benefits]");
+    if (!node) return;
+    node.innerHTML = text("benefits").map(function (item) {
+      return `<span class="hero-benefit">${icon(item[0])}<span>${item[1]}</span></span>`;
+    }).join("");
+    refreshIcons();
+  }
+
+  function createOwnerPanel() {
+    if (document.querySelector("[data-owner-hero-panel]")) return;
+    var heroSearch = document.querySelector(".hero-search");
+    if (!heroSearch) return;
+    var panel = document.createElement("div");
+    panel.className = "audience-owner-panel";
+    panel.setAttribute("data-owner-hero-panel", "");
+    panel.innerHTML = `
+      <div><span data-owner-panel-kicker></span><strong data-owner-panel-title></strong><p data-owner-panel-copy></p></div>
+      <div class="audience-owner-actions"><a class="button primary" href="index.html#owner" data-owner-panel-primary></a><a class="button ghost" href="index.html#owner" data-owner-panel-secondary></a></div>
+    `;
+    heroSearch.insertAdjacentElement("afterend", panel);
+  }
+
+  function updateAudienceTexts(mode) {
+    var node = document.querySelector("[data-audience-switch]");
+    if (!node) return;
+    node.dataset.audience = mode;
+    setText(node.querySelector("[data-audience-label]"), text("switchLabel"));
+    setText(node.querySelector("[data-audience-status]"), text(mode === "owner" ? "ownerStatus" : "tenantStatus"));
+    setText(node.querySelector("[data-audience-hint]"), text(mode === "owner" ? "ownerHint" : "tenantHint"));
+    setText(node.querySelector("[data-audience-tenant]"), text("tenant"));
+    setText(node.querySelector("[data-audience-tenant-sub]"), text("tenantSub"));
+    setText(node.querySelector("[data-audience-owner]"), text("owner"));
+    setText(node.querySelector("[data-audience-owner-sub]"), text("ownerSub"));
+    node.querySelectorAll("[data-audience-option]").forEach(function (button) {
+      var active = button.dataset.audienceOption === mode;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-checked", String(active));
+    });
+  }
+
+  function updateOwnerPanelTexts() {
+    var panel = document.querySelector("[data-owner-hero-panel]");
+    if (!panel) return;
+    setText(panel.querySelector("[data-owner-panel-kicker]"), text("ownerPanelKicker"));
+    setText(panel.querySelector("[data-owner-panel-title]"), text("ownerPanelTitle"));
+    setText(panel.querySelector("[data-owner-panel-copy]"), text("ownerPanelCopy"));
+    setText(panel.querySelector("[data-owner-panel-primary]"), text("ownerPanelPrimary"));
+    setText(panel.querySelector("[data-owner-panel-secondary]"), text("ownerPanelSecondary"));
+  }
+
+  function updateHeroForAudience(mode) {
+    var hero = document.querySelector(".hero");
+    if (!hero) return;
+    var trustItems = hero.querySelectorAll(".trust-row span");
+    var cta = hero.querySelector(".hero-cta-row a");
+    var ctaText = hero.querySelector(".hero-cta-row a span");
+    if (mode === "owner") {
+      setText(hero.querySelector(".eyebrow"), text("ownerKicker"));
+      setText(hero.querySelector("h1"), text("ownerTitle"));
+      setText(hero.querySelector(".hero-copy"), text("ownerCopy"));
+      if (trustItems[0]) trustItems[0].innerHTML = `${icon("handshake")}<span>${text("ownerTrust1")}</span>`;
+      if (trustItems[1]) trustItems[1].innerHTML = `${icon("building-2")}<span>${text("ownerTrust2")}</span>`;
+      if (trustItems[2]) trustItems[2].innerHTML = `${icon("banknote")}<span>${text("ownerTrust3")}</span>`;
+      if (cta) cta.href = "index.html#owner";
+      if (ctaText) ctaText.textContent = text("ownerCta");
+    } else {
+      setText(hero.querySelector(".eyebrow"), siteText("hero.kicker"));
+      setText(hero.querySelector("h1"), siteText("hero.title"));
+      setText(hero.querySelector(".hero-copy"), siteText("hero.copy"));
+      if (trustItems[0]) trustItems[0].innerHTML = `${icon("badge-check")}<span>${siteText("hero.trust1")}</span>`;
+      if (trustItems[1]) trustItems[1].innerHTML = `${icon("receipt-text")}<span>${siteText("hero.trust2")}</span>`;
+      if (trustItems[2]) trustItems[2].innerHTML = `${icon("calendar-check")}<span>${siteText("hero.trust3")}</span>`;
+      if (cta) cta.href = "index.html#owner";
+      if (ctaText) ctaText.textContent = siteText("hero.ownerCta");
+    }
+    refreshIcons();
+  }
+
+  function applyAudience(mode, persist) {
+    mode = mode === "owner" ? "owner" : "tenant";
+    if (persist) {
+      try { localStorage.setItem(AUDIENCE_KEY, mode); } catch { /* ignore */ }
+      markAudienceSeen();
+    }
+    document.documentElement.dataset.audience = mode;
+    if (document.body) document.body.dataset.audience = mode;
+    updateAudienceTexts(mode);
+    updateOwnerPanelTexts();
+    updateHeroBenefits();
+    updateHeroForAudience(mode);
+    var switchElement = document.querySelector("[data-audience-switch]");
+    if (switchElement) switchElement.classList.toggle("is-first-visit", isFirstAudienceVisit() && mode === "tenant");
+    if (persist) {
+      var target = mode === "owner" ? document.querySelector("#ownerView") : document.querySelector("#top");
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function initAudience() {
+    createAudienceSwitch();
+    // Hero benefit chips intentionally omitted — they duplicated the trust row below the search.
+    if (isFirstAudienceVisit()) {
+      try { localStorage.setItem(AUDIENCE_KEY, "tenant"); } catch { /* ignore */ }
+    }
+    applyAudience(preferredAudience(), false);
+  }
+
+  function improveNavigation() {
+    var firstNav = document.querySelector('.site-header .nav-links a[href="#search"], .site-header .nav-links a[href="index.html#search"]');
+    if (firstNav) {
+      firstNav.href = firstNav.getAttribute("href")?.startsWith("index") ? "index.html#top" : "#top";
+      firstNav.textContent = text("homeNav");
+    }
+    var headerActions = document.querySelector(".header-actions");
+    if (headerActions && !headerActions.querySelector(".saved-flats-link")) {
+      var saved = document.createElement("a");
+      saved.className = "saved-flats-link";
+      saved.href = "#search";
+      saved.setAttribute("data-saved-flats-link", "");
+      saved.innerHTML = `${icon("heart")}<span></span>`;
+      var authButton = headerActions.querySelector(".auth-button") || headerActions.querySelector(".nav-cta");
+      headerActions.insertBefore(saved, authButton || headerActions.firstChild);
+      saved.addEventListener("click", function (event) {
+        event.preventDefault();
+        setSavedOnly(!isSavedOnly());
+        document.querySelector("#search")?.scrollIntoView({ behavior: "smooth" });
+      });
+    }
+    updateSavedLinks();
   }
 
   function favoriteIds() {
-    try { return new Set(JSON.parse(localStorage.getItem("ebrostay-favorites") || "[]")); }
-    catch { return new Set(); }
+    try { return JSON.parse(localStorage.getItem("ebrostay-favorites") || "[]").map(String); } catch { return []; }
   }
 
-  function whatsappUrl(message) {
-    var number = typeof WHATSAPP_NUMBER !== "undefined" ? WHATSAPP_NUMBER : "34678715418";
-    return "https://wa.me/" + number + "?text=" + encodeURIComponent(message);
+  function isSavedOnly() {
+    try { return localStorage.getItem(SAVED_ONLY_KEY) === "true"; } catch { return false; }
   }
 
-  function playBrandChirp() {
+  function setSavedOnly(value) {
+    try { localStorage.setItem(SAVED_ONLY_KEY, value ? "true" : "false"); } catch { /* ignore */ }
+    updateSavedLinks();
+    applyEnhancedListingFilters();
+    if (value && favoriteIds().length === 0) toast(text("favoritesEmpty"));
+    if (value && favoriteIds().length > 0) toast(text("favoritesShowing"));
+  }
+
+  function updateSavedLinks() {
+    var count = favoriteIds().length;
+    document.querySelectorAll("[data-saved-flats-link] span, .saved-quick-filter span").forEach(function (node) {
+      node.textContent = `${text("favorites")} ${count ? `(${count})` : ""}`;
+    });
+    document.querySelectorAll("[data-saved-flats-link], .saved-quick-filter").forEach(function (node) {
+      node.classList.toggle("is-active", isSavedOnly());
+    });
+  }
+
+  function enhanceSearchFilters() {
+    var form = document.querySelector("#availabilityFilter");
+    if (!form || form.querySelector("[data-enhanced-filters]")) return;
+    var block = document.createElement("div");
+    block.className = "enhanced-filter-row";
+    block.setAttribute("data-enhanced-filters", "");
+    block.innerHTML = `
+      <label><span data-extra-address-label></span><input id="addressQuery" name="addressQuery" type="search" data-extra-address-placeholder></label>
+      <div class="enhanced-filter-pair">
+        <label><span data-extra-bedrooms-label></span><select id="minBedrooms" name="minBedrooms"><option value="0" data-extra-any-bedrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+        <label><span data-extra-bathrooms-label></span><select id="minBathrooms" name="minBathrooms"><option value="0" data-extra-any-bathrooms></option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
+      </div>
+    `;
+    var typeLabel = form.querySelector("#propertyType")?.closest("label");
+    if (typeLabel) typeLabel.insertAdjacentElement("afterend", block);
+    else form.prepend(block);
+
+    var amenities = form.querySelector(".checkbox-group");
+    if (amenities) {
+      ["heating", "kitchen", "terrace", "dishwasher", "tv", "microwave", "oven"].forEach(function (amenity) {
+        if (amenities.querySelector(`input[value="${amenity}"]`)) return;
+        var label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" name="amenities" value="${amenity}"> <span>${siteText(`amenity.${amenity}`)}</span>`;
+        amenities.appendChild(label);
+      });
+    }
+
+    var reset = form.querySelector("#resetAvailability");
+    if (reset) reset.textContent = text("filtersClear");
+
+    var quick = document.querySelector(".quick-filters");
+    if (quick && !quick.querySelector(".saved-quick-filter")) {
+      var savedButton = document.createElement("button");
+      savedButton.type = "button";
+      savedButton.className = "saved-quick-filter";
+      savedButton.setAttribute("data-saved-flats-link", "");
+      savedButton.innerHTML = `${icon("heart")} <span></span>`;
+      quick.appendChild(savedButton);
+      savedButton.addEventListener("click", function () { setSavedOnly(!isSavedOnly()); });
+    }
+
+    form.addEventListener("input", function () { window.setTimeout(applyEnhancedListingFilters, 0); });
+    form.addEventListener("change", function () { window.setTimeout(applyEnhancedListingFilters, 0); });
+    form.addEventListener("reset", function () {
+      window.setTimeout(function () {
+        setSavedOnly(false);
+        applyEnhancedListingFilters();
+      }, 0);
+    });
+    updateEnhancedFilterText();
+    updateSavedLinks();
+  }
+
+  function updateEnhancedFilterText() {
+    setText("[data-extra-address-label]", text("filtersAddress"));
+    setText("[data-extra-bedrooms-label]", text("filtersBedrooms"));
+    setText("[data-extra-bathrooms-label]", text("filtersBathrooms"));
+    var address = document.querySelector("[data-extra-address-placeholder]");
+    if (address) address.placeholder = text("filtersAddressPlaceholder");
+    document.querySelectorAll("[data-extra-any-bedrooms], [data-extra-any-bathrooms]").forEach(function (node) { node.textContent = text("filtersAny"); });
+    var reset = document.querySelector("#resetAvailability");
+    if (reset) reset.textContent = text("filtersClear");
+    var deposit = document.querySelector('[data-quick="deposit"]');
+    if (deposit) deposit.remove();
+    var mapTitle = document.querySelector(".map-copy strong");
+    var mapCopy = document.querySelector(".map-copy span");
+    if (mapTitle) mapTitle.textContent = text("mapTitle");
+    if (mapCopy) mapCopy.textContent = text("mapCopy");
+    updateSavedLinks();
+  }
+
+  function propertyById(id) {
     try {
-      var AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      var ctx = new AudioCtx();
-      var osc = ctx.createOscillator();
-      var gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(660, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(990, ctx.currentTime + 0.11);
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.045, ctx.currentTime + 0.018);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.16);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.17);
-      setTimeout(function () { ctx.close?.(); }, 260);
-    } catch {
-      // Audio is optional and user-gesture dependent.
-    }
+      if (typeof properties === "undefined") return null;
+      return properties.find(function (item) { return String(item.id) === String(id); }) || null;
+    } catch { return null; }
   }
 
-  function injectStyles() {
-    if (document.getElementById("ebrostay-feedback-styles")) return;
-    var style = document.createElement("style");
-    style.id = "ebrostay-feedback-styles";
-    style.textContent = `
-      :root {
-        --display: "Hanken Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      }
-
-      h1, h2, h3, .brand-wordmark, .button, .nav-links, .nav-cta {
-        font-family: "Hanken Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-      }
-
-      .hero-overlay {
-        background:
-          linear-gradient(90deg, rgba(10, 51, 36, 0.92), rgba(13, 29, 24, 0.58) 52%, rgba(13, 29, 24, 0.18)),
-          linear-gradient(0deg, rgba(10, 20, 17, 0.82), rgba(10, 20, 17, 0.16) 54%);
-      }
-
-      .hero .eyebrow,
-      .section-kicker,
-      .detail-content .section-kicker,
-      .property-title-row .section-kicker {
-        display: inline-flex;
-        align-items: center;
-        width: fit-content;
-        max-width: 100%;
-        border-radius: var(--radius-pill);
-        color: var(--green-900);
-        background: rgba(236, 246, 239, 0.95);
-        border: 1px solid rgba(31, 138, 87, 0.16);
-        padding: 6px 10px;
-        font-size: clamp(0.74rem, 0.94vw, 0.84rem);
-        line-height: 1.1;
-        letter-spacing: 0.035em;
-        text-shadow: none;
-      }
-
-      .hero .eyebrow {
-        gap: 8px;
-        margin-bottom: 10px;
-        padding: 7px 11px;
-        background: rgba(250, 249, 246, 0.94);
-        border-color: rgba(250, 249, 246, 0.72);
-        box-shadow: 0 10px 28px rgba(10, 20, 17, 0.20);
-      }
-
-      .hero .eyebrow::before {
-        content: "";
-        flex: 0 0 auto;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: var(--green);
-        box-shadow: 0 0 0 4px rgba(31, 138, 87, 0.14);
-      }
-
-      .hero h1,
-      .hero-copy {
-        text-shadow: 0 2px 18px rgba(10, 20, 17, 0.38);
-      }
-
-      .hero-copy {
-        color: rgba(255, 255, 255, 0.94);
-      }
-
-      .audience-selector {
-        width: min(620px, 100%);
-        margin: 0 0 16px;
-        border: 1px solid rgba(250, 249, 246, 0.58);
-        border-radius: 16px;
-        padding: 9px;
-        background: rgba(250, 249, 246, 0.94);
-        color: var(--ink);
-        box-shadow: 0 14px 34px rgba(10, 20, 17, 0.22);
-        backdrop-filter: blur(16px);
-      }
-
-      .audience-selector-head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 8px;
-      }
-
-      .audience-selector-label {
-        color: var(--muted);
-        font-size: 0.72rem;
-        font-weight: 900;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-      }
-
-      .audience-active-chip {
-        border-radius: var(--radius-pill);
-        padding: 4px 9px;
-        background: rgba(31, 138, 87, 0.12);
-        color: var(--green-700);
-        font-size: 0.74rem;
-        font-weight: 900;
-        white-space: nowrap;
-      }
-
-      .audience-toggle {
-        position: relative;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 0;
-        overflow: hidden;
-        border: 1px solid rgba(10, 51, 36, 0.12);
-        border-radius: var(--radius-pill);
-        padding: 3px;
-        background: rgba(10, 51, 36, 0.08);
-      }
-
-      .audience-toggle::before {
-        content: "";
-        position: absolute;
-        top: 3px;
-        bottom: 3px;
-        left: 3px;
-        width: calc(50% - 3px);
-        border-radius: var(--radius-pill);
-        background: var(--grad-primary);
-        box-shadow: var(--shadow-brand);
-        transform: translateX(0);
-        transition: transform 360ms var(--ease-spring), box-shadow 240ms var(--ease-out);
-      }
-
-      .audience-toggle.is-owner::before { transform: translateX(100%); }
-
-      .audience-toggle-button {
-        position: relative;
-        z-index: 1;
-        display: grid;
-        gap: 0;
-        min-height: 46px;
-        border: 0;
-        border-radius: var(--radius-pill);
-        padding: 7px 10px;
-        color: var(--ink-soft);
-        background: transparent;
-        text-align: center;
-        cursor: pointer;
-        transition: color 200ms var(--ease-out), transform 200ms var(--ease-out);
-      }
-
-      .audience-toggle-button:hover { transform: translateY(-1px); }
-      .audience-toggle-button.is-active { color: #fff; }
-      .audience-role { font-size: clamp(0.9rem, 1.1vw, 1rem); font-weight: 950; line-height: 1.08; }
-      .audience-role-hint { color: var(--muted); font-size: 0.7rem; font-weight: 800; line-height: 1.12; }
-      .audience-toggle-button.is-active .audience-role-hint { color: rgba(255, 255, 255, 0.82); }
-
-      .audience-status {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 4px 8px;
-        margin: 8px 2px 0;
-        color: var(--muted);
-        font-size: 0.86rem;
-        font-weight: 700;
-      }
-
-      .audience-status strong { color: var(--ink); font-weight: 950; }
-      .audience-link { color: var(--green-700); font-weight: 950; text-decoration: none; }
-      .audience-link:hover { text-decoration: underline; }
-
-      .audience-selector.is-first-visit .audience-toggle-button.is-active {
-        animation: audience-active-pulse 2.2s var(--ease-out) 3;
-      }
-
-      @keyframes audience-active-pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(31, 138, 87, 0); }
-        35% { box-shadow: 0 0 0 7px rgba(31, 138, 87, 0.16); }
-      }
-
-      .hero-benefits {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        width: min(760px, 100%);
-        margin: 18px 0 4px;
-      }
-
-      .benefit-chip {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        min-height: 44px;
-        border: 1px solid rgba(255, 255, 255, 0.25);
-        border-radius: 14px;
-        padding: 9px 11px;
-        color: #fff;
-        background: rgba(255, 255, 255, 0.11);
-        backdrop-filter: blur(10px);
-        font-size: 0.88rem;
-        font-weight: 850;
-      }
-
-      .benefit-chip i,
-      .benefit-chip svg { width: 18px; height: 18px; color: #fff; opacity: 0.95; }
-
-      .trust-row { gap: 8px; }
-      .trust-row span {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        border-radius: 14px;
-        padding: 7px 10px;
-        pointer-events: none;
-      }
-      .trust-row span::before { content: "✓"; font-weight: 950; color: #9ee0bd; }
-
-      .saved-flats-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-pill);
-        padding: 8px 12px;
-        color: var(--green-700);
-        background: #fff;
-        font-size: 0.9rem;
-        font-weight: 850;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .saved-flats-link[data-count="0"] .saved-count { display: none; }
-      .saved-count {
-        display: inline-grid;
-        place-items: center;
-        min-width: 20px;
-        height: 20px;
-        border-radius: 99px;
-        padding: 0 6px;
-        color: #fff;
-        background: var(--green);
-        font-size: 0.76rem;
-      }
-
-      .quick-filters [data-quick="deposit"] { display: none !important; }
-      .clear-filters-inline { margin-left: auto; }
-
-      .filter-enhancements {
-        display: grid;
-        gap: 12px;
-        border-top: 1px solid var(--line);
-        padding-top: 14px;
-      }
-
-      .filter-enhancements-title {
-        color: var(--green-700);
-        font-size: 0.82rem;
-        font-weight: 950;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-      }
-
-      .extra-filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .extra-amenities { display: flex; flex-wrap: wrap; gap: 7px; }
-      .extra-amenities label {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-pill);
-        padding: 7px 10px;
-        color: var(--muted);
-        background: #fff;
-        font-size: 0.78rem;
-        font-weight: 850;
-      }
-      .extra-amenities input { width: 14px; min-height: 14px; accent-color: var(--green); }
-
-      .property-card[hidden] { display: none !important; }
-      .property-card .property-badges span,
-      .detail-content .property-badges span { font-size: 0.72rem; }
-      .property-card .property-meta span,
-      .detail-content .property-meta span { font-size: 0.76rem; }
-      .property-body p { font-size: 0.92rem; }
-      .property-card .amenity-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, max-content)); }
-      .property-card .amenity-list span::before { content: "• "; color: var(--green); }
-
-      .map-panel { position: sticky; top: 92px; }
-      .map-card { border-radius: var(--radius-lg); overflow: hidden; }
-      .google-map-wrap { min-height: 620px; }
-      .google-map-wrap::after,
-      .detail-map::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        pointer-events: none;
-        background: linear-gradient(135deg, rgba(31, 138, 87, 0.10), rgba(217, 99, 42, 0.04));
-        mix-blend-mode: multiply;
-        z-index: 500;
-      }
-      .google-map-wrap .leaflet-container,
-      .detail-map .leaflet-container { filter: saturate(0.88) sepia(0.08); }
-      .map-addresses { display: none !important; }
-      .map-copy { border-top: 1px solid var(--line); }
-
-      @media (min-width: 1081px) {
-        .marketplace-layout { grid-template-columns: 265px minmax(390px, 1fr) minmax(420px, 0.95fr); }
-      }
-
-      .value-band { padding: clamp(48px, 7vw, 86px) clamp(20px, 5vw, 62px); }
-      .value-band .section-kicker { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.92); border-color: rgba(255,255,255,0.22); }
-      .value-lead { max-width: 820px; font-size: clamp(1.05rem, 1.7vw, 1.28rem); }
-      .value-card p { font-size: 0.94rem; }
-      .value-badge { display: none !important; }
-      .how-section { grid-template-columns: 1fr; gap: 22px; text-align: center; }
-      .how-section .steps { max-width: 860px; margin: 0 auto; }
-      .how-section .steps article { min-height: 150px; display: grid; place-items: center; text-align: center; }
-      .how-section .steps p { display: none; }
-
-      .contact-chat-card {
-        display: grid;
-        gap: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        padding: clamp(18px, 4vw, 28px);
-        background: #fff;
-        box-shadow: 0 10px 28px rgba(24, 33, 29, 0.07);
-      }
-      .chat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-      .chat-actions { display: flex; flex-wrap: wrap; gap: 10px; }
-      .chat-actions .button { flex: 1 1 180px; }
-
-      .support-fab {
-        position: fixed;
-        right: 18px;
-        bottom: 18px;
-        z-index: 80;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        border: 0;
-        border-radius: var(--radius-pill);
-        padding: 12px 16px;
-        color: #fff;
-        background: var(--green);
-        font-weight: 900;
-        box-shadow: var(--shadow-brand);
-        cursor: pointer;
-      }
-
-      .support-panel {
-        position: fixed;
-        right: 18px;
-        bottom: 78px;
-        z-index: 80;
-        width: min(380px, calc(100vw - 36px));
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        padding: 18px;
-        background: #fff;
-        box-shadow: var(--shadow);
-      }
-      .support-panel[hidden] { display: none !important; }
-      .support-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
-      .support-head strong { color: var(--ink); font-size: 1.05rem; }
-      .support-close { border: 0; background: transparent; color: var(--muted); font-weight: 900; cursor: pointer; }
-
-      .site-footer { flex-wrap: wrap; }
-      .footer-legal {
-        flex-basis: 100%;
-        border-top: 1px solid var(--line);
-        padding-top: 12px;
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
-
-      .detail-media {
-        background-size: contain !important;
-        background-repeat: no-repeat !important;
-        background-color: #f4f2ec;
-        cursor: zoom-in;
-      }
-      .detail-media::after {
-        content: attr(data-gallery-hint);
-        position: absolute;
-        right: 14px;
-        bottom: 14px;
-        border-radius: var(--radius-pill);
-        padding: 8px 11px;
-        background: rgba(10, 51, 36, 0.86);
-        color: #fff;
-        font-size: 0.78rem;
-        font-weight: 850;
-      }
-      .detail-gallery { display: flex !important; overflow-x: auto; gap: 10px; padding: 10px 0 0; }
-      .gallery-thumb { flex: 0 0 78px; height: 58px; background-size: cover; background-position: center; border-radius: 10px; border: 2px solid transparent; }
-      .gallery-thumb.is-active { border-color: var(--green); }
-
-      .detail-media-tabs {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 12px 0 0;
-      }
-      .detail-media-tabs a,
-      .detail-media-tabs button {
-        border: 1px solid var(--line);
-        border-radius: var(--radius-pill);
-        padding: 9px 12px;
-        color: var(--green-700);
-        background: #fff;
-        font-weight: 850;
-        text-decoration: none;
-        cursor: pointer;
-      }
-      #floorplanSection {
-        border: 1px solid var(--line);
-        border-radius: var(--radius-lg);
-        padding: 22px;
-        background: #fff;
-        box-shadow: 0 10px 28px rgba(24, 33, 29, 0.07);
-      }
-
-      .detail-trust-grid { display:grid; gap:10px; margin: 12px 0; }
-      .detail-trust-box {
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 12px;
-        background: var(--mist);
-        color: var(--ink);
-      }
-      .detail-trust-box strong { display:block; color: var(--green-700); font-size:0.9rem; }
-      .detail-trust-box span { display:block; margin-top:3px; color: var(--muted); font-size:0.84rem; font-weight:700; }
-
-      .share-options { display:flex; flex-wrap:wrap; gap:8px; margin-top: 8px; }
-      .share-options a, .share-options button {
-        border: 1px solid var(--line);
-        border-radius: var(--radius-pill);
-        padding: 8px 10px;
-        color: var(--green-700);
-        background:#fff;
-        font-size:0.84rem;
-        font-weight:850;
-        text-decoration:none;
-        cursor:pointer;
-      }
-
-      .booking-widget { gap: 10px; }
-      .booking-widget h4 { font-size: 0.96rem; letter-spacing: 0.025em; }
-      .booking-widget label { font-size: 0.82rem; }
-      .booking-widget input, .booking-widget textarea { min-height: 42px; border-radius: 12px; font-size: 0.94rem; }
-      .movein-rows li, .booking-note { font-size: 0.86rem; line-height: 1.35; }
-      #bookingVatTip { border-radius: 12px; padding: 10px; background: var(--mist); }
-
-      .lightbox {
-        position: fixed;
-        inset: 0;
-        z-index: 100;
-        display: grid;
-        grid-template-rows: auto 1fr auto;
-        gap: 12px;
-        padding: 18px;
-        background: rgba(10, 20, 17, 0.88);
-      }
-      .lightbox[hidden] { display:none !important; }
-      .lightbox img { max-width: 100%; max-height: calc(100vh - 150px); object-fit: contain; margin: auto; border-radius: 14px; background: #fff; }
-      .lightbox-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#fff; }
-      .lightbox-actions { display:flex; gap:10px; justify-content:center; }
-      .lightbox button { border:0; border-radius: var(--radius-pill); padding: 10px 14px; color: var(--green-900); background:#fff; font-weight:900; cursor:pointer; }
-
-
-      @media (prefers-reduced-motion: reduce) {
-        .audience-selector.is-first-visit .audience-toggle-button.is-active { animation: none; }
-        .audience-toggle::before, .audience-toggle-button { transition: none; }
-      }
-
-      @media (max-width: 1080px) {
-        .google-map-wrap { min-height: 440px; }
-      }
-
-      @media (max-width: 820px) {
-        .hero .eyebrow { white-space: normal; font-size: clamp(0.78rem, 3.2vw, 0.9rem); padding: 7px 10px; }
-        .audience-selector { margin-bottom: 14px; padding: 8px; }
-        .audience-selector-head, .audience-status { align-items: flex-start; flex-direction: column; }
-        .audience-active-chip { white-space: normal; }
-        .audience-toggle-button { min-height: 42px; padding: 6px 8px; }
-        .hero-benefits { grid-template-columns: 1fr 1fr; }
-        .benefit-chip { font-size: 0.78rem; min-height: 40px; padding: 8px; }
-        .extra-filter-grid, .chat-grid { grid-template-columns: 1fr; }
-        .clear-filters-inline { margin-left: 0; width: 100%; }
-        .support-fab { right: 12px; bottom: 12px; }
-        .support-panel { right: 12px; bottom: 70px; width: min(360px, calc(100vw - 24px)); }
-      }
-    `;
-    document.head.appendChild(style);
+  function propertySearchText(property) {
+    if (!property) return "";
+    var parts = [property.address, property.addressKey, property.city, siteText(property.areaKey), siteText(property.nameKey), siteText(property.copyKey), siteText(property.detailsKey)];
+    return parts.filter(Boolean).join(" ").toLowerCase();
   }
 
-  function initAudienceSwitch() {
-    var heroContent = document.querySelector(".hero-content");
-    var anchor = heroContent?.querySelector(".eyebrow");
-    if (!heroContent || !anchor || document.querySelector("[data-audience-selector]")) return;
-
-    var firstVisit = !localStorage.getItem(AUDIENCE_KEY);
-    var mode = getStoredAudience();
-    var selector = document.createElement("div");
-    selector.className = "audience-selector";
-    selector.setAttribute("data-audience-selector", "");
-    selector.innerHTML = `
-      <div class="audience-selector-head">
-        <span class="audience-selector-label"></span>
-        <span class="audience-active-chip"></span>
-      </div>
-      <div class="audience-toggle" role="group">
-        <button class="audience-toggle-button" type="button" data-audience-value="tenant" aria-pressed="false">
-          <span class="audience-role"></span>
-          <span class="audience-role-hint"></span>
-        </button>
-        <button class="audience-toggle-button" type="button" data-audience-value="owner" aria-pressed="false">
-          <span class="audience-role"></span>
-          <span class="audience-role-hint"></span>
-        </button>
-      </div>
-      <p class="audience-status" role="status">
-        <strong></strong>
-        <span></span>
-        <a class="audience-link"></a>
-      </p>
-    `;
-    anchor.insertAdjacentElement("afterend", selector);
-
-    var toggle = selector.querySelector(".audience-toggle");
-    var buttons = selector.querySelectorAll("[data-audience-value]");
-    var label = selector.querySelector(".audience-selector-label");
-    var chip = selector.querySelector(".audience-active-chip");
-    var statusStrong = selector.querySelector(".audience-status strong");
-    var statusCopy = selector.querySelector(".audience-status span");
-    var statusLink = selector.querySelector(".audience-link");
-
-    function render() {
-      var isOwner = mode === "owner";
-      document.body.dataset.ebrostayAudience = mode;
-      selector.classList.toggle("is-first-visit", firstVisit && mode === "tenant");
-      toggle.classList.toggle("is-owner", isOwner);
-      toggle.setAttribute("aria-label", c("chooser"));
-      label.textContent = c("audienceLabel");
-      chip.textContent = isOwner ? c("ownerChip") : c("tenantChip");
-      statusStrong.textContent = isOwner ? c("ownerStatus") : c("tenantStatus");
-      statusCopy.textContent = isOwner ? c("ownerCopy") : c("tenantCopy");
-      statusLink.textContent = isOwner ? c("ownerCta") : c("tenantCta");
-      statusLink.href = isOwner ? "partner.html" : "#search";
-      buttons.forEach(function (button) {
-        var value = button.dataset.audienceValue;
-        var active = value === mode;
-        button.classList.toggle("is-active", active);
-        button.setAttribute("aria-pressed", String(active));
-        button.querySelector(".audience-role").textContent = value === "owner" ? c("owner") : c("tenant");
-        button.querySelector(".audience-role-hint").textContent = value === "owner" ? c("ownerHint") : c("tenantHint");
-      });
-    }
-
-    buttons.forEach(function (button) {
-      button.addEventListener("click", function () {
-        mode = AUDIENCES.indexOf(button.dataset.audienceValue) >= 0 ? button.dataset.audienceValue : "tenant";
-        firstVisit = false;
-        localStorage.setItem(AUDIENCE_KEY, mode);
-        playBrandChirp();
-        render();
-      });
-    });
-
-    document.querySelectorAll("[data-lang]").forEach(function (button) {
-      button.addEventListener("click", function () { window.setTimeout(render, 0); });
-    });
-
-    render();
-  }
-
-  function initNavPolish() {
-    function apply() {
-      document.querySelectorAll('[data-i18n="nav.search"]').forEach(function (link) {
-        link.textContent = c("navHome");
-        if (link.getAttribute("href")?.includes("#search")) link.setAttribute("href", link.getAttribute("href").replace("#search", "#top"));
-      });
-      var headerActions = document.querySelector(".header-actions");
-      if (headerActions && !document.querySelector(".saved-flats-link")) {
-        var saved = document.createElement("a");
-        saved.className = "saved-flats-link";
-        saved.href = "index.html" + SAVED_HASH;
-        saved.innerHTML = `<span>♡</span><span class="saved-label"></span><span class="saved-count"></span>`;
-        var authButton = document.querySelector("#authButton") || document.querySelector(".nav-cta");
-        headerActions.insertBefore(saved, authButton || headerActions.firstChild);
-      }
-      updateSavedLink();
-      if (location.pathname.endsWith("/owners.html") || location.pathname.endsWith("owners.html")) document.body.dataset.page = "owners";
-    }
-
-    document.querySelectorAll("[data-lang]").forEach(function (button) {
-      button.addEventListener("click", function () { window.setTimeout(apply, 0); });
-    });
-    apply();
-  }
-
-  function updateSavedLink() {
-    var link = document.querySelector(".saved-flats-link");
-    if (!link) return;
-    var count = favoriteIds().size;
-    link.dataset.count = String(count);
-    setText(link.querySelector(".saved-label"), c("saved"));
-    setText(link.querySelector(".saved-count"), String(count));
-  }
-
-  function initHeroBenefits() {
-    var search = document.querySelector(".hero-search");
-    if (!search || document.querySelector(".hero-benefits")) return;
-    var strip = document.createElement("div");
-    strip.className = "hero-benefits";
-    strip.innerHTML = c("benefits").map(function (item) {
-      return `<span class="benefit-chip"><i data-lucide="${item[0]}"></i>${item[1]}</span>`;
-    }).join("");
-    search.insertAdjacentElement("beforebegin", strip);
-  }
-
-  function initFilterImprovements() {
-    var form = document.querySelector("#availabilityFilter");
-    var quickFilters = document.querySelector(".quick-filters");
-    if (!form) return;
-
-    if (quickFilters && !document.querySelector(".clear-filters-inline")) {
-      var clear = document.createElement("button");
-      clear.className = "details-button clear-filters-inline";
-      clear.type = "button";
-      clear.textContent = c("clearFilters");
-      clear.addEventListener("click", function () {
-        document.querySelector("#resetAvailability")?.click();
-        resetExtraFilters();
-      });
-      quickFilters.appendChild(clear);
-    }
-
-    if (!form.querySelector(".filter-enhancements")) {
-      var box = document.createElement("div");
-      box.className = "filter-enhancements";
-      box.innerHTML = `
-        <strong class="filter-enhancements-title">${c("extraFilters")}</strong>
-        <label><span>${c("address")}</span><input name="extraAddress" type="search" placeholder="${c("addressPlaceholder")}"></label>
-        <div class="extra-filter-grid">
-          <label><span>${c("bedrooms")}</span><select name="extraBedrooms"><option value="">${c("any")}</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
-          <label><span>${c("bathrooms")}</span><select name="extraBathrooms"><option value="">${c("any")}</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option></select></label>
-        </div>
-        <div class="extra-amenities">
-          ${["dishwasher", "heating", "ac", "washer", "lift", "parking", "terrace", "balcony"].map(function (key) {
-            return `<label><input type="checkbox" name="extraAmenities" value="${key}"><span>${dict("amenity." + key)}</span></label>`;
-          }).join("")}
-        </div>
-      `;
-      var reset = form.querySelector("#resetAvailability");
-      if (reset) reset.insertAdjacentElement("beforebegin", box);
-      else form.appendChild(box);
-      box.addEventListener("input", applyExtraFilters);
-      box.addEventListener("change", applyExtraFilters);
-    }
-
+  function applyEnhancedListingFilters() {
     var grid = document.querySelector("#propertyGrid");
-    if (grid) {
-      var observer = new MutationObserver(function () { window.requestAnimationFrame(applyExtraFilters); });
-      observer.observe(grid, { childList: true });
-    }
-
-    window.addEventListener("hashchange", applyExtraFilters);
-    applyExtraFilters();
-  }
-
-  function resetExtraFilters() {
-    var form = document.querySelector("#availabilityFilter");
-    if (!form) return;
-    ["extraAddress", "extraBedrooms", "extraBathrooms"].forEach(function (name) {
-      if (form.elements[name]) form.elements[name].value = "";
-    });
-    form.querySelectorAll('[name="extraAmenities"]').forEach(function (input) { input.checked = false; });
-    if (location.hash === SAVED_HASH) history.replaceState(null, "", location.pathname + location.search + "#search");
-    applyExtraFilters();
-  }
-
-  function propertyMatchesExtra(property, extra) {
-    if (!property) return true;
-    var haystack = [
-      property.id,
-      property.addressKey,
-      dict(property.nameKey),
-      dict(property.areaKey),
-      property.address || "",
-      property.city || ""
-    ].join(" ").toLowerCase();
-    if (extra.address && !haystack.includes(extra.address)) return false;
-    if (extra.bedrooms && Number(property.bedrooms || 0) < Number(extra.bedrooms)) return false;
-    if (extra.bathrooms && Number(property.bathrooms || 0) < Number(extra.bathrooms)) return false;
-    if (extra.amenities.some(function (amenity) { return !(property.amenities || []).includes(amenity); })) return false;
-    return true;
-  }
-
-  function applyExtraFilters() {
-    var grid = document.querySelector("#propertyGrid");
-    var form = document.querySelector("#availabilityFilter");
     if (!grid) return;
-    var savedMode = location.hash === SAVED_HASH;
-    var saved = favoriteIds();
-    var extra = {
-      address: (form?.elements.extraAddress?.value || "").toLowerCase().trim(),
-      bedrooms: form?.elements.extraBedrooms?.value || "",
-      bathrooms: form?.elements.extraBathrooms?.value || "",
-      amenities: Array.from(form?.querySelectorAll('[name="extraAmenities"]:checked') || []).map(function (input) { return input.value; })
-    };
+    var address = (document.querySelector("#addressQuery")?.value || "").trim().toLowerCase();
+    var minBedrooms = Number(document.querySelector("#minBedrooms")?.value || 0);
+    var minBathrooms = Number(document.querySelector("#minBathrooms")?.value || 0);
+    var saved = new Set(favoriteIds());
+    var savedOnly = isSavedOnly();
     var visible = 0;
-    grid.querySelectorAll(".property-card").forEach(function (card) {
-      var id = card.dataset.propertyId;
-      var property = Array.isArray(window.properties) ? window.properties.find(function (item) { return item.id === id; }) : null;
-      var show = (!savedMode || saved.has(id)) && propertyMatchesExtra(property, extra);
-      card.hidden = !show;
-      if (show) visible += 1;
+    grid.querySelectorAll("[data-property-id]").forEach(function (card) {
+      var property = propertyById(card.dataset.propertyId);
+      var ok = true;
+      if (property) {
+        if (address && !propertySearchText(property).includes(address)) ok = false;
+        if (minBedrooms && Number(property.bedrooms || 0) < minBedrooms) ok = false;
+        if (minBathrooms && Number(property.bathrooms || 0) < minBathrooms) ok = false;
+        if (savedOnly && !saved.has(String(property.id))) ok = false;
+      }
+      card.hidden = !ok;
+      if (ok) visible += 1;
     });
     var status = document.querySelector("#availabilityStatus");
-    if (status && savedMode) status.textContent = visible ? `${c("savedShowing")}: ${visible}` : c("savedEmpty");
-    updateSavedLink();
-  }
-
-  function initMapImprovements() {
-    document.querySelectorAll(".map-addresses").forEach(function (element) { element.hidden = true; });
-  }
-
-  function initHomepageCopyPolish() {
-    var value = document.querySelector(".value-band");
-    if (value) {
-      setText(value.querySelector("h2"), c("whyTitle"));
-      setText(value.querySelector(".value-lead"), c("whyLead"));
-      var cards = value.querySelectorAll(".value-card");
-      var short = getLanguage() === "es" ? [
-        ["Reserva fácil", "Elige fechas y solicita sin llamadas."],
-        ["Precio claro", "Renta, fianza y condiciones visibles."],
-        ["Gestión completa", "Contrato, cobros, llaves y soporte."],
-        ["Ayuda humana", "WhatsApp y email cuando lo necesites."]
-      ] : [
-        ["Easy request", "Pick dates and request without calls."],
-        ["Clear price", "Rent, deposit and conditions up front."],
-        ["Full handling", "Contract, payments, keys and support."],
-        ["Human help", "WhatsApp and email when needed."]
-      ];
-      cards.forEach(function (card, i) {
-        if (!short[i]) return;
-        setText(card.querySelector("h3"), short[i][0]);
-        setText(card.querySelector("p"), short[i][1]);
-      });
+    if (status && (address || minBedrooms || minBathrooms || savedOnly)) {
+      if (savedOnly && visible === 0) status.textContent = text("favoritesEmpty");
+      else if (savedOnly) status.textContent = text("favoritesShowing");
+      else status.textContent = lang() === "es" ? `${visible} viviendas encontradas.` : `${visible} homes found.`;
     }
-    var how = document.querySelector(".how-section");
-    if (how) {
-      setText(how.querySelector("h2"), c("howTitle"));
-      var p = how.querySelector("p:not(.section-kicker)") || document.createElement("p");
-      p.textContent = c("howCopy");
-      p.className = "value-lead";
-      if (!p.parentElement) how.querySelector("div")?.appendChild(p);
-    }
+    decoratePropertyCards();
+    updateSavedLinks();
   }
 
-  function initContactChat() {
-    var contact = document.querySelector("#contact");
+  function amenityIcon(label) {
+    var lower = String(label || "").toLowerCase();
+    if (lower.includes("wifi")) return "wifi";
+    if (lower.includes("mesa") || lower.includes("desk")) return "briefcase-business";
+    if (lower.includes("calef") || lower.includes("heating")) return "flame";
+    if (lower.includes("cocina") || lower.includes("kitchen")) return "utensils";
+    if (lower.includes("terra") || lower.includes("balc")) return "trees";
+    if (lower.includes("lavadora") || lower.includes("washing")) return "washing-machine";
+    if (lower.includes("lavava") || lower.includes("dish")) return "glass-water";
+    if (lower.includes("aire") || lower.includes("air")) return "snowflake";
+    if (lower.includes("ascensor") || lower.includes("lift")) return "arrow-up-down";
+    if (lower.includes("parking")) return "car";
+    return "check";
+  }
+
+  function decoratePropertyCards() {
+    document.querySelectorAll(".amenity-list > span").forEach(function (span) {
+      if (span.querySelector("svg") || span.querySelector("i")) return;
+      span.innerHTML = `${icon(amenityIcon(span.textContent))}<span>${span.textContent}</span>`;
+    });
+    document.querySelectorAll(".property-meta > span").forEach(function (span) {
+      if (span.querySelector("svg") || span.querySelector("i")) return;
+      var lower = span.textContent.toLowerCase();
+      var name = lower.includes("hab") || lower.includes("bed") ? "bed-double" : lower.includes("baño") || lower.includes("bath") ? "bath" : lower.includes("persona") || lower.includes("people") ? "users" : lower.includes("disp") || lower.includes("available") ? "calendar-check" : "check-circle";
+      span.innerHTML = `${icon(name)}<span>${span.textContent}</span>`;
+    });
+    refreshIcons();
+  }
+
+  function observeListings() {
+    var grid = document.querySelector("#propertyGrid");
+    if (!grid || grid.dataset.enhancedObserved) return;
+    grid.dataset.enhancedObserved = "true";
+    new MutationObserver(function () { applyEnhancedListingFilters(); }).observe(grid, { childList: true });
+    grid.addEventListener("click", function () { window.setTimeout(function () { updateSavedLinks(); decoratePropertyCards(); }, 50); });
+  }
+
+  function simplifyValueAndHow() {
+    var whyTitle = document.querySelector("#why h2");
+    var whyLead = document.querySelector("#why .value-lead");
+    if (whyTitle) whyTitle.textContent = text("whyTitle");
+    if (whyLead) whyLead.textContent = text("whyLead");
+    var how = document.querySelector(".how-section#how, #how.how-section");
+    if (!how) return;
+    how.classList.add("is-slogan");
+    var kicker = how.querySelector(".section-kicker");
+    var h2 = how.querySelector("h2");
+    if (kicker) kicker.textContent = text("howKicker");
+    if (h2) h2.textContent = text("howTitle");
+    var steps = how.querySelector(".steps");
+    if (steps) {
+      steps.innerHTML = text("howSteps").map(function (item, idx) {
+        return `<article>${icon(item[0])}<span>0${idx + 1}</span><h3>${item[1]}</h3><p>${item[2]}</p></article>`;
+      }).join("");
+    }
+    refreshIcons();
+  }
+
+  function replaceContactFormWithChat() {
     var form = document.querySelector("#inquiryForm");
-    if (contact && form && !document.querySelector(".contact-chat-card")) {
-      var card = document.createElement("section");
-      card.className = "contact-chat-card";
-      card.innerHTML = chatMarkup("contact");
-      form.insertAdjacentElement("beforebegin", card);
-      card.addEventListener("click", handleChatClick);
-      setText(contact.querySelector(".section-kicker"), c("contactKicker"));
-      setText(contact.querySelector("h2"), c("contactTitle"));
-      setText(contact.querySelector(".contact-copy p:not(.section-kicker)"), c("contactCopy"));
-    }
-
-    if (!document.querySelector(".support-fab")) {
-      var fab = document.createElement("button");
-      fab.className = "support-fab";
-      fab.type = "button";
-      fab.innerHTML = `<i data-lucide="message-circle"></i><span>${c("assistantOpen")}</span>`;
-      var panel = document.createElement("section");
-      panel.className = "support-panel";
-      panel.hidden = true;
-      panel.innerHTML = `<div class="support-head"><strong>${c("assistantTitle")}</strong><button class="support-close" type="button">×</button></div><p>${c("assistantLead")}</p>${chatMarkup("support")}`;
-      document.body.appendChild(fab);
-      document.body.appendChild(panel);
-      fab.addEventListener("click", function () { panel.hidden = !panel.hidden; playBrandChirp(); });
-      panel.querySelector(".support-close").addEventListener("click", function () { panel.hidden = true; });
-      panel.addEventListener("click", handleChatClick);
-    }
-  }
-
-  function chatMarkup(prefix) {
-    return `
-      <div class="chat-grid">
-        <label><span>${c("name")}</span><input data-chat-name="${prefix}" autocomplete="name"></label>
-        <label><span>${c("email")}</span><input data-chat-email="${prefix}" type="email" autocomplete="email"></label>
+    var section = document.querySelector(".contact-section");
+    if (!form || !section || section.querySelector(".contact-chat")) return;
+    form.classList.add("is-replaced-by-chat");
+    var chat = document.createElement("form");
+    chat.className = "contact-chat";
+    chat.innerHTML = `
+      <div class="contact-chat-thread">
+        <div class="chat-bubble agent"><strong data-chat-title></strong><br><span data-chat-intro></span></div>
+        <div class="chat-bubble user">${lang() === "es" ? "Hola, necesito ayuda con una estancia." : "Hi, I need help with a stay."}</div>
       </div>
-      <label><span>${c("message")}</span><textarea data-chat-message="${prefix}" rows="3" placeholder="${c("messagePlaceholder")}"></textarea></label>
-      <div class="chat-actions">
-        <a class="button whatsapp-button" href="#" data-chat-send="whatsapp" data-chat-prefix="${prefix}">${c("chatWhatsapp")}</a>
-        <a class="button ghost" href="#" data-chat-send="email" data-chat-prefix="${prefix}">${c("chatEmail")}</a>
+      <div class="contact-chat-fields">
+        <input name="name" autocomplete="name" required>
+        <input name="email" type="email" autocomplete="email" required>
+        <textarea name="message" rows="4" required></textarea>
+      </div>
+      <div class="contact-chat-actions">
+        <button class="button whatsapp-button" type="button" data-chat-whatsapp></button>
+        <button class="button ghost" type="submit" data-chat-email></button>
       </div>
     `;
+    form.insertAdjacentElement("afterend", chat);
+    chat.querySelector("[data-chat-whatsapp]").addEventListener("click", function () {
+      window.location.href = whatsappLink(chatMessage(chat));
+    });
+    chat.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var subject = lang() === "es" ? "Solicitud Ebrostay" : "Ebrostay request";
+      window.location.href = `mailto:${contactEmail()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(chatMessage(chat))}`;
+    });
+    updateContactChatText();
   }
 
-  function handleChatClick(event) {
-    var trigger = event.target.closest("[data-chat-send]");
-    if (!trigger) return;
-    var prefix = trigger.dataset.chatPrefix;
-    var root = trigger.closest(".contact-chat-card, .support-panel") || document;
-    var name = root.querySelector(`[data-chat-name="${prefix}"]`)?.value?.trim() || "";
-    var email = root.querySelector(`[data-chat-email="${prefix}"]`)?.value?.trim() || "";
-    var message = root.querySelector(`[data-chat-message="${prefix}"]`)?.value?.trim() || "";
-    var body = `Nombre / Name: ${name}\nEmail: ${email}\n\n${message || c("messagePlaceholder")}`;
-    if (trigger.dataset.chatSend === "whatsapp") trigger.href = whatsappUrl(body);
-    else trigger.href = `mailto:${typeof CONTACT_EMAIL !== "undefined" ? CONTACT_EMAIL : "info@ebrostay.com"}?subject=${encodeURIComponent("Ebrostay")}&body=${encodeURIComponent(body)}`;
+  function chatMessage(form) {
+    var data = new FormData(form);
+    return `Name / Nombre: ${data.get("name") || ""}\nEmail: ${data.get("email") || ""}\n\n${data.get("message") || ""}`;
   }
 
-  function initFooterLegal() {
+  function updateContactChatText() {
+    var chat = document.querySelector(".contact-chat");
+    if (!chat) return;
+    setText(chat.querySelector("[data-chat-title]"), text("chatTitle"));
+    setText(chat.querySelector("[data-chat-intro]"), text("chatIntro"));
+    chat.querySelector('input[name="name"]').placeholder = text("chatName");
+    chat.querySelector('input[name="email"]').placeholder = text("chatEmail");
+    chat.querySelector('textarea[name="message"]').placeholder = text("chatMessage");
+    setText(chat.querySelector("[data-chat-whatsapp]"), text("chatWhatsapp"));
+    setText(chat.querySelector("[data-chat-email]"), text("chatEmailCta"));
+  }
+
+  function addFooterLegal() {
     var footer = document.querySelector(".site-footer");
-    if (footer && !footer.querySelector(".footer-legal")) {
-      var legal = document.createElement("p");
-      legal.className = "footer-legal";
-      legal.textContent = c("legal");
-      footer.appendChild(legal);
+    if (!footer) return;
+    var yearEl = footer.querySelector("#year");
+    if (yearEl && !yearEl.textContent) yearEl.textContent = new Date().getFullYear();
+    var note = footer.querySelector(".footer-legal-note");
+    if (!note) {
+      note = document.createElement("p");
+      note.className = "footer-legal-note";
+      footer.appendChild(note);
     }
+    note.innerHTML = `${text("legal")} <a href="privacy.html">${siteText("nav.privacy")}</a>`;
   }
 
-  function initDetailEnhancements() {
+  function enhanceDetailPage() {
     if (!document.querySelector(".detail-page")) return;
     var media = document.querySelector("#detailMedia");
-    if (media) media.dataset.galleryHint = c("galleryHint");
-    addDetailTabs();
-    addDetailTrustBoxes();
-    addShareOptions();
-    initLightbox();
-    enhanceDetailText();
-    setTimeout(function () {
-      addDetailTabs();
-      addDetailTrustBoxes();
-      addShareOptions();
-      enhanceDetailText();
-    }, 600);
+    if (media) media.setAttribute("data-gallery-hint", text("galleryHint"));
+    addDetailMediaTabs();
+    addDetailHighlights();
+    addTrustStrip();
+    addSocialShareButtons();
+    initGalleryLightbox();
   }
 
-  function addDetailTabs() {
-    var media = document.querySelector("#detailMedia");
-    if (!media || document.querySelector(".detail-media-tabs")) return;
+  function extractBackgroundUrl(value) {
+    var match = String(value || "").match(/url\(["']?([^"')]+)["']?\)/);
+    return match ? match[1] : "";
+  }
+
+  function collectDetailPhotos() {
+    var urls = [];
+    document.querySelectorAll("#detailGallery [style]").forEach(function (button) {
+      var url = extractBackgroundUrl(button.style.backgroundImage);
+      if (url && !urls.includes(url)) urls.push(url);
+    });
+    var main = extractBackgroundUrl(document.querySelector("#detailMedia")?.style.backgroundImage || "");
+    if (main && !urls.includes(main)) urls.unshift(main);
+    return urls;
+  }
+
+  function addDetailMediaTabs() {
+    if (document.querySelector(".detail-media-tabs")) return;
+    var gallery = document.querySelector("#detailGallery");
+    if (!gallery) return;
     var tabs = document.createElement("div");
     tabs.className = "detail-media-tabs";
     tabs.innerHTML = `
-      <button type="button" data-open-gallery>${c("photos")}</button>
-      <a href="#floorplanSection">${c("floorplans")}</a>
-      <a class="detail-video-tab" href="#" hidden target="_blank" rel="noopener">${c("video")}</a>
+      <button type="button" data-media-photos>${icon("images")}<span></span></button>
+      <button type="button" data-media-floorplan>${icon("layout-panel-top")}<span></span></button>
+      <a href="#" data-media-video>${icon("play-circle")}<span></span></a>
+      <button type="button" data-media-share aria-label="${text("mediaShare")}">${icon("share-2")}</button>
     `;
-    media.insertAdjacentElement("afterend", tabs);
-    tabs.querySelector("[data-open-gallery]").addEventListener("click", openLightbox);
-    var videoButton = document.querySelector("#detailVideoButton");
-    var videoTab = tabs.querySelector(".detail-video-tab");
-    if (videoButton && !videoButton.hidden && videoButton.href) {
-      videoTab.hidden = false;
-      videoTab.href = videoButton.href;
+    gallery.insertAdjacentElement("afterend", tabs);
+    tabs.querySelector("[data-media-photos]").addEventListener("click", function () { openGallery(0); });
+    tabs.querySelector("[data-media-floorplan]").addEventListener("click", function () { document.querySelector("#floorplanSection")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
+    tabs.querySelector("[data-media-share]").addEventListener("click", function () { document.querySelector("#shareButton")?.click(); });
+    updateDetailMediaTabs();
+  }
+
+  function updateDetailMediaTabs() {
+    var tabs = document.querySelector(".detail-media-tabs");
+    if (!tabs) return;
+    setText(tabs.querySelector("[data-media-photos] span"), text("mediaPhotos"));
+    setText(tabs.querySelector("[data-media-floorplan] span"), text("mediaFloorplan"));
+    setText(tabs.querySelector("[data-media-video] span"), text("mediaVideo"));
+    var shareTab = tabs.querySelector("[data-media-share]");
+    if (shareTab) shareTab.setAttribute("aria-label", text("mediaShare"));
+    var videoSource = document.querySelector("#detailVideoButton");
+    var video = tabs.querySelector("[data-media-video]");
+    if (video && videoSource) {
+      video.hidden = videoSource.hidden || !videoSource.href || videoSource.href.endsWith("#");
+      video.href = videoSource.href;
+      video.target = "_blank";
+      video.rel = "noopener";
     }
+    var floorplan = tabs.querySelector("[data-media-floorplan]");
+    var floorplanSection = document.querySelector("#floorplanSection");
+    if (floorplan && floorplanSection) floorplan.hidden = floorplanSection.hidden;
+    refreshIcons();
   }
 
-  function addDetailTrustBoxes() {
-    var card = document.querySelector(".detail-request-card");
-    if (!card || card.querySelector(".detail-trust-grid")) return;
-    var grid = document.createElement("div");
-    grid.className = "detail-trust-grid";
-    grid.innerHTML = `
-      <div class="detail-trust-box"><strong>${c("urgency")}</strong><span>${c("urgencyCopy")}</span></div>
-      <div class="detail-trust-box"><strong>${c("reviews")}</strong><span>${c("reviewsCopy")}</span></div>
-      <div class="detail-trust-box"><strong>${c("trustpilot")}</strong></div>
-    `;
-    var share = card.querySelector("#shareButton");
-    if (share) share.insertAdjacentElement("afterend", grid);
-    else card.prepend(grid);
-  }
-
-  function addShareOptions() {
-    var share = document.querySelector("#shareButton");
-    if (!share || document.querySelector(".share-options, #detailShareActions")) return;
-    var wrap = document.createElement("div");
-    wrap.className = "share-options";
-    var url = encodeURIComponent(window.location.href);
-    var text = encodeURIComponent(document.title || "Ebrostay");
-    wrap.innerHTML = `
-      <a href="${whatsappUrl(window.location.href)}" target="_blank" rel="noopener">${c("shareWhatsapp")}</a>
-      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${url}" target="_blank" rel="noopener">${c("shareLinkedin")}</a>
-      <button type="button" data-copy-current-link>${c("shareCopy")}</button>
-    `;
-    share.insertAdjacentElement("afterend", wrap);
-    wrap.querySelector("[data-copy-current-link]").addEventListener("click", function () {
-      navigator.clipboard?.writeText(window.location.href);
-    });
-  }
-
-  function enhanceDetailText() {
-    var detail = document.querySelector("#detailDetails");
-    var amenities = Array.from(document.querySelectorAll("#detailAmenities span")).map(function (s) { return s.textContent.trim(); }).filter(Boolean);
-    if (detail && amenities.length && !detail.dataset.enhanced) {
-      detail.dataset.enhanced = "true";
-      var highlights = amenities.slice(0, 7).join(" · ");
-      detail.textContent = detail.textContent + " " + (getLanguage() === "es" ? "Características destacadas: " : "Key features: ") + highlights + ".";
-    }
-  }
-
-  function galleryImages() {
-    var imgs = [];
-    document.querySelectorAll(".gallery-thumb").forEach(function (thumb) {
-      var bg = thumb.style.backgroundImage || "";
-      var match = bg.match(/url\(["']?([^"')]+)["']?\)/);
-      if (match) imgs.push(match[1]);
-    });
-    var mediaBg = document.querySelector("#detailMedia")?.style.backgroundImage || "";
-    var mediaMatches = mediaBg.match(/url\(["']?([^"')]+)["']?\)/g) || [];
-    mediaMatches.forEach(function (value) {
-      var match = value.match(/url\(["']?([^"')]+)["']?\)/);
-      if (match && !imgs.includes(match[1])) imgs.unshift(match[1]);
-    });
-    return imgs;
-  }
-
-  function initLightbox() {
-    if (!document.querySelector("#detailMedia") || document.querySelector(".lightbox") || document.querySelector("#detailLightbox")) return;
-    var box = document.createElement("div");
-    box.className = "lightbox";
-    box.hidden = true;
-    box.innerHTML = `
-      <div class="lightbox-bar"><strong>Ebrostay</strong><button type="button" data-lightbox-close>×</button></div>
-      <img alt="Ebrostay gallery image">
-      <div class="lightbox-actions"><button type="button" data-lightbox-prev>‹</button><button type="button" data-lightbox-next>›</button></div>
-    `;
-    document.body.appendChild(box);
-    var index = 0;
-    function show(i) {
-      var imgs = galleryImages();
-      if (!imgs.length) return;
-      index = (i + imgs.length) % imgs.length;
-      box.querySelector("img").src = imgs[index];
-      box.hidden = false;
-    }
-    window.__ebrostayOpenLightbox = function () { show(0); };
-    box.querySelector("[data-lightbox-close]").addEventListener("click", function () { box.hidden = true; });
-    box.querySelector("[data-lightbox-prev]").addEventListener("click", function () { show(index - 1); });
-    box.querySelector("[data-lightbox-next]").addEventListener("click", function () { show(index + 1); });
-    box.addEventListener("click", function (event) { if (event.target === box) box.hidden = true; });
-    document.querySelector("#detailMedia").addEventListener("dblclick", function () { show(0); });
-  }
-
-  function openLightbox() {
-    if (typeof window.__ebrostayOpenLightbox === "function") window.__ebrostayOpenLightbox();
-  }
-
-
-  function injectSection2Styles() {
-    if (document.getElementById("ebrostay-section2-styles")) return;
-    var style = document.createElement("style");
-    style.id = "ebrostay-section2-styles";
-    style.textContent = `
-      [data-lucide]:empty { display: none !important; }
-      .audience-selector.is-first-visit { animation: section2-audience-pop 900ms cubic-bezier(.2,.8,.2,1) both, section2-audience-glow 2.8s ease-in-out 3; }
-      @keyframes section2-audience-pop { 0% { opacity: 0; transform: translateY(14px) scale(.96); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
-      @keyframes section2-audience-glow { 0%, 100% { box-shadow: 0 14px 34px rgba(10, 20, 17, .22), 0 0 0 0 rgba(200, 241, 105, 0); } 45% { box-shadow: 0 18px 44px rgba(10, 20, 17, .28), 0 0 0 8px rgba(200, 241, 105, .22); } }
-      .property-list { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
-      .property-card { position: relative !important; display: block !important; aspect-ratio: 1 / 1 !important; min-height: 360px; overflow: hidden; border-radius: 10px; background: #fff; }
-      .property-card[hidden] { display: none !important; }
-      .property-media { position: absolute !important; inset: 0; min-height: 0 !important; height: auto !important; overflow: hidden; background-position: center !important; background-size: cover !important; }
-      .property-card-photo { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .35s ease; }
-      .property-media::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(24,33,29,.03), rgba(24,33,29,.56)); }
-      .property-card:hover .property-card-photo { transform: scale(1.025); }
-      .availability-pill, .favorite-button { z-index: 5; }
-      .property-card-hit { position: absolute; inset: 54px 54px 118px 54px; z-index: 2; border-radius: 10px; }
-      .property-body { position: absolute; z-index: 3; left: 12px; right: 12px; bottom: 12px; display: grid !important; gap: 7px !important; max-height: min(52%, 230px); overflow: hidden; padding: 12px !important; border: 1px solid rgba(255,255,255,.62); border-radius: 10px; background: rgba(255,255,255,.93); box-shadow: 0 12px 30px rgba(24,33,29,.18); backdrop-filter: blur(14px); }
-      .property-title-row { grid-template-columns: 1fr; gap: 5px !important; }
-      .property-title-row .section-kicker { font-size: .68rem !important; padding: 4px 8px !important; }
-      .property-title-row h3 { font-size: clamp(1rem, 1.4vw, 1.16rem); line-height: 1.08; }
-      .property-price { justify-items: start; }
-      .property-body > p { display: none; }
-      .property-badges { display: none !important; }
-      .property-meta { gap: 5px !important; }
-      .property-meta span { padding: 4px 7px !important; font-size: .72rem !important; }
-      .property-card .amenity-list { display: flex !important; flex-wrap: nowrap !important; gap: 5px !important; overflow: hidden; }
-      .property-card .amenity-list span { flex: 0 0 auto; border-radius: 999px; padding: 4px 7px; color: var(--green-700); background: rgba(236,246,239,.96); font-size: .72rem !important; font-weight: 850; }
-      .property-card .amenity-list span::before { content: none !important; }
-      .property-actions { justify-content: flex-end; }
-      .property-actions .button { min-height: 38px; padding: 9px 14px; }
-      .property-photo-arrow { position: absolute; z-index: 5; top: 46%; width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.76); border-radius: 50%; color: var(--ink); background: rgba(255,255,255,.9); box-shadow: 0 10px 24px rgba(24,33,29,.18); font-size: 1.6rem; line-height: 1; cursor: pointer; }
-      .property-photo-arrow.is-prev { left: 12px; }
-      .property-photo-arrow.is-next { right: 12px; }
-      .property-photo-count { position: absolute; z-index: 5; right: 14px; top: 54px; border-radius: 999px; padding: 5px 8px; color: #fff; background: rgba(24,33,29,.58); font-size: .75rem; font-weight: 850; }
-      .map-tools { display: grid; grid-template-columns: max-content max-content 1fr; gap: 8px; align-items: center; padding: 0 16px 16px; }
-      .map-area-status { color: var(--muted); font-size: .84rem; font-weight: 760; }
-      .listings-map.is-drawing-area { cursor: crosshair; }
-      .map-addresses { display: none !important; }
-      .detail-media { position: relative; min-height: min(74vh, 680px) !important; background-size: cover !important; background-position: center !important; }
-      .detail-media::after { content: none !important; }
-      .detail-media-arrow, .lightbox-arrow { position: absolute; z-index: 8; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border: 1px solid rgba(255,255,255,.72); border-radius: 50%; color: var(--ink); background: rgba(255,255,255,.92); box-shadow: 0 12px 28px rgba(24,33,29,.22); font-size: 1.8rem; cursor: pointer; }
-      .detail-media-arrow.is-prev, .lightbox-arrow.is-prev { left: 18px; }
-      .detail-media-arrow.is-next, .lightbox-arrow.is-next { right: 18px; }
-      .detail-media-counter { position: absolute; right: 18px; bottom: 18px; z-index: 8; border-radius: 999px; padding: 7px 10px; color: #fff; background: rgba(24,33,29,.62); font-weight: 900; }
-      .detail-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; margin: 12px auto 0; width: min(1180px, calc(100% - 38px)); }
-      .gallery-thumb { min-height: 72px; border-radius: 8px; background-size: cover; background-position: center; }
-      .detail-lightbox[hidden] { display: none !important; }
-      .detail-lightbox { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 28px; background: rgba(10,20,17,.88); }
-      .detail-lightbox img { max-width: min(1100px, 92vw); max-height: 86vh; border-radius: 8px; object-fit: contain; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
-      .lightbox-close { position: fixed; top: 18px; right: 18px; z-index: 121; width: 44px; height: 44px; border: 1px solid rgba(255,255,255,.62); border-radius: 50%; color: #fff; background: rgba(255,255,255,.12); font-size: 1.6rem; cursor: pointer; }
-      .detail-content .amenity-grid { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px !important; }
-      .detail-content .amenity-grid span { display: flex; align-items: center; min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: #fff; color: var(--ink); font-weight: 850; }
-      .share-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-      .share-label { display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; color: #fff; background: var(--ink); font-weight: 950; }
-      .share-chip { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; color: var(--ink); background: #fff; font-weight: 850; text-decoration: none; cursor: pointer; }
-      .share-chip strong { display: inline-grid; place-items: center; min-width: 22px; height: 22px; border-radius: 50%; color: #fff; background: var(--green); font-size: .78rem; }
-      .share-linkedin strong { background: #0a66c2; }
-      .share-whatsapp strong { background: #1da851; }
-      .booking-included { display: grid; gap: 10px; border: 1px solid rgba(47,107,85,.16); border-radius: 8px; padding: 12px; background: rgba(236,246,239,.62); }
-      .booking-included h5 { margin: 0; color: var(--green); font-size: .92rem; }
-      .booking-included-grid { display: grid; gap: 8px; }
-      .booking-included-grid span { display: grid; gap: 2px; padding-left: 18px; position: relative; }
-      .booking-included-grid span::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--green); font-weight: 950; }
-      .booking-included-grid small { color: var(--muted); line-height: 1.28; }
-      @media (max-width: 760px) { .property-card { min-height: 390px; } .property-card-hit { inset: 54px 50px 160px 50px; } .map-tools { grid-template-columns: 1fr; } .detail-media { min-height: 58vh !important; } }
-    `;
-    document.head.appendChild(style);
-  }
-
-  function initIcons() {
-    if (window.lucide && typeof window.lucide.createIcons === "function") window.lucide.createIcons();
-  }
-
-  function initReveals() {
-    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    var selectors = [
-      ".audience-selector", ".hero-benefits", ".value-band > *", ".split-card", ".feature-card", ".steps article",
-      ".compare-wrap", ".stat", ".partner-metric", ".how-section > div", ".contact-copy", ".contact-chat-card",
-      ".inquiry-form", ".about-intro > *", ".about-cta > *", ".value-grid", ".marketplace-toolbar"
+  function addDetailHighlights() {
+    var meta = document.querySelector("#detailMeta");
+    if (!meta || document.querySelector(".detail-highlights")) return;
+    var propertyName = document.querySelector("#detailName")?.textContent || "";
+    var rows = [
+      ["badge-check", siteText("badge.checked")],
+      ["armchair", lang() === "es" ? "Amueblado" : "Furnished"],
+      ["headphones", lang() === "es" ? "Soporte 24/7" : "24/7 support"],
+      ["utensils", lang() === "es" ? "Cocina equipada" : "Equipped kitchen"]
     ];
-    var nodes = document.querySelectorAll(selectors.join(","));
-    if (!nodes.length) return;
-    if (reduce || !("IntersectionObserver" in window)) {
-      nodes.forEach(function (el) { el.classList.add("reveal", "is-in"); });
-      return;
-    }
-    nodes.forEach(function (el) { el.classList.add("reveal"); });
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          var el = entry.target;
-          var sibs = Array.prototype.slice.call(el.parentElement ? el.parentElement.children : []);
-          var idx = Math.max(0, sibs.indexOf(el));
-          el.style.transitionDelay = Math.min(idx * 70, 350) + "ms";
-          el.classList.add("is-in");
-          io.unobserve(el);
-        }
-      });
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-    nodes.forEach(function (el) { io.observe(el); });
+    if (propertyName.toLowerCase().includes("movera")) rows.push(["sparkles", lang() === "es" ? "Terraza" : "Terrace"]);
+    var node = document.createElement("div");
+    node.className = "detail-highlights";
+    node.innerHTML = rows.map(function (row) { return `<div class="detail-highlight">${icon(row[0])}<div>${row[1]}</div></div>`; }).join("");
+    meta.insertAdjacentElement("afterend", node);
+    refreshIcons();
   }
 
-  function refreshTextAfterLanguageChange() {
-    initNavPolish();
-    initHomepageCopyPolish();
-    document.querySelectorAll(".hero-benefits").forEach(function (el) { el.remove(); });
-    initHeroBenefits();
-    document.querySelectorAll(".contact-chat-card, .support-fab, .support-panel").forEach(function (el) { el.remove(); });
-    initContactChat();
-    initFooterLegal();
-    initDetailEnhancements();
-    initIcons();
+  function addTrustStrip() {
+    var content = document.querySelector(".detail-content");
+    if (!content || document.querySelector(".trust-detail-strip")) return;
+    var strip = document.createElement("div");
+    strip.className = "trust-detail-strip";
+    strip.innerHTML = [
+      ["flame", text("highDemand")],
+      ["eye", text("visitsToday")],
+      ["star", text("transparentReviews")],
+      ["shield-check", text("trustPilot")]
+    ].map(function (row) { return `<div class="trust-detail-card">${icon(row[0])}<div>${row[1]}</div></div>`; }).join("");
+    var firstSection = content.querySelector(".detail-section");
+    if (firstSection) firstSection.insertAdjacentElement("beforebegin", strip);
+    refreshIcons();
+  }
+
+  function addSocialShareButtons() {
+    var share = document.querySelector("#shareButton");
+    if (!share || document.querySelector(".share-social-row")) return;
+    var url = encodeURIComponent(window.location.href);
+    var title = encodeURIComponent(document.title || "Ebrostay");
+    var row = document.createElement("div");
+    row.className = "share-social-row";
+    row.innerHTML = `
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${url}" target="_blank" rel="noopener" aria-label="${text("shareLinkedin")}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.44-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg></a>
+      <a href="${whatsappLink(window.location.href)}" target="_blank" rel="noopener" aria-label="${text("shareWhatsapp")}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.05 4.91A9.82 9.82 0 0 0 12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.91-7.02zM12.05 20.15a8.23 8.23 0 0 1-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.24-8.23a8.2 8.2 0 0 1 5.82 2.41 8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.24 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.39.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.1-.22-.16-.47-.28z"/></svg></a>
+      <a href="mailto:?subject=${title}&body=${url}" aria-label="${text("shareEmail")}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h18a1 1 0 0 1 1 1v.4l-10 6.1L2 5.4V5a1 1 0 0 1 1-1zm-1 3.66V19a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1V7.66l-9.48 5.78a1 1 0 0 1-1.04 0L2 7.66z"/></svg></a>
+    `;
+    share.insertAdjacentElement("afterend", row);
+  }
+
+  var lightboxIndex = 0;
+  function initGalleryLightbox() {
+    if (document.querySelector(".gallery-lightbox")) return;
+    var box = document.createElement("div");
+    box.className = "gallery-lightbox";
+    box.innerHTML = `<button class="gallery-close" type="button">×</button><button class="gallery-prev" type="button">‹</button><img alt="Ebrostay gallery"><button class="gallery-next" type="button">›</button>`;
+    document.body.appendChild(box);
+    box.querySelector(".gallery-close").addEventListener("click", closeGallery);
+    box.querySelector(".gallery-prev").addEventListener("click", function () { moveGallery(-1); });
+    box.querySelector(".gallery-next").addEventListener("click", function () { moveGallery(1); });
+    box.addEventListener("click", function (event) { if (event.target === box) closeGallery(); });
+    document.querySelector("#detailMedia")?.addEventListener("dblclick", function () { openGallery(0); });
+    document.querySelector("#detailGallery")?.addEventListener("dblclick", function (event) {
+      var thumb = event.target.closest("[data-photo-index]");
+      openGallery(thumb ? Number(thumb.dataset.photoIndex) : 0);
+    });
+    document.addEventListener("keydown", function (event) {
+      if (!box.classList.contains("is-open")) return;
+      if (event.key === "Escape") closeGallery();
+      if (event.key === "ArrowLeft") moveGallery(-1);
+      if (event.key === "ArrowRight") moveGallery(1);
+    });
+  }
+
+  function openGallery(index) {
+    var photos = collectDetailPhotos();
+    if (!photos.length) return;
+    lightboxIndex = Math.max(0, Math.min(index || 0, photos.length - 1));
+    var box = document.querySelector(".gallery-lightbox");
+    box.querySelector("img").src = photos[lightboxIndex];
+    box.classList.add("is-open");
+  }
+
+  function closeGallery() {
+    document.querySelector(".gallery-lightbox")?.classList.remove("is-open");
+  }
+
+  function moveGallery(direction) {
+    var photos = collectDetailPhotos();
+    if (!photos.length) return;
+    lightboxIndex = (lightboxIndex + direction + photos.length) % photos.length;
+    document.querySelector(".gallery-lightbox img").src = photos[lightboxIndex];
+  }
+
+  function addOwnerExtras() {
+    if (!document.querySelector(".owner-hero")) return;
+    document.body.classList.add("owner-page");
+    var featureSection = document.querySelector(".owner-features");
+    if (!featureSection) return;
+    var items = [
+      ["sofa", "ownerExtraFurnish", "ownerExtraFurnishCopy"],
+      ["clipboard-check", "ownerExtraMove", "ownerExtraMoveCopy"],
+      ["bar-chart-3", "ownerExtraStats", "ownerExtraStatsCopy"]
+    ];
+    var existing = featureSection.querySelectorAll("[data-owner-extra]");
+    if (existing.length === items.length) {
+      // Re-sync text on language change (cards already injected).
+      existing.forEach(function (card, i) {
+        setText(card.querySelector("h3"), text(items[i][1]));
+        setText(card.querySelector("p"), text(items[i][2]));
+      });
+    } else if (!existing.length) {
+      items.forEach(function (item) {
+        var card = document.createElement("div");
+        card.className = "feature-card";
+        card.setAttribute("data-owner-extra", "");
+        card.innerHTML = `<span class="feature-icon">${icon(item[0])}</span><h3>${text(item[1])}</h3><p>${text(item[2])}</p>`;
+        featureSection.appendChild(card);
+      });
+    }
+    refreshIcons();
+  }
+
+  function addSupportAssistant() {
+    if (document.querySelector(".support-fab")) return;
+    var panel = document.createElement("div");
+    panel.className = "support-panel";
+    panel.innerHTML = `
+      <h3></h3><p></p><textarea></textarea>
+      <div class="support-panel-actions"><button class="button primary" type="button" data-support-send></button><button class="button ghost" type="button" data-support-close>×</button></div>
+    `;
+    var fab = document.createElement("button");
+    fab.className = "support-fab";
+    fab.type = "button";
+    fab.innerHTML = `${icon("message-circle")}<span></span>`;
+    document.body.appendChild(panel);
+    document.body.appendChild(fab);
+    fab.addEventListener("click", function () { panel.classList.toggle("is-open"); playBrandChime(); });
+    panel.querySelector("[data-support-close]").addEventListener("click", function () { panel.classList.remove("is-open"); });
+    panel.querySelector("[data-support-send]").addEventListener("click", function () {
+      var message = panel.querySelector("textarea").value.trim() || text("assistantPlaceholder");
+      window.open(whatsappLink(message), "_blank", "noopener");
+    });
+    updateSupportText();
+    refreshIcons();
+  }
+
+  function updateSupportText() {
+    var panel = document.querySelector(".support-panel");
+    var fab = document.querySelector(".support-fab");
+    if (fab) setText(fab.querySelector("span"), text("assistantOpen"));
+    if (panel) {
+      setText(panel.querySelector("h3"), text("assistantTitle"));
+      setText(panel.querySelector("p"), text("assistantCopy"));
+      panel.querySelector("textarea").placeholder = text("assistantPlaceholder");
+      setText(panel.querySelector("[data-support-send]"), text("assistantSend"));
+    }
+  }
+
+  function playBrandChime() {
+    try {
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      var ctx = new AudioContext();
+      var gain = ctx.createGain();
+      gain.gain.value = 0.035;
+      gain.connect(ctx.destination);
+      [523.25, 659.25, 783.99].forEach(function (frequency, index) {
+        var osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = frequency;
+        osc.connect(gain);
+        osc.start(ctx.currentTime + index * 0.055);
+        osc.stop(ctx.currentTime + index * 0.055 + 0.13);
+      });
+      setTimeout(function () { ctx.close(); }, 420);
+    } catch { /* no audio */ }
+  }
+
+  function refreshLanguageSensitiveEnhancements() {
+    applyKeyedTranslations(lang());
+    improveNavigation();
+    updateEnhancedFilterText();
+    simplifyValueAndHow();
+    updateContactChatText();
+    addFooterLegal();
+    updateSupportText();
+    updateDetailMediaTabs();
+    addOwnerExtras();
+    if (document.querySelector(".detail-page")) {
+      document.querySelector("#detailMedia")?.setAttribute("data-gallery-hint", text("galleryHint"));
+    }
+    applyAudience(preferredAudience(), false);
+  }
+
+  function initObservers() {
+    observeListings();
+    var detail = document.querySelector(".detail-page");
+    if (detail && !detail.dataset.enhanceObserved) {
+      detail.dataset.enhanceObserved = "true";
+      new MutationObserver(function () { window.setTimeout(enhanceDetailPage, 0); }).observe(detail, { childList: true, subtree: true });
+    }
+  }
+
+  // ---- Dark mode: light-first, dark only when the visitor opts in ----
+  var THEME_KEY = "ebrostay-theme";
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  }
+
+  function initThemeToggle() {
+    var actions = document.querySelector(".header-actions");
+    if (!actions || actions.querySelector(".theme-toggle")) return;
+
+    var active = document.querySelector(".language-option.is-active[data-lang]");
+    var lang = (active && active.dataset.lang) || document.documentElement.lang || "es";
+    if (lang !== "en") lang = "es";
+    var labels = {
+      es: { toDark: "Activar modo oscuro", toLight: "Activar modo claro" },
+      en: { toDark: "Switch to dark mode", toLight: "Switch to light mode" }
+    };
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "theme-toggle";
+
+    function sync() {
+      var dark = currentTheme() === "dark";
+      button.innerHTML = '<i data-lucide="' + (dark ? "sun" : "moon") + '"></i>';
+      button.setAttribute("aria-label", dark ? labels[lang].toLight : labels[lang].toDark);
+    }
+
+    button.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      applyTheme(next);
+      try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+      sync();
+      refreshIcons();
+    });
+
+    sync();
+    actions.insertBefore(button, actions.firstChild);
+  }
+
+  // Owner lead form (lives in the in-page owner view on the homepage).
+  function initOwnerForm() {
+    var form = document.querySelector("#ownerForm");
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = "1";
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      var note = document.querySelector("#ownerFormNote");
+      var data = new FormData(form);
+      var backend = window.EbrostayBackend;
+      if (!backend || !backend.isConfigured || !backend.isConfigured()) {
+        if (note) note.textContent = siteText("owners.sentFallback");
+        return;
+      }
+      Promise.resolve(backend.submitOwnerLead({
+        name: (data.get("name") || "").toString().trim(),
+        email: (data.get("email") || "").toString().trim(),
+        phone: (data.get("phone") || "").toString().trim(),
+        units: (data.get("units") || "").toString().trim(),
+        city: (data.get("city") || "").toString().trim(),
+        message: (data.get("message") || "").toString().trim()
+      })).then(function (res) {
+        var ok = res && res.ok;
+        if (note) {
+          note.textContent = ok ? siteText("owners.sent") : siteText("form.errorSend");
+          note.classList.toggle("is-success", !!ok);
+          note.classList.toggle("is-error", !ok);
+        }
+        if (ok) { if (window.umami) window.umami.track("owner-lead"); form.reset(); }
+      });
+    });
+  }
+
+  // Deep-link / cross-page entry into owner mode via #owner.
+  function checkOwnerHash() {
+    if (location.hash === "#owner") applyAudience("owner", true);
   }
 
   function boot() {
-    injectStyles();
-    injectSection2Styles();
-    initAudienceSwitch();
-    initNavPolish();
-    initHeroBenefits();
-    initFilterImprovements();
-    initMapImprovements();
-    initHomepageCopyPolish();
-    initContactChat();
-    initFooterLegal();
-    initDetailEnhancements();
-    initIcons();
-    initReveals();
+    addGlobalStyles();
+    applyKeyedTranslations(lang());
+    improveNavigation();
+    initAudience();
+    initThemeToggle();
+    initOwnerForm();
+    checkOwnerHash();
+    enhanceSearchFilters();
+    observeListings();
+    decoratePropertyCards();
+    simplifyValueAndHow();
+    replaceContactFormWithChat();
+    addFooterLegal();
+    addSupportAssistant();
+    enhanceDetailPage();
+    addOwnerExtras();
+    initObservers();
+    refreshIcons();
+    window.addEventListener("hashchange", checkOwnerHash);
+
     document.querySelectorAll("[data-lang]").forEach(function (button) {
-      button.addEventListener("click", function () { window.setTimeout(refreshTextAfterLanguageChange, 0); });
+      button.addEventListener("click", function () {
+        applyKeyedTranslations(button.dataset.lang);
+        window.setTimeout(refreshLanguageSensitiveEnhancements, 20);
+      });
     });
-    window.addEventListener("storage", updateSavedLink);
+    [120, 450, 1000, 1800].forEach(function (delay) {
+      window.setTimeout(function () {
+        enhanceSearchFilters();
+        decoratePropertyCards();
+        applyEnhancedListingFilters();
+        enhanceDetailPage();
+        addOwnerExtras();
+        updateSavedLinks();
+        refreshIcons();
+      }, delay);
+    });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
 })();

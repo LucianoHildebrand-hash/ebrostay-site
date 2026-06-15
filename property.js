@@ -5,14 +5,18 @@ let property = null;
 const languageButtons = document.querySelectorAll("[data-lang]");
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
 let detailMap = null;
-let detailPhotoIndex = 0;
-let detailLightboxIndex = 0;
+let detailGalleryIndex = 0;
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
 function interpolate(key, values) {
   return Object.entries(values).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), t(key));
 }
+
+// Prices are always shown with two decimals, e.g. 950.00 EUR.
+const formatEur = (amount) => interpolate("cond.eur", { amount: Number(amount).toFixed(2) });
+const formatEurMonth = (amount) => interpolate("cond.eurMonth", { amount: Number(amount).toFixed(2) });
+const monthlyPriceLabel = () => interpolate("listing.price", { price: formatEur(property.priceNumber) });
 
 function dateValue(value) {
   return value ? new Date(`${value}T00:00:00`) : null;
@@ -59,7 +63,7 @@ function renderDetail() {
     .map((key) => `<span>${t(`amenity.${key}`)}</span>`)
     .join("");
 
-  document.querySelector("#detailPrice").textContent = interpolate("listing.price", { price: property.price });
+  document.querySelector("#detailPrice").textContent = monthlyPriceLabel();
   const priceNote = document.querySelector("#detailPriceNote");
   if (property.priceNoteKey) {
     priceNote.hidden = false;
@@ -70,20 +74,14 @@ function renderDetail() {
   });
 
   const addressElement = document.querySelector("#detailAddress");
-  if (addressElement) {
+  const addressValue = document.querySelector("#detailAddressValue");
+  if (addressElement && addressValue) {
     addressElement.hidden = !property.address;
-    addressElement.textContent = property.address ? `${property.address}, Zaragoza` : "";
+    addressValue.textContent = property.address ? `${property.address}, Zaragoza` : "";
   }
 
-  const subject = encodeURIComponent(`${t("email.subject")} - ${t(property.nameKey)}`);
-  const body = encodeURIComponent(`${t("email.defaultMessage")}\n\n${t(property.nameKey)}: ${t(property.copyKey)}`);
-  document.querySelector("#detailEmailButton").href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
-  document.querySelector("#detailWhatsappButton").href = whatsappLink(
-    interpolate("whatsapp.message", { property: t(property.nameKey) })
-  );
+  updateRequestLinks();
 
-  renderShareActions();
-  renderBookingIncluded();
   updateSeoTags();
 }
 
@@ -91,7 +89,7 @@ function renderDetail() {
 // so rendered crawls index each listing with its real content.
 function updateSeoTags() {
   const url = `https://ebrostay.com/property.html?id=${property.id}`;
-  const description = `${t(property.copyKey)} ${property.address ? `${property.address}, ` : ""}Zaragoza. ${interpolate("listing.price", { price: property.price })}.`;
+  const description = `${t(property.copyKey)} ${property.address ? `${property.address}, ` : ""}Zaragoza. ${monthlyPriceLabel()}.`;
 
   document.querySelector('meta[name="description"]')?.setAttribute("content", description);
   document.querySelector('meta[property="og:title"]')?.setAttribute("content", `${t(property.nameKey)} | Ebrostay`);
@@ -150,159 +148,19 @@ function renderFloorplan() {
   const plans = property.floorplans || [];
   section.hidden = plans.length === 0;
   grid.innerHTML = plans.map((url) => `
-    <a class="floorplan-link" href="${url}" target="_blank" rel="noopener">
+    <button class="floorplan-link" type="button" aria-pressed="false" aria-label="${t("detail.floorplanZoom")}">
       <img class="floorplan-img" src="${url}" alt="${t("detail.floorplan")}" loading="lazy">
-    </a>
+    </button>
   `).join("");
 }
 
-// Travel times to the city reference points. Walking and driving come from
-// OSRM (real routes); public transport is an estimate, and everything falls
-// back to distance-based estimates if the routing service is unreachable.
-const LANDMARKS = [
-  { key: "landmark.pilar", lat: 41.6563, lng: -0.8786 },
-  { key: "landmark.delicias", lat: 41.6591, lng: -0.9117 },
-  { key: "landmark.plaza", lat: 41.643, lng: -0.9941 }
-];
-
-function haversineKm(aLat, aLng, bLat, bLng) {
-  const rad = Math.PI / 180;
-  const dLat = (bLat - aLat) * rad;
-  const dLng = (bLng - aLng) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * rad) * Math.cos(bLat * rad) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.asin(Math.sqrt(h));
-}
-
-async function osrmDurations(server, profile, destinations) {
-  const coords = [`${property.lng},${property.lat}`, ...destinations.map((l) => `${l.lng},${l.lat}`)].join(";");
-  const response = await fetch(
-    `https://routing.openstreetmap.de/${server}/table/v1/${profile}/${coords}?sources=0&annotations=duration,distance`,
-    { signal: AbortSignal.timeout(6000) }
-  );
-  const data = await response.json();
-  if (data.code !== "Ok") throw new Error(data.code);
-  return {
-    minutes: data.durations[0].slice(1).map((s) => Math.max(1, Math.round(s / 60))),
-    km: (data.distances?.[0] || []).slice(1).map((m) => m / 1000)
-  };
-}
-
-async function travelTimes(destinations) {
-  // distance-based estimates as the baseline
-  const straightKm = destinations.map((l) => haversineKm(property.lat, property.lng, l.lat, l.lng));
-  let walk = straightKm.map((km) => Math.max(1, Math.round((km * 1.3) / 4.7 * 60)));
-  let car = straightKm.map((km) => Math.max(2, Math.round(2 + (km * 1.3) / 28 * 60)));
-  let routeKm = straightKm.map((km) => km * 1.3);
-
-  try {
-    const [foot, driving] = await Promise.all([
-      osrmDurations("routed-foot", "foot", destinations),
-      osrmDurations("routed-car", "driving", destinations)
-    ]);
-    walk = foot.minutes;
-    car = driving.minutes;
-    if (foot.km.length) routeKm = foot.km;
-  } catch { /* keep estimates */ }
-
-  // urban bus estimate: short wait plus ~15 km/h door to door, never worse than walking
-  const transit = routeKm.map((km, index) => Math.min(walk[index], Math.max(4, Math.round(6 + (km / 15) * 60))));
-  return { walk, car, transit, routeKm };
-}
-
-function distanceRow(name, times, index, extraClass = "") {
-  return `
-    <li${extraClass ? ` class="${extraClass}"` : ""}>
-      <span class="distance-name">${name}<small>${times.routeKm[index].toFixed(1)} km</small></span>
-      <span class="distance-modes">
-        <span title="${t("dist.walk")}">&#128694; ${times.walk[index]} min</span>
-        <span title="${t("dist.transit")}">&#128652; ${times.transit[index]} min</span>
-        <span title="${t("dist.car")}">&#128663; ${times.car[index]} min</span>
-      </span>
-    </li>
-  `;
-}
-
-async function renderDistances() {
-  const list = document.querySelector("#distanceList");
-  if (!list || !property.lat) return;
-  const times = await travelTimes(LANDMARKS);
-  list.innerHTML = LANDMARKS.map((landmark, index) => distanceRow(t(landmark.key), times, index)).join("");
-  if (customDestination) renderCustomDistance();
-}
-
-// Visitor-typed destination: geocoded, measured, and drawn on the map
-let customDestination = null;
-let customLayer = null;
-
-async function geocodeDestination(query) {
-  // prefer results inside greater Zaragoza
-  const search = async (q, bounded) => {
-    const box = "&viewbox=-1.10,41.78,-0.70,41.52" + (bounded ? "&bounded=1" : "");
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=es&addressdetails=1${box}&q=${encodeURIComponent(q)}`,
-      { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(8000) }
-    );
-    const results = await response.json();
-    return Array.isArray(results) && results.length ? results[0] : null;
-  };
-  const withCity = /zaragoza/i.test(query) ? query : `${query}, Zaragoza`;
-  return await search(withCity, true) || await search(withCity, false) || await search(query, false);
-}
-
-function destinationLabel(match) {
-  const a = match.address || {};
-  const street = [a.road || a.pedestrian || a.neighbourhood, a.house_number].filter(Boolean).join(" ");
-  const zone = a.suburb || a.village || a.town || a.city_district || "";
-  const named = [street || match.display_name.split(",")[0], zone].filter(Boolean).join(", ");
-  return named || match.display_name.split(",").slice(0, 2).join(",");
-}
-
-function drawCustomDestination() {
-  if (!detailMap || !customDestination || typeof L === "undefined") return;
-  if (customLayer) detailMap.removeLayer(customLayer);
-  customLayer = L.layerGroup([
-    L.marker([customDestination.lat, customDestination.lng], { title: customDestination.label }),
-    L.polyline(
-      [[property.lat, property.lng], [customDestination.lat, customDestination.lng]],
-      { color: "#376f83", weight: 3, dashArray: "7 7" }
-    )
-  ]).addTo(detailMap);
-  detailMap.fitBounds(
-    L.latLngBounds([[property.lat, property.lng], [customDestination.lat, customDestination.lng]]),
-    { padding: [34, 34] }
-  );
-}
-
-async function renderCustomDistance() {
-  const list = document.querySelector("#distanceList");
-  if (!list || !customDestination) return;
-  const times = await travelTimes([customDestination]);
-  document.querySelector("#customDistanceRow")?.remove();
-  list.insertAdjacentHTML("beforeend",
-    distanceRow(`&#128205; ${customDestination.label}`, times, 0, "is-custom").replace("<li", '<li id="customDistanceRow"'));
-  drawCustomDestination();
-}
-
-document.querySelector("#distanceForm")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const input = document.querySelector("#distanceInput");
-  const status = document.querySelector("#distanceStatus");
-  const query = input?.value.trim();
-  if (!query) return;
-  status.hidden = false;
-  status.textContent = t("dist.searching");
-  const match = await geocodeDestination(query).catch(() => null);
-  if (!match) {
-    status.textContent = t("dist.notFound");
-    return;
-  }
-  status.hidden = true;
-  customDestination = {
-    lat: Number(match.lat),
-    lng: Number(match.lon),
-    label: destinationLabel(match)
-  };
-  await renderCustomDistance();
+// Clicking a floor plan zooms it in place — expanding to the full content
+// width (up to the booking card) and back — instead of opening a new tab.
+document.querySelector("#floorplanImages")?.addEventListener("click", (event) => {
+  const plan = event.target.closest(".floorplan-link");
+  if (!plan) return;
+  const zoomed = plan.classList.toggle("is-zoomed");
+  plan.setAttribute("aria-pressed", String(zoomed));
 });
 
 let availabilityCalendar = null;
@@ -347,9 +205,9 @@ function renderConditions() {
   const rows = [];
   if (property.minStayMonths != null) rows.push([t("cond.minStay"), stay(property.minStayMonths)]);
   if (property.maxStayMonths != null) rows.push([t("cond.maxStay"), stay(property.maxStayMonths)]);
-  if (property.depositAmount != null) rows.push([t("cond.deposit"), interpolate("cond.eur", { amount: property.depositAmount })]);
-  if (property.upfrontRentEur != null) rows.push([t("cond.upfront"), interpolate("cond.eur", { amount: property.upfrontRentEur })]);
-  if (property.utilitiesCapEur != null) rows.push([t("cond.utilities"), interpolate("cond.eurMonth", { amount: property.utilitiesCapEur })]);
+  if (property.depositAmount != null) rows.push([t("cond.deposit"), formatEur(property.depositAmount)]);
+  if (property.upfrontRentEur != null) rows.push([t("cond.upfront"), formatEur(property.upfrontRentEur)]);
+  if (property.utilitiesCapEur != null) rows.push([t("cond.utilities"), formatEurMonth(property.utilitiesCapEur)]);
   if (property.energyRating) rows.push([t("cond.energy"), property.energyRating]);
   if (property.bedsKey) rows.push([t("cond.beds"), t(property.bedsKey)]);
   if (property.petsAllowed != null) rows.push([t("cond.pets"), yesNo(property.petsAllowed)]);
@@ -384,7 +242,7 @@ function renderMoveInCost() {
 
   const total = rows.reduce((sum, [, amount]) => sum + amount, 0);
   const line = (labelKey, amount, strong = false) =>
-    `<li${strong ? ' class="is-total"' : ""}><span>${t(labelKey)}</span><span>${interpolate("cond.eur", { amount })}</span></li>`;
+    `<li${strong ? ' class="is-total"' : ""}><span>${t(labelKey)}</span><span>${formatEur(amount)}</span></li>`;
   list.innerHTML = rows.map(([key, amount]) => line(key, amount)).join("") +
     (rows.length > 1 ? line("movein.total", total, true) : "");
 }
@@ -430,42 +288,17 @@ function nextBlockAfter(startDate) {
 
 const MAX_STAY_MONTHS = 11;
 const COMMISSION_PCT = 0.15;
-const money = (amount) => interpolate("cond.eur", { amount: Math.round(amount * 100) / 100 });
+const money = formatEur;
 
-function updateBookingSummary() {
-  const summary = document.querySelector("#bookingSummary");
-  const startDate = document.querySelector("#bookingStart")?.value;
-  const endDate = document.querySelector("#bookingEnd")?.value;
-  const split = document.querySelector("#bookingSplit");
-  const vatTip = document.querySelector("#bookingVatTip");
-  const button = document.querySelector("#bookingButton");
-  if (!summary) return;
-  if (split) split.hidden = true;
-  if (button) button.disabled = false;
-  if (!startDate || !endDate || endDate <= startDate) {
-    summary.innerHTML = "";
-    if (vatTip) vatTip.textContent = "";
-    return;
-  }
-  // Pre-vet: the chosen range must not cross any booked/held dates.
-  if (rangeHasConflict(startDate, endDate)) {
-    summary.innerHTML = "";
-    if (vatTip) vatTip.textContent = "";
-    if (split) { split.hidden = false; split.textContent = t("book.rangeUnavailable"); }
-    if (button) button.disabled = true;
-    return;
-  }
-
+// Price a stay from the chosen dates, mirroring the server-side computation.
+// Returns a status so the UI can explain why an estimate isn't shown.
+function computeEstimate(startDate, endDate) {
+  if (!startDate || !endDate || endDate <= startDate) return { status: "empty" };
+  // The chosen range must not cross any booked/held dates.
+  if (rangeHasConflict(startDate, endDate)) return { status: "conflict" };
   const months = billedMonths(startDate, endDate);
-
   // Stays longer than 11 months need two separate contracts.
-  if (months > MAX_STAY_MONTHS) {
-    summary.innerHTML = "";
-    if (vatTip) vatTip.textContent = "";
-    if (split) { split.hidden = false; split.textContent = t("book.splitNote"); }
-    if (button) button.disabled = true;
-    return;
-  }
+  if (months > MAX_STAY_MONTHS) return { status: "toolong" };
 
   const price = property.priceNumber;
   const rent = months * price;
@@ -475,34 +308,114 @@ function updateBookingSummary() {
   const discount = capped ? commissionRaw - commission : 0;
   const deposit = property.depositAmount || 0;
   const total = rent + commission + deposit;
+  return { status: "ok", months, rent, commissionRaw, commission, capped, discount, deposit, total };
+}
+
+function updateBookingSummary() {
+  const summary = document.querySelector("#bookingSummary");
+  const startDate = document.querySelector("#bookingStart")?.value;
+  const endDate = document.querySelector("#bookingEnd")?.value;
+  const split = document.querySelector("#bookingSplit");
+  const vatTip = document.querySelector("#bookingVatTip");
+  if (!summary) return;
+  if (split) split.hidden = true;
+
+  const est = computeEstimate(startDate, endDate);
+  if (est.status !== "ok") {
+    summary.innerHTML = "";
+    if (vatTip) vatTip.textContent = "";
+    if (split && est.status === "conflict") { split.hidden = false; split.textContent = t("book.rangeUnavailable"); }
+    if (split && est.status === "toolong") { split.hidden = false; split.textContent = t("book.splitNote"); }
+    updateRequestLinks();
+    return;
+  }
 
   summary.innerHTML = `
-    <li><span>${t("book.stay")}</span><span>${formatDate(dateValue(startDate))} &ndash; ${formatDate(dateValue(endDate))}</span></li>
-    <li><span>${t("book.rent")} (${monthsText(months)})</span><span>${money(rent)}</span></li>
-    <li><span>${t("book.commission")}</span><span>${money(commissionRaw)}</span></li>
-    ${capped ? `<li class="booking-discount"><span>${t("book.commissionDiscount")}</span><span>&minus;${money(discount)}</span></li>` : ""}
-    ${deposit ? `<li><span>${t("cond.deposit")}</span><span>${money(deposit)}</span></li>` : ""}
-    <li class="is-total"><span>${t("book.payNow")}</span><span>${money(total)}</span></li>
+    <li class="is-range"><span>${t("book.stay")}</span><span>${formatDate(dateValue(startDate))} &ndash; ${formatDate(dateValue(endDate))}</span></li>
+    <li><span>${t("book.rent")} (${monthsText(est.months)})</span><span>${money(est.rent)}</span></li>
+    <li><span>${t("book.commission")}</span><span>${money(est.commissionRaw)}</span></li>
+    ${est.capped ? `<li class="booking-discount"><span>${t("book.commissionDiscount")}</span><span>&minus;${money(est.discount)}</span></li>` : ""}
+    ${est.deposit ? `<li><span>${t("cond.deposit")}</span><span>${money(est.deposit)}</span></li>` : ""}
+    <li class="is-total"><span>${t("book.estimateTotal")}</span><span>${money(est.total)}</span></li>
   `;
 
   if (vatTip) {
-    const names = document.querySelector("#bookingTenants")?.value.trim();
-    vatTip.textContent = names ? t("book.vatExempt") : t("book.vatCompany");
-    vatTip.className = `booking-note${names ? " booking-vat-ok" : ""}`;
+    const exempt = Boolean(document.querySelector("#bookingTenants")?.value.trim());
+    const icon = exempt ? "badge-check" : "lightbulb";
+    vatTip.className = `booking-note booking-tip${exempt ? " booking-vat-ok" : ""}`;
+    vatTip.innerHTML = `<i data-lucide="${icon}" aria-hidden="true"></i><span>${exempt ? t("book.vatExempt") : t("book.vatCompany")}</span>`;
+    window.lucide?.createIcons();
   }
+  updateRequestLinks();
 }
 
-function bookingMessage(key, isError = true) {
-  const element = document.querySelector("#bookingMessage");
-  if (!element) return;
-  element.textContent = key ? t(key) : "";
-  element.className = `auth-message${key && isError ? " is-error" : ""}`;
+// Build a branded, plain-text recap of the request that we drop into the
+// prefilled email body / WhatsApp message. `channel` "whatsapp" gets *bold*
+// markdown on the header and total so the recap reads cleanly in the app.
+function buildRequestSummary(channel) {
+  const bold = (text) => (channel === "whatsapp" ? `*${text}*` : text);
+  const startDate = document.querySelector("#bookingStart")?.value;
+  const endDate = document.querySelector("#bookingEnd")?.value;
+  const tenants = document.querySelector("#bookingTenants")?.value.trim();
+  const est = computeEstimate(startDate, endDate);
+
+  const lines = [
+    bold(t("request.summaryHeader")),
+    "",
+    `${t("request.propertyLabel")}: ${t(property.nameKey)}`,
+    `${t("request.areaLabel")}: ${t(property.areaKey)}`,
+    `${t("request.priceLabel")}: ${monthlyPriceLabel()}`
+  ];
+
+  if (est.status === "ok") {
+    lines.push(
+      "",
+      `${t("book.start")}: ${formatDate(dateValue(startDate))}`,
+      `${t("book.end")}: ${formatDate(dateValue(endDate))}`,
+      `${t("book.months")}: ${monthsText(est.months)}`,
+      "",
+      `${t("request.estimateLabel")}:`,
+      `- ${t("book.rent")} (${monthsText(est.months)}): ${money(est.rent)}`,
+      `- ${t("book.commission")}: ${money(est.commissionRaw)}`
+    );
+    if (est.deposit) lines.push(`- ${t("cond.deposit")}: ${money(est.deposit)}`);
+    lines.push(`- ${t("book.estimateTotal")}: ${bold(money(est.total))}`);
+  }
+
+  if (tenants) {
+    const names = tenants.split("\n").map((name) => name.trim()).filter(Boolean);
+    if (names.length) {
+      lines.push("", `${t("request.tenantsLabel")}:`, ...names.map((name) => `- ${name}`));
+    }
+  }
+
+  lines.push("", t("request.summaryFooter"));
+  return lines.join("\n");
+}
+
+// Keep the two request buttons pointing at a prefilled, branded message that
+// reflects whatever the visitor has selected so far.
+function updateRequestLinks() {
+  const emailButton = document.querySelector("#bookingEmailButton");
+  const whatsappButton = document.querySelector("#bookingWhatsappButton");
+  if (!property || (!emailButton && !whatsappButton)) return;
+
+  if (emailButton) {
+    const subject = `${t("request.emailSubject")} – ${t(property.nameKey)}`;
+    const body = buildRequestSummary("email");
+    emailButton.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }
+  if (whatsappButton) {
+    whatsappButton.href = whatsappLink(buildRequestSummary("whatsapp"));
+  }
 }
 
 function initBookingWidget() {
   const widget = document.querySelector("#bookingWidget");
   if (!widget) return;
-  if (!window.EbrostayBackend?.isConfigured() || typeof flatpickr === "undefined") {
+  // The request buttons live outside the widget and always work; the date
+  // pickers are an enhancement that needs flatpickr loaded.
+  if (typeof flatpickr === "undefined") {
     widget.hidden = true;
     return;
   }
@@ -564,10 +477,6 @@ function initBookingWidget() {
 
   preselectSearchDates(minStart, minEndFor);
   updateBookingSummary();
-
-  if (new URLSearchParams(window.location.search).get("booking") === "cancelled") {
-    bookingMessage("book.cancelled");
-  }
 }
 
 // Carry the dates from the visitor's last search into the booking widget,
@@ -594,62 +503,13 @@ function preselectSearchDates(minStart, minEndFor) {
   bookingEndPicker?.setDate(end, false);
 }
 
-const BOOKING_ERROR_KEYS = {
-  // after client pre-vetting, a server unavailability means someone booked
-  // (or is mid-checkout) in the meantime
-  dates_unavailable: "book.justTaken",
-  stripe_not_configured: "book.notConfigured",
-  unauthorized: "book.loginFirst",
-  max_stay: "book.splitNote",
-  min_stay: "book.minStayError"
-};
-
-document.querySelector("#bookingButton")?.addEventListener("click", async () => {
-  const startDate = document.querySelector("#bookingStart")?.value;
-  const endDate = document.querySelector("#bookingEnd")?.value;
-  if (!startDate) {
-    bookingPicker?.open();
-    return;
-  }
-  if (!endDate || endDate <= startDate) {
-    bookingEndPicker?.open();
-    return;
-  }
-  if (!EbrostayBackend.getUser()) {
-    localStorage.setItem("ebrostay-return-to", JSON.stringify({
-      url: window.location.pathname + window.location.search + "#book",
-      ts: Date.now()
-    }));
-    const message = document.querySelector("#bookingMessage");
-    if (message) {
-      message.className = "auth-message";
-      message.innerHTML = `<a href="index.html#login">${t("book.loginCta")}</a>`;
-    }
-    return;
-  }
-  const button = document.querySelector("#bookingButton");
-  button.disabled = true;
-  window.umami?.track("booking-start", { property: property.id, checkIn: startDate, checkOut: endDate });
-  bookingMessage("book.redirecting", false);
-  const tenantNames = document.querySelector("#bookingTenants")?.value.trim() || "";
-  const { url, code } = await EbrostayBackend.createBookingCheckout(property.id, startDate, endDate, tenantNames);
-  if (url) {
-    window.location.href = url;
-    return;
-  }
-  button.disabled = false;
-  bookingMessage(BOOKING_ERROR_KEYS[code] || "book.error");
-  // if it was taken in the meantime, refresh availability so the calendar
-  // and pickers reflect the dates that are now unavailable
-  if (code === "dates_unavailable") {
-    await EbrostayBackend.reloadProperties?.();
-    const refreshed = properties.find((item) => item.id === propertyId);
-    if (refreshed) {
-      property = refreshed;
-      renderAvailabilityCalendar();
-      initBookingWidget();
-    }
-  }
+// Send a booking request straight to Ebrostay by email or WhatsApp, with the
+// chosen dates and estimate prefilled — track it the same way for analytics.
+document.querySelector("#bookingEmailButton")?.addEventListener("click", () => {
+  window.umami?.track("booking-request", { property: property?.id, channel: "email" });
+});
+document.querySelector("#bookingWhatsappButton")?.addEventListener("click", () => {
+  window.umami?.track("booking-request", { property: property?.id, channel: "whatsapp" });
 });
 
 
@@ -663,7 +523,7 @@ function pageToast(message) {
   setTimeout(() => toast.remove(), 4000);
 }
 
-function propertyShareUrl() {
+document.querySelector("#shareButton")?.addEventListener("click", async () => {
   const url = new URL("property.html", window.location.href);
   url.searchParams.set("id", property.id);
   let search = null;
@@ -673,36 +533,15 @@ function propertyShareUrl() {
   if (from) url.searchParams.set("from", from);
   if (to) url.searchParams.set("to", to);
   if (search?.guests) url.searchParams.set("guests", search.guests);
-  return url.toString();
-}
+  const link = url.toString();
+  window.umami?.track("share", { property: property.id });
 
-function renderShareActions() {
-  const shareButton = document.querySelector("#shareButton");
-  if (!shareButton || !property) return;
-  shareButton.hidden = true;
-  let actions = document.querySelector("#detailShareActions");
-  if (!actions) {
-    actions = document.createElement("div");
-    actions.className = "share-actions";
-    actions.id = "detailShareActions";
-    shareButton.insertAdjacentElement("afterend", actions);
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `${t(property.nameKey)} | Ebrostay`, text: t("share.text"), url: link });
+      return;
+    } catch { return; /* user dismissed the share sheet */ }
   }
-  const link = propertyShareUrl();
-  const encodedUrl = encodeURIComponent(link);
-  const encodedTitle = encodeURIComponent(`${t(property.nameKey)} | Ebrostay`);
-  actions.innerHTML = `
-    <span class="share-label" aria-label="${t("share.button")}">↗</span>
-    <a class="share-chip share-linkedin" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}" target="_blank" rel="noopener" aria-label="LinkedIn"><strong>in</strong><span>LinkedIn</span></a>
-    <a class="share-chip share-whatsapp" href="${whatsappLink(`${t("share.text")} ${link}`)}" target="_blank" rel="noopener" aria-label="WhatsApp"><strong>W</strong><span>WhatsApp</span></a>
-    <a class="share-chip" href="mailto:?subject=${encodedTitle}&body=${encodeURIComponent(`${t("share.text")}\n${link}`)}" aria-label="Email"><strong>@</strong><span>Email</span></a>
-    <button class="share-chip" type="button" data-copy-share><strong>⧉</strong><span>${t("share.copy")}</span></button>
-  `;
-}
-
-document.addEventListener("click", async (event) => {
-  if (!event.target.closest("[data-copy-share]")) return;
-  const link = propertyShareUrl();
-  window.umami?.track("share", { property: property.id, channel: "copy" });
   try {
     await navigator.clipboard.writeText(link);
     pageToast(t("share.copied"));
@@ -711,139 +550,117 @@ document.addEventListener("click", async (event) => {
   }
 });
 
-function bookingIncludedItems() {
-  return currentLanguage === "es" ? [
-    ["Respuesta instantánea", "Confirmación y siguiente paso sin esperas."],
-    ["Incidencias en horas", "Soporte coordinado para resolver problemas rápido."],
-    ["Alojamiento alternativo", "Ayuda activa si surge una incidencia grave."],
-    ["Servicios claros", "Utilities, contrato, pagos y fianza explicados antes de pagar."],
-    ["Contrato redactado", "Documentación preparada para estancias temporales."],
-    ["Turnover incluido", "Limpieza, entrada y salida coordinadas."],
-    ["Soporte 24/7", "WhatsApp y email durante toda la estancia."]
-  ] : [
-    ["Instant response", "Confirmation and next step without waiting."],
-    ["Issues solved in hours", "Coordinated support to fix problems quickly."],
-    ["Alternative accommodation", "Active help if a serious issue comes up."],
-    ["Clear services", "Utilities, contract, payments and deposit explained before payment."],
-    ["Contract drafted", "Documents prepared for temporary stays."],
-    ["Turnover included", "Cleaning, move-in and move-out coordinated."],
-    ["24/7 support", "WhatsApp and email throughout the stay."]
-  ];
-}
-
-function renderBookingIncluded() {
-  const widget = document.querySelector("#bookingWidget");
-  if (!widget) return;
-  let block = document.querySelector("#bookingIncluded");
-  if (!block) {
-    block = document.createElement("div");
-    block.className = "booking-included";
-    block.id = "bookingIncluded";
-    document.querySelector("#bookingSummary")?.insertAdjacentElement("afterend", block);
-  }
-  block.innerHTML = `
-    <h5>${currentLanguage === "es" ? "Incluido en la comisión de gestión" : "Included in the service fee"}</h5>
-    <div class="booking-included-grid">
-      ${bookingIncludedItems().map(([title, copy]) => `<span><strong>${title}</strong><small>${copy}</small></span>`).join("")}
-    </div>
-  `;
-}
-
 function setBannerPhoto(url) {
   const media = document.querySelector("#detailMedia");
   if (media) {
     media.style.backgroundImage =
-      `linear-gradient(135deg, rgba(24, 33, 29, 0.12), rgba(24, 33, 29, 0.02)), url('${url}')`;
+      `linear-gradient(135deg, rgba(24, 33, 29, 0.18), rgba(24, 33, 29, 0.02)), url('${url}')`;
   }
 }
 
-function setDetailPhoto(index) {
-  const photos = property.photos || [];
-  if (!photos.length) return;
-  detailPhotoIndex = (index + photos.length) % photos.length;
-  setBannerPhoto(photos[detailPhotoIndex]);
-  document.querySelectorAll(".gallery-thumb").forEach((button) => {
-    button.classList.toggle("is-active", Number(button.dataset.photoIndex) === detailPhotoIndex);
-  });
-  const counter = document.querySelector("#detailMediaCounter");
-  if (counter) counter.textContent = `${detailPhotoIndex + 1}/${photos.length}`;
+function detailPhotos() {
+  if (property.photos?.length) return property.photos;
+  return property.addressKey === "pedro"
+    ? ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"]
+    : ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
 }
 
-function ensureDetailMediaControls() {
-  const media = document.querySelector("#detailMedia");
-  if (!media || media.dataset.controlsReady) return;
-  media.insertAdjacentHTML("beforeend", `
-    <button class="detail-media-arrow is-prev" type="button" data-detail-step="-1" aria-label="${currentLanguage === "es" ? "Foto anterior" : "Previous photo"}">‹</button>
-    <button class="detail-media-arrow is-next" type="button" data-detail-step="1" aria-label="${currentLanguage === "es" ? "Foto siguiente" : "Next photo"}">›</button>
-    <span class="detail-media-counter" id="detailMediaCounter"></span>
-  `);
-  media.dataset.controlsReady = "true";
-  media.addEventListener("click", (event) => {
-    const step = event.target.closest("[data-detail-step]")?.dataset.detailStep;
-    if (step) setDetailPhoto(detailPhotoIndex + Number(step));
-  });
-  media.addEventListener("dblclick", openDetailLightbox);
-}
-
-function ensureLightbox() {
-  document.querySelector(".lightbox")?.remove();
-  if (document.querySelector("#detailLightbox")) return;
-  const box = document.createElement("div");
-  box.className = "detail-lightbox";
-  box.id = "detailLightbox";
-  box.hidden = true;
-  box.innerHTML = `
-    <button class="lightbox-close" type="button" data-lightbox-close>×</button>
-    <button class="lightbox-arrow is-prev" type="button" data-lightbox-step="-1">‹</button>
-    <img alt="Ebrostay">
-    <button class="lightbox-arrow is-next" type="button" data-lightbox-step="1">›</button>
-  `;
-  document.body.appendChild(box);
-  box.addEventListener("click", (event) => {
-    if (event.target === box || event.target.closest("[data-lightbox-close]")) box.hidden = true;
-    const step = event.target.closest("[data-lightbox-step]")?.dataset.lightboxStep;
-    if (step) showLightboxPhoto(detailLightboxIndex + Number(step));
+function updateGalleryActiveState() {
+  const photos = detailPhotos();
+  const image = document.querySelector("#detailLightboxImage");
+  const caption = document.querySelector("#detailLightboxCaption");
+  if (photos.length === 0) return;
+  detailGalleryIndex = (detailGalleryIndex + photos.length) % photos.length;
+  setBannerPhoto(photos[detailGalleryIndex]);
+  if (image) {
+    image.src = photos[detailGalleryIndex];
+    image.alt = `${t(property.nameKey)} - ${detailGalleryIndex + 1}`;
+  }
+  if (caption) caption.textContent = `${detailGalleryIndex + 1} / ${photos.length}`;
+  document.querySelectorAll("[data-photo-index], [data-lightbox-photo-index]").forEach((button) => {
+    const index = Number(button.dataset.photoIndex ?? button.dataset.lightboxPhotoIndex);
+    button.classList.toggle("is-active", index === detailGalleryIndex);
   });
 }
 
-function showLightboxPhoto(index) {
-  const photos = property.photos || [];
-  if (!photos.length) return;
-  ensureLightbox();
-  detailLightboxIndex = (index + photos.length) % photos.length;
-  const box = document.querySelector("#detailLightbox");
-  box.querySelector("img").src = photos[detailLightboxIndex];
-  box.hidden = false;
+function openGallery(index = 0) {
+  const photos = detailPhotos();
+  const lightbox = document.querySelector("#detailLightbox");
+  if (!lightbox || photos.length === 0) return;
+  detailGalleryIndex = index;
+  updateGalleryActiveState();
+  if (typeof lightbox.showModal === "function") lightbox.showModal();
+  else lightbox.setAttribute("open", "");
 }
 
-function openDetailLightbox() {
-  detailLightboxIndex = detailPhotoIndex;
-  showLightboxPhoto(detailLightboxIndex);
+function closeGallery() {
+  const lightbox = document.querySelector("#detailLightbox");
+  if (!lightbox) return;
+  if (typeof lightbox.close === "function") lightbox.close();
+  else lightbox.removeAttribute("open");
+}
+
+function stepGallery(delta) {
+  detailGalleryIndex += delta;
+  updateGalleryActiveState();
 }
 
 function renderGallery() {
   const gallery = document.querySelector("#detailGallery");
-  const photos = property.photos || [];
+  const lightboxThumbs = document.querySelector("#detailLightboxThumbs");
+  const mediaOpen = document.querySelector("#detailMediaOpen");
+  const photos = detailPhotos();
   if (!gallery || photos.length === 0) return;
 
-  ensureDetailMediaControls();
-  ensureLightbox();
+  setBannerPhoto(photos[0]);
+  detailGalleryIndex = 0;
   gallery.hidden = photos.length < 2;
   gallery.innerHTML = photos.map((url, index) => `
-    <button class="gallery-thumb${index === detailPhotoIndex ? " is-active" : ""}" type="button"
+    <button class="gallery-thumb${index === 0 ? " is-active" : ""}" type="button"
       data-photo-index="${index}" style="background-image: url('${url}')"
       aria-label="Foto ${index + 1}"></button>
   `).join("");
-
-  if (!gallery.dataset.bound) {
-    gallery.addEventListener("click", (event) => {
-      const thumb = event.target.closest("[data-photo-index]");
-      if (!thumb) return;
-      setDetailPhoto(Number(thumb.dataset.photoIndex));
-    });
-    gallery.dataset.bound = "true";
+  if (lightboxThumbs) {
+    lightboxThumbs.innerHTML = photos.map((url, index) => `
+      <button class="gallery-thumb${index === 0 ? " is-active" : ""}" type="button"
+        data-lightbox-photo-index="${index}" style="background-image: url('${url}')"
+        aria-label="Foto ${index + 1}"></button>
+    `).join("");
   }
-  setDetailPhoto(detailPhotoIndex);
+
+  gallery.addEventListener("click", (event) => {
+    const thumb = event.target.closest("[data-photo-index]");
+    if (!thumb) return;
+    detailGalleryIndex = Number(thumb.dataset.photoIndex);
+    updateGalleryActiveState();
+  });
+
+  mediaOpen?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openGallery(detailGalleryIndex);
+  });
+  document.querySelector("#detailMedia")?.addEventListener("click", (event) => {
+    if (event.target.closest("#detailMediaOpen")) return;
+    if (event.target.closest(".availability-pill")) return;
+    openGallery(detailGalleryIndex);
+  });
+  document.querySelector("#detailLightbox")?.addEventListener("click", (event) => {
+    if (event.target === event.currentTarget || event.target.closest("[data-gallery-close]")) closeGallery();
+    const step = event.target.closest("[data-gallery-step]");
+    if (step) stepGallery(Number(step.dataset.galleryStep));
+    const lightboxThumb = event.target.closest("[data-lightbox-photo-index]");
+    if (lightboxThumb) {
+      detailGalleryIndex = Number(lightboxThumb.dataset.lightboxPhotoIndex);
+      updateGalleryActiveState();
+    }
+  });
+  document.addEventListener("keydown", (event) => {
+    const lightbox = document.querySelector("#detailLightbox");
+    if (!lightbox?.open) return;
+    if (event.key === "ArrowLeft") stepGallery(-1);
+    if (event.key === "ArrowRight") stepGallery(1);
+  });
+  updateGalleryActiveState();
 }
 
 function initDetailMap() {
@@ -896,11 +713,8 @@ function applyLanguage(language) {
 
   renderDetail();
   renderFloorplan();
-  renderDistances();
   renderAvailabilityCalendar();
   initBookingWidget();
-  renderShareActions();
-  renderBookingIncluded();
   updateDetailMarker();
 }
 
@@ -918,7 +732,7 @@ async function boot() {
   const year = document.querySelector("#year");
   if (year) year.textContent = new Date().getFullYear();
 
-  document.querySelector("#detailMedia")?.classList.add("property-media", `property-${property.addressKey}`);
+  document.querySelector("#detailMedia")?.classList.add(`property-${property.addressKey}`);
   renderGallery();
 
   languageButtons.forEach((button) => {

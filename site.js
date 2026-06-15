@@ -46,9 +46,10 @@ let mapNeedsFit = true;
 let highlightTimer = null;
 let propertyPhotoIndexes = {};
 let mapBoundsFilter = null;
-let drawnMapBounds = null;
+let drawnMapPolygon = null;
 let drawnMapShape = null;
-let draftDrawRect = null;
+let draftDrawShape = null;
+let draftDrawPoints = [];
 let isDrawingMapArea = false;
 let suppressMapMove = false;
 let mapViewportFilteringEnabled = false;
@@ -60,8 +61,17 @@ function flatpickrLocale() {
   return currentLanguage === "es" && typeof flatpickr !== "undefined" ? flatpickr.l10ns.es : "default";
 }
 
+function defaultStayRange() {
+  const checkIn = new Date();
+  checkIn.setHours(0, 0, 0, 0);
+  const checkOut = new Date(checkIn);
+  checkOut.setMonth(checkOut.getMonth() + 1);
+  return { checkIn, checkOut };
+}
+
 function setupDatePickers() {
   if (typeof flatpickr === "undefined") return;
+  const { checkIn: defaultCheckIn, checkOut: defaultCheckOut } = defaultStayRange();
   const base = {
     dateFormat: "Y-m-d",
     altInput: true,
@@ -72,10 +82,11 @@ function setupDatePickers() {
   };
   const heroCheckIn = heroSearch?.querySelector('[name="checkIn"]');
   const heroCheckOut = heroSearch?.querySelector('[name="checkOut"]');
-  if (heroCheckOut) datePickers.heroOut = flatpickr(heroCheckOut, { ...base });
+  if (heroCheckOut) datePickers.heroOut = flatpickr(heroCheckOut, { ...base, minDate: defaultCheckIn, defaultDate: defaultCheckOut });
   if (heroCheckIn) {
     datePickers.hero = flatpickr(heroCheckIn, {
       ...base,
+      defaultDate: defaultCheckIn,
       onChange: (dates) => {
         if (dates[0]) datePickers.heroOut?.set("minDate", dates[0]);
       }
@@ -84,9 +95,10 @@ function setupDatePickers() {
   const checkInElement = document.querySelector("#checkIn");
   const checkOutElement = document.querySelector("#checkOut");
   if (checkInElement && checkOutElement) {
-    datePickers.checkOut = flatpickr(checkOutElement, { ...base });
+    datePickers.checkOut = flatpickr(checkOutElement, { ...base, minDate: defaultCheckIn, defaultDate: defaultCheckOut });
     datePickers.checkIn = flatpickr(checkInElement, {
       ...base,
+      defaultDate: defaultCheckIn,
       onChange: (dates) => {
         if (dates[0]) datePickers.checkOut.set("minDate", dates[0]);
       }
@@ -169,10 +181,27 @@ function isAvailable(property, filter) {
   return true;
 }
 
+function pointInPolygon(point, polygon) {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const xi = polygon[i].lng;
+    const yi = polygon[i].lat;
+    const xj = polygon[j].lng;
+    const yj = polygon[j].lat;
+    const intersects = ((yi > point.lat) !== (yj > point.lat)) &&
+      (point.lng < ((xj - xi) * (point.lat - yi)) / (yj - yi || Number.EPSILON) + xi);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
 function propertyInMapArea(property) {
-  const bounds = drawnMapBounds || mapBoundsFilter;
-  if (!bounds || !property.lat || !property.lng || typeof bounds.contains !== "function") return true;
-  return bounds.contains([property.lat, property.lng]);
+  if (!property.lat || !property.lng) return true;
+  if (drawnMapPolygon?.length >= 3) {
+    return pointInPolygon({ lat: property.lat, lng: property.lng }, drawnMapPolygon);
+  }
+  if (!mapBoundsFilter || typeof mapBoundsFilter.contains !== "function") return true;
+  return mapBoundsFilter.contains([property.lat, property.lng]);
 }
 
 function propertyCardPhotos(property) {
@@ -238,27 +267,43 @@ function ensureMapTools() {
   tools.className = "map-tools";
   tools.innerHTML = `
     <button class="details-button" type="button" data-map-draw>${t("map.draw")}</button>
-    <button class="details-button" type="button" data-map-clear hidden>${t("map.clear")}</button>
+    <button class="details-button map-clear-button" type="button" data-map-clear hidden aria-label="${t("map.clear")}" title="${t("map.clear")}">&times;</button>
+    <button class="details-button" type="button" data-map-finish hidden>${t("map.finish")}</button>
     <span class="map-area-status" data-map-area-status>${t("map.areaCity")}</span>
   `;
-  const copy = mapCard.querySelector(".map-copy");
-  copy?.insertAdjacentElement("afterend", tools);
-  tools.querySelector("[data-map-draw]")?.addEventListener("click", startMapDraw);
-  tools.querySelector("[data-map-clear]")?.addEventListener("click", clearMapArea);
+  const wrap = mapCard.querySelector(".google-map-wrap");
+  if (wrap) wrap.appendChild(tools);
+  else mapCard.appendChild(tools);
+  tools.querySelector("[data-map-draw]")?.addEventListener("click", () => {
+    if (isDrawingMapArea) cancelMapDraw();
+    else startMapDraw();
+  });
+  tools.querySelector("[data-map-finish]")?.addEventListener("click", finishMapDraw);
+  tools.querySelector("[data-map-clear]")?.addEventListener("click", () => clearMapArea());
 }
 
 function syncMapTools() {
   ensureMapTools();
   const draw = document.querySelector("[data-map-draw]");
+  const finish = document.querySelector("[data-map-finish]");
   const clear = document.querySelector("[data-map-clear]");
-  if (draw) draw.textContent = isDrawingMapArea ? t("map.drawHint") : t("map.draw");
+  if (draw) draw.textContent = isDrawingMapArea ? t("map.cancelDraw") : t("map.draw");
+  if (finish) {
+    finish.textContent = t("map.finish");
+    finish.hidden = !isDrawingMapArea || draftDrawPoints.length < 3;
+  }
   if (clear) {
-    clear.textContent = t("map.clear");
-    clear.hidden = !(drawnMapBounds || mapBoundsFilter);
+    clear.innerHTML = "&times;";
+    clear.setAttribute("aria-label", t("map.clear"));
+    clear.setAttribute("title", t("map.clear"));
+    clear.hidden = !(drawnMapPolygon || mapBoundsFilter || isDrawingMapArea);
   }
   const status = document.querySelector("[data-map-area-status]");
   if (status) {
-    status.textContent = drawnMapBounds ? t("map.areaDrawn") : (mapBoundsFilter ? t("map.areaViewport") : t("map.areaCity"));
+    if (isDrawingMapArea) status.textContent = t("map.drawHint");
+    else if (drawnMapPolygon) status.textContent = t("map.areaDrawn");
+    else if (mapBoundsFilter) status.textContent = t("map.areaViewport");
+    else status.textContent = t("map.areaCity");
   }
 }
 
@@ -268,12 +313,12 @@ function suppressUpcomingMapMove() {
 }
 
 function markMapViewportIntent() {
-  if (suppressMapMove || isDrawingMapArea) return;
+  if (suppressMapMove || isDrawingMapArea || drawnMapPolygon) return;
   mapViewportFilteringEnabled = true;
 }
 
 function handleMapMove() {
-  if (!leafletMap || isDrawingMapArea) return;
+  if (!leafletMap || isDrawingMapArea || drawnMapPolygon) return;
   if (suppressMapMove) {
     suppressMapMove = false;
     return;
@@ -284,65 +329,128 @@ function handleMapMove() {
   renderProperties({ keepMapView: true });
 }
 
+function stopLeafletEvent(event) {
+  if (event?.originalEvent && typeof L !== "undefined") {
+    L.DomEvent.stop(event.originalEvent);
+  }
+}
+
 function startMapDraw() {
   if (!leafletMap || typeof L === "undefined") return;
-  clearDraftDrawRect();
-  isDrawingMapArea = true;
-  syncMapTools();
-  listingsMapElement?.classList.add("is-drawing-area");
-  leafletMap.dragging.disable();
-  leafletMap.once("mousedown", beginMapDraw);
-}
-
-function beginMapDraw(event) {
-  if (!leafletMap || !isDrawingMapArea) return;
-  const start = event.latlng;
-  draftDrawRect = L.rectangle([start, start], {
-    color: "#2f6b55",
-    weight: 2,
-    fillColor: "#2f6b55",
-    fillOpacity: 0.14,
-    dashArray: "6 6"
-  }).addTo(leafletMap);
-  const move = (moveEvent) => {
-    draftDrawRect.setBounds(L.latLngBounds(start, moveEvent.latlng));
-  };
-  const finish = () => {
-    leafletMap.off("mousemove", move);
-    leafletMap.dragging.enable();
-    listingsMapElement?.classList.remove("is-drawing-area");
-    isDrawingMapArea = false;
-    if (drawnMapShape) leafletMap.removeLayer(drawnMapShape);
-    drawnMapShape = draftDrawRect;
-    draftDrawRect = null;
-    drawnMapBounds = drawnMapShape.getBounds();
-    mapBoundsFilter = null;
-    mapNeedsFit = false;
-    syncMapTools();
-    renderProperties({ keepMapView: true });
-  };
-  leafletMap.on("mousemove", move);
-  leafletMap.once("mouseup", finish);
-}
-
-function clearDraftDrawRect() {
-  if (draftDrawRect && leafletMap) leafletMap.removeLayer(draftDrawRect);
-  draftDrawRect = null;
-}
-
-function clearMapArea() {
-  if (drawnMapShape && leafletMap) leafletMap.removeLayer(drawnMapShape);
-  clearDraftDrawRect();
+  clearDraftDrawShape();
+  if (drawnMapShape) leafletMap.removeLayer(drawnMapShape);
   drawnMapShape = null;
-  drawnMapBounds = null;
+  drawnMapPolygon = null;
   mapBoundsFilter = null;
   mapViewportFilteringEnabled = false;
+  draftDrawPoints = [];
+  isDrawingMapArea = true;
+  listingsMapElement?.classList.add("is-drawing-area");
+  leafletMap.dragging.disable();
+  leafletMap.doubleClickZoom.disable();
+  leafletMap.on("click", addMapDrawPoint);
+  leafletMap.on("mousemove", previewMapDraw);
+  leafletMap.on("dblclick", finishMapDraw);
+  syncMapTools();
+}
+
+function addMapDrawPoint(event) {
+  if (!leafletMap || !isDrawingMapArea) return;
+  stopLeafletEvent(event);
+  if (draftDrawPoints.length >= 3 && isNearFirstDrawPoint(event.latlng)) {
+    finishMapDraw(event);
+    return;
+  }
+  draftDrawPoints.push(event.latlng);
+  updateDraftDrawShape(event.latlng);
+  syncMapTools();
+}
+
+function isNearFirstDrawPoint(latlng) {
+  if (!leafletMap || draftDrawPoints.length < 3) return false;
+  const first = leafletMap.latLngToContainerPoint(draftDrawPoints[0]);
+  const current = leafletMap.latLngToContainerPoint(latlng);
+  return first.distanceTo(current) < 14;
+}
+
+function previewMapDraw(event) {
+  if (!leafletMap || !isDrawingMapArea || draftDrawPoints.length === 0) return;
+  updateDraftDrawShape(event.latlng);
+}
+
+function updateDraftDrawShape(cursorLatLng) {
+  if (!leafletMap || typeof L === "undefined") return;
+  const previewPoints = cursorLatLng ? [...draftDrawPoints, cursorLatLng] : draftDrawPoints;
+  if (previewPoints.length < 2) return;
+  if (!draftDrawShape) {
+    draftDrawShape = L.polyline(previewPoints, {
+      color: "#1f8a57",
+      weight: 2,
+      dashArray: "6 6"
+    }).addTo(leafletMap);
+  } else {
+    draftDrawShape.setLatLngs(previewPoints);
+  }
+}
+
+function finishMapDraw(event) {
+  if (!leafletMap || !isDrawingMapArea) return;
+  stopLeafletEvent(event);
+  if (draftDrawPoints.length < 3) {
+    syncMapTools();
+    return;
+  }
+  endMapDrawingMode();
+  clearDraftDrawShape();
+  drawnMapPolygon = draftDrawPoints.slice();
+  drawnMapShape = L.polygon(drawnMapPolygon, {
+    color: "#1f8a57",
+    weight: 2,
+    fillColor: "#1f8a57",
+    fillOpacity: 0.16
+  }).addTo(leafletMap);
+  draftDrawPoints = [];
+  mapBoundsFilter = null;
+  mapNeedsFit = false;
+  syncMapTools();
+  renderProperties({ keepMapView: true });
+}
+
+function endMapDrawingMode() {
+  if (!leafletMap) return;
   isDrawingMapArea = false;
-  leafletMap?.dragging.enable();
   listingsMapElement?.classList.remove("is-drawing-area");
+  leafletMap.off("click", addMapDrawPoint);
+  leafletMap.off("mousemove", previewMapDraw);
+  leafletMap.off("dblclick", finishMapDraw);
+  leafletMap.dragging.enable();
+  leafletMap.doubleClickZoom.enable();
+}
+
+function clearDraftDrawShape() {
+  if (draftDrawShape && leafletMap) leafletMap.removeLayer(draftDrawShape);
+  draftDrawShape = null;
+}
+
+function cancelMapDraw() {
+  clearDraftDrawShape();
+  draftDrawPoints = [];
+  endMapDrawingMode();
+  syncMapTools();
+}
+
+function clearMapArea(options = {}) {
+  if (drawnMapShape && leafletMap) leafletMap.removeLayer(drawnMapShape);
+  clearDraftDrawShape();
+  draftDrawPoints = [];
+  drawnMapShape = null;
+  drawnMapPolygon = null;
+  mapBoundsFilter = null;
+  mapViewportFilteringEnabled = false;
+  if (isDrawingMapArea) endMapDrawingMode();
   mapNeedsFit = true;
   syncMapTools();
-  renderProperties();
+  if (!options.skipRender) renderProperties();
 }
 
 function highlightCard(propertyId) {
@@ -390,7 +498,7 @@ function updateMapMarkers(list, options = {}) {
     suppressUpcomingMapMove();
     leafletMap.fitBounds(L.latLngBounds(list.map((property) => [property.lat, property.lng])), {
       padding: [42, 42],
-      maxZoom: 12
+      maxZoom: 15
     });
     mapNeedsFit = false;
   }
@@ -438,7 +546,7 @@ function renderProperties(options = {}) {
   const baseFiltered = properties.filter((property) => isAvailable(property, activeFilter));
   const filtered = sortProperties(baseFiltered.filter(propertyInMapArea), selectedSort);
   const count = filtered.length;
-  const usingMapArea = Boolean(drawnMapBounds || mapBoundsFilter);
+  const usingMapArea = Boolean(drawnMapPolygon || mapBoundsFilter);
 
   syncMapTools();
 
@@ -460,8 +568,8 @@ function renderProperties(options = {}) {
     propertyPhotoIndexes[property.id] = photoIndex;
     const activePhoto = photos[photoIndex] || photos[0];
     const photoControls = photos.length > 1 ? `
-      <button class="property-photo-arrow is-prev" type="button" data-card-slide="-1" data-property-id="${property.id}" aria-label="${t("listing.prevPhoto")}">‹</button>
-      <button class="property-photo-arrow is-next" type="button" data-card-slide="1" data-property-id="${property.id}" aria-label="${t("listing.nextPhoto")}">›</button>
+      <button class="property-photo-arrow is-prev" type="button" data-card-slide="-1" data-property-id="${property.id}" aria-label="${t("listing.prevPhoto")}">&lsaquo;</button>
+      <button class="property-photo-arrow is-next" type="button" data-card-slide="1" data-property-id="${property.id}" aria-label="${t("listing.nextPhoto")}">&rsaquo;</button>
       <span class="property-photo-count" data-photo-count>${photoIndex + 1}/${photos.length}</span>
     ` : "";
 
@@ -495,6 +603,9 @@ function renderProperties(options = {}) {
           </div>
           <div class="amenity-list">${amenities}</div>
           <div class="property-actions">
+            <a class="details-button" href="${detailUrl}">${t("listing.view")}</a>
+            <button class="details-button" type="button" data-map-focus="${property.id}">${t("listing.map")}</button>
+            <button class="details-button request-button" type="button" data-request="${property.id}">${t("listing.request")}</button>
             <a class="button primary request-button" href="${detailUrl}#book">${t("listing.book")}</a>
           </div>
         </div>
@@ -502,7 +613,22 @@ function renderProperties(options = {}) {
     `;
   }).join("");
 
-  updateMapMarkers(filtered, options);
+  updateMapMarkers(filtered, usingMapArea ? { ...options, keepMapView: true } : options);
+}
+
+function updatePropertyCardPhoto(propertyId, delta) {
+  const property = properties.find((item) => item.id === propertyId);
+  if (!property) return;
+  const photos = propertyCardPhotos(property);
+  if (photos.length < 2) return;
+  const current = propertyPhotoIndexes[propertyId] || 0;
+  const next = (current + delta + photos.length) % photos.length;
+  propertyPhotoIndexes[propertyId] = next;
+  const card = propertyGrid?.querySelector(`[data-property-id="${propertyId}"]`);
+  const image = card?.querySelector("[data-card-photo]");
+  const count = card?.querySelector("[data-photo-count]");
+  if (image) image.src = photos[next];
+  if (count) count.textContent = `${next + 1}/${photos.length}`;
 }
 
 function applyLanguage(language) {
@@ -630,7 +756,6 @@ if (resetAvailability) {
   resetAvailability.addEventListener("click", () => {
     activeFilter = null;
     statusOverride = null;
-    clearMapArea();
     quickFilters.clear();
     quickButtons.forEach((button) => button.classList.remove("is-active"));
     availabilityFilter?.reset();
@@ -641,22 +766,10 @@ if (resetAvailability) {
     datePickers.checkIn?.clear();
     datePickers.checkOut?.clear();
     datePickers.checkOut?.set("minDate", "today");
+    clearMapArea({ skipRender: true });
     mapNeedsFit = true;
     renderProperties();
   });
-}
-
-function setCardPhoto(propertyId, direction) {
-  const property = properties.find((item) => item.id === propertyId);
-  const photos = property ? propertyCardPhotos(property) : [];
-  if (photos.length < 2) return;
-  const next = ((propertyPhotoIndexes[propertyId] || 0) + direction + photos.length) % photos.length;
-  propertyPhotoIndexes[propertyId] = next;
-  const card = propertyGrid?.querySelector(`[data-property-id="${propertyId}"]`);
-  const photo = card?.querySelector("[data-card-photo]");
-  if (photo) photo.src = photos[next];
-  const count = card?.querySelector("[data-photo-count]");
-  if (count) count.textContent = `${next + 1}/${photos.length}`;
 }
 
 if (propertyGrid) {
@@ -669,7 +782,7 @@ if (propertyGrid) {
     if (slide) {
       event.preventDefault();
       event.stopPropagation();
-      setCardPhoto(slide.dataset.propertyId, Number(slide.dataset.cardSlide));
+      updatePropertyCardPhoto(slide.dataset.propertyId, Number(slide.dataset.cardSlide));
       return;
     }
 
@@ -735,7 +848,7 @@ if (inquiryForm) {
 
 function updateAuthUI(user) {
   const configured = Boolean(window.EbrostayBackend?.isConfigured());
-  if (authButton) authButton.hidden = Boolean(user);
+  if (authButton) authButton.hidden = !configured || Boolean(user);
   if (userChip) userChip.hidden = !configured || !user;
   if (user && userEmail) userEmail.textContent = user.email || "";
   if (adminLink) adminLink.hidden = !EbrostayBackend?.getIsAdmin();
@@ -848,11 +961,6 @@ if (authForm) {
     const password = formData.get("password")?.toString() || "";
     authMessage.className = "auth-message";
 
-    if (!window.EbrostayBackend?.isConfigured()) {
-      showAuthError("auth.unavailable");
-      return;
-    }
-
     if (authMode === "signup") {
       const { needsConfirmation, error } = await EbrostayBackend.signUp(email, password);
       if (error) showAuthError("auth.signupError");
@@ -897,21 +1005,6 @@ if (authForm) {
 
 if (logoutButton) {
   logoutButton.addEventListener("click", () => EbrostayBackend.signOut());
-}
-
-function showPageToast(key, isError = false) {
-  const toast = document.createElement("p");
-  toast.className = `admin-status is-toast${isError ? " is-error" : ""}`;
-  toast.setAttribute("role", "status");
-  toast.textContent = t(key);
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 7000);
-}
-
-const pageParams = new URLSearchParams(window.location.search);
-if (pageParams.get("booking") === "success") {
-  showPageToast("book.confirmed");
-  history.replaceState(null, "", window.location.pathname + window.location.hash);
 }
 
 initListingsMap();
