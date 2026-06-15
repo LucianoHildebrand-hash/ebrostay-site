@@ -335,7 +335,6 @@
       .quick-filters .saved-quick-filter.is-active { color: #fff; background: var(--green); }
       .marketplace-layout { grid-template-columns: minmax(0, 1fr) minmax(480px, 50vw); grid-template-areas: "filters filters" "results map"; }
       .filter-panel { grid-area: filters; position: sticky; top: var(--filter-sticky-top, 72px); z-index: 80; background: var(--paper); }
-      .filter-panel::before { content: ""; position: absolute; left: 50%; width: 100vw; top: calc(-1 * var(--filter-sticky-top, 72px) - 12px); bottom: -10px; z-index: -1; transform: translateX(-50%); border-bottom: 1px solid var(--line); background: var(--paper); pointer-events: none; }
       .map-panel { grid-area: map; position: sticky; top: var(--map-sticky-top, 152px); z-index: 1; height: calc(100vh - var(--map-sticky-top, 152px) - 18px); min-height: 480px; min-width: 0; }
       .results-column { position: relative; z-index: 0; grid-area: results; min-width: 0; }
       .property-list { grid-template-columns: repeat(auto-fill, minmax(286px, 1fr)); gap: 22px; }

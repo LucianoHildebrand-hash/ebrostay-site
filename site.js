@@ -298,6 +298,18 @@ function syncStickySearchOffsets() {
   window.setTimeout(() => leafletMap?.invalidateSize(), 0);
 }
 
+function keepSearchHeadingClear() {
+  const header = document.querySelector(".site-header");
+  const heading = document.querySelector("#search .marketplace-toolbar h2");
+  if (!header || !heading) return;
+  const headingTop = heading.getBoundingClientRect().top;
+  const headerBottom = header.getBoundingClientRect().bottom;
+  if (headingTop >= 0 && headingTop < headerBottom + 16) {
+    const targetTop = window.scrollY + headingTop - header.getBoundingClientRect().height - 18;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: "auto" });
+  }
+}
+
 function orderedFilterValues(seedValues, propertyField) {
   if (!currentCityAllowsZaragozaAreas()) return [];
   const values = new Set(seedValues);
@@ -464,7 +476,8 @@ function initListingsMap() {
     return;
   }
 
-  leafletMap = L.map(listingsMapElement, { scrollWheelZoom: false });
+  leafletMap = L.map(listingsMapElement, { scrollWheelZoom: false, zoomControl: true });
+  leafletMap.zoomControl.setPosition("topright");
   leafletMap.attributionControl.setPrefix(false);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
@@ -541,7 +554,6 @@ function suppressUpcomingMapMove() {
 }
 
 function markMapViewportIntent(event) {
-  if (!event?.originalEvent) return;
   if (suppressMapMove || isDrawingMapArea || drawnMapPolygon) return;
   mapViewportFilteringEnabled = true;
 }
@@ -854,9 +866,6 @@ function renderProperties(options = {}) {
           </div>
           <div class="amenity-list">${amenities}</div>
           <div class="property-actions">
-            <a class="details-button" href="${detailUrl}">${t("listing.view")}</a>
-            <button class="details-button" type="button" data-map-focus="${property.id}">${t("listing.map")}</button>
-            <button class="details-button request-button" type="button" data-request="${property.id}">${t("listing.request")}</button>
             <a class="button primary request-button" href="${detailUrl}#book">${t("listing.book")}</a>
           </div>
         </div>
@@ -915,6 +924,7 @@ function applyLanguage(language) {
   renderMapLocationFilters();
   syncMapTools();
   renderProperties();
+  window.setTimeout(keepSearchHeadingClear, 0);
 }
 
 if (year) year.textContent = new Date().getFullYear();
