@@ -3865,16 +3865,30 @@ input:focus, select:focus, textarea:focus {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   padding: 8px 11px;
   color: var(--green-700);
   background: var(--surface-brand-soft);
+  font-weight: 600;
 }
 
 .owner-service-fieldset input {
   width: auto;
   min-height: auto;
   accent-color: var(--green);
+}
+
+[data-theme="dark"] .owner-service-fieldset label {
+  border-color: rgba(113, 189, 145, 0.4);
+  color: #f5f3ee;
+  background: #24362a;
+}
+
+[data-theme="dark"] .owner-service-fieldset label:has(input:checked) {
+  border-color: rgba(113, 189, 145, 0.72);
+  color: #ffffff;
+  background: #157047;
 }
 
 .owner-description-field textarea {

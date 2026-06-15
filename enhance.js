@@ -567,6 +567,13 @@
     if (persist) {
       var target = mode === "owner" ? document.querySelector("#ownerView") : document.querySelector("#top");
       target?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (mode === "tenant") {
+        var refreshListingsMap = function () {
+          window.dispatchEvent(new CustomEvent("ebrostay:refresh-listings-map", { detail: { refit: true } }));
+        };
+        window.setTimeout(refreshListingsMap, 120);
+        window.setTimeout(refreshListingsMap, 520);
+      }
     }
   }
 

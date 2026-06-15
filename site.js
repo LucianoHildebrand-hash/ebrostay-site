@@ -56,6 +56,7 @@ let draftDrawShape = null;
 let draftDrawPoints = [];
 let isDrawingMapArea = false;
 let suppressMapMove = false;
+let suppressMapMoveUntil = 0;
 let mapViewportFilteringEnabled = false;
 
 let currentLanguage = localStorage.getItem("ebrostay-language") || "es";
@@ -310,6 +311,22 @@ function keepSearchHeadingClear() {
   }
 }
 
+function refreshListingsMapLayout(options = {}) {
+  syncStickySearchOffsets();
+  window.setTimeout(() => {
+    leafletMap?.invalidateSize();
+    if (options.refit) {
+      mapNeedsFit = true;
+      renderProperties();
+    }
+  }, 80);
+}
+
+window.EbrostayRefreshListingsMap = refreshListingsMapLayout;
+window.addEventListener("ebrostay:refresh-listings-map", (event) => {
+  refreshListingsMapLayout(event.detail || {});
+});
+
 function orderedFilterValues(seedValues, propertyField) {
   if (!currentCityAllowsZaragozaAreas()) return [];
   const values = new Set(seedValues);
@@ -488,6 +505,7 @@ function initListingsMap() {
   leafletMap.setView([41.6516, -0.865], 12);
   ensureMapTools();
   leafletMap.on("dragstart zoomstart", markMapViewportIntent);
+  leafletMap.on("dragend zoomend", handleMapViewportGestureEnd);
   leafletMap.on("moveend", handleMapMove);
 }
 
@@ -550,20 +568,33 @@ function syncMapTools() {
 
 function suppressUpcomingMapMove() {
   suppressMapMove = true;
-  window.setTimeout(() => { suppressMapMove = false; }, 700);
+  suppressMapMoveUntil = Date.now() + 900;
+  window.setTimeout(() => {
+    if (Date.now() >= suppressMapMoveUntil) suppressMapMove = false;
+  }, 950);
+}
+
+function isMapMoveSuppressed() {
+  if (!suppressMapMove) return false;
+  if (Date.now() < suppressMapMoveUntil) return true;
+  suppressMapMove = false;
+  return false;
 }
 
 function markMapViewportIntent(event) {
-  if (suppressMapMove || isDrawingMapArea || drawnMapPolygon) return;
+  if (isMapMoveSuppressed() || isDrawingMapArea || drawnMapPolygon) return;
   mapViewportFilteringEnabled = true;
+}
+
+function handleMapViewportGestureEnd() {
+  if (!leafletMap || isMapMoveSuppressed() || isDrawingMapArea || drawnMapPolygon) return;
+  mapViewportFilteringEnabled = true;
+  handleMapMove();
 }
 
 function handleMapMove() {
   if (!leafletMap || isDrawingMapArea || drawnMapPolygon) return;
-  if (suppressMapMove) {
-    suppressMapMove = false;
-    return;
-  }
+  if (isMapMoveSuppressed()) return;
   if (!mapViewportFilteringEnabled) return;
   mapBoundsFilter = leafletMap.getBounds();
   mapNeedsFit = false;
