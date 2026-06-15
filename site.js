@@ -291,8 +291,8 @@ function clearSelectedAreaLayer() {
 function syncStickySearchOffsets() {
   const headerHeight = Math.round(document.querySelector(".site-header")?.getBoundingClientRect().height || 56);
   const filterHeight = Math.round(document.querySelector(".filter-panel")?.getBoundingClientRect().height || 0);
-  const filterTop = Math.max(58, headerHeight + 12);
-  const mapTop = filterTop + filterHeight + 22;
+  const filterTop = Math.max(56, headerHeight);
+  const mapTop = filterTop + filterHeight + 14;
   document.documentElement.style.setProperty("--filter-sticky-top", `${filterTop}px`);
   document.documentElement.style.setProperty("--map-sticky-top", `${mapTop}px`);
   window.setTimeout(() => leafletMap?.invalidateSize(), 0);
