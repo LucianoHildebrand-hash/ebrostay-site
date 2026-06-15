@@ -10,6 +10,9 @@ const quickButtons = document.querySelectorAll("[data-quick]");
 const sortBy = document.querySelector("#sortBy");
 const googleMap = document.querySelector("#googleMap");
 const mapAddressButtons = document.querySelectorAll("[data-map-address]");
+const postcodeFiltersElement = document.querySelector("#postcodeFilters");
+const neighborhoodFiltersElement = document.querySelector("#neighborhoodFilters");
+const locationFilterClear = document.querySelector("[data-location-clear]");
 const authButton = document.querySelector("#authButton");
 const authDialog = document.querySelector("#authDialog");
 const authForm = document.querySelector("#authForm");
@@ -109,6 +112,24 @@ let activeFilter = null;
 let statusOverride = null;
 let quickFilters = new Set();
 let favorites = new Set(JSON.parse(localStorage.getItem("ebrostay-favorites") || "[]"));
+let activePostcodes = new Set();
+let activeNeighborhoods = new Set();
+
+const zaragozaPostcodes = [
+  "50001", "50002", "50003", "50004", "50005", "50006", "50007", "50008", "50009", "50010",
+  "50011", "50012", "50013", "50014", "50015", "50016", "50017", "50018", "50019", "50021",
+  "50022", "50059", "50190", "50191", "50192", "50194"
+];
+
+const zaragozaNeighborhoods = [
+  "Actur-Rey Fernando", "Arrabal", "Casablanca", "Casco Historico", "Centro", "Delicias",
+  "El Rabal", "La Almozara", "Las Fuentes", "Miralbueno", "Movera", "Oliver-Valdefierro",
+  "Parque Goya", "Romareda", "San Jose", "Santa Isabel", "Torrero-La Paz", "Universidad"
+];
+
+if (typeof hydrateOwnerPublishedProperties === "function") {
+  hydrateOwnerPublishedProperties();
+}
 
 const t = (key) => translations[currentLanguage][key] || translations.es[key] || key;
 
@@ -165,6 +186,39 @@ function passesQuickFilters(property) {
   return true;
 }
 
+function hasLocationFilters() {
+  return activePostcodes.size > 0 || activeNeighborhoods.size > 0;
+}
+
+function passesLocationFilters(property) {
+  const postcode = (property.postcode || "").toString();
+  const neighborhood = (property.neighborhood || "").toString();
+  if (activePostcodes.size && !activePostcodes.has(postcode)) return false;
+  if (activeNeighborhoods.size && !activeNeighborhoods.has(neighborhood)) return false;
+  return true;
+}
+
+function orderedFilterValues(seedValues, propertyField) {
+  const values = new Set(seedValues);
+  properties.forEach((property) => {
+    const value = (property[propertyField] || "").toString().trim();
+    if (value) values.add(value);
+  });
+  return [...values].sort((a, b) => a.localeCompare(b, currentLanguage === "es" ? "es" : "en", { numeric: true }));
+}
+
+function renderFilterButtons(container, values, activeSet, kind) {
+  if (!container) return;
+  container.innerHTML = values.map((value) => `
+    <button class="${activeSet.has(value) ? "is-active" : ""}" type="button" data-location-kind="${kind}" data-location-value="${value}" aria-pressed="${activeSet.has(value)}">${value}</button>
+  `).join("");
+}
+
+function renderMapLocationFilters() {
+  renderFilterButtons(postcodeFiltersElement, orderedFilterValues(zaragozaPostcodes, "postcode"), activePostcodes, "postcode");
+  renderFilterButtons(neighborhoodFiltersElement, orderedFilterValues(zaragozaNeighborhoods, "neighborhood"), activeNeighborhoods, "neighborhood");
+}
+
 function isAvailable(property, filter) {
   if (!passesQuickFilters(property)) return false;
   if (!filter) return true;
@@ -205,10 +259,14 @@ function propertyInMapArea(property) {
 }
 
 function propertyCardPhotos(property) {
-  if (property.photos?.length) return property.photos;
-  return property.addressKey === "pedro"
-    ? ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"]
-    : ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
+  if (property.photos?.length) return [...new Set(property.photos.filter(Boolean))];
+  const fallbackSets = {
+    pedro1: ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"],
+    pedro2: ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg", "assets/ebrostay-hero.webp"],
+    movera0: ["assets/movera-second-hero.jpg", "assets/movera-second-bedroom-1.jpg", "assets/movera-second-bathroom.jpg"],
+    movera1: ["assets/movera-first-hero.jpg", "assets/movera-first-bedroom-1.jpg", "assets/movera-first-bathroom.jpg"]
+  };
+  return fallbackSets[property.id] || ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
 }
 
 function sortProperties(list, selectedSort) {
@@ -543,16 +601,21 @@ function renderProperties(options = {}) {
   if (!propertyGrid || !availabilityStatus) return;
 
   const selectedSort = sortBy?.value || activeFilter?.sortBy || "best";
-  const baseFiltered = properties.filter((property) => isAvailable(property, activeFilter));
+  const baseFiltered = properties
+    .filter((property) => isAvailable(property, activeFilter))
+    .filter(passesLocationFilters);
   const filtered = sortProperties(baseFiltered.filter(propertyInMapArea), selectedSort);
   const count = filtered.length;
   const usingMapArea = Boolean(drawnMapPolygon || mapBoundsFilter);
+  const usingLocationFilters = hasLocationFilters();
 
   syncMapTools();
 
   if (statusOverride) availabilityStatus.textContent = statusOverride;
   else if (usingMapArea && count === 0) availabilityStatus.textContent = t("status.mapNone");
   else if (usingMapArea) availabilityStatus.textContent = interpolate("status.mapMatches", { count });
+  else if (usingLocationFilters && count === 0) availabilityStatus.textContent = t("status.none");
+  else if (usingLocationFilters) availabilityStatus.textContent = interpolate("status.locationMatches", { count });
   else if (!activeFilter && quickFilters.size === 0) availabilityStatus.textContent = interpolate("status.all", { count: properties.length });
   else if (count === 0) availabilityStatus.textContent = t("status.none");
   else if (count === 1) availabilityStatus.textContent = t("status.one");
@@ -661,6 +724,7 @@ function applyLanguage(language) {
     link.href = whatsappLink(t("whatsapp.general"));
   });
 
+  renderMapLocationFilters();
   syncMapTools();
   renderProperties();
 }
@@ -683,6 +747,29 @@ quickButtons.forEach((button) => {
 
 mapAddressButtons.forEach((button) => {
   button.addEventListener("click", () => focusMap(button.dataset.mapAddress));
+});
+
+function handleLocationFilterClick(event) {
+  const button = event.target.closest("[data-location-kind]");
+  if (!button) return;
+  const value = button.dataset.locationValue;
+  const targetSet = button.dataset.locationKind === "postcode" ? activePostcodes : activeNeighborhoods;
+  targetSet.has(value) ? targetSet.delete(value) : targetSet.add(value);
+  mapNeedsFit = true;
+  renderMapLocationFilters();
+  renderProperties({ keepMapView: true });
+}
+
+postcodeFiltersElement?.addEventListener("click", handleLocationFilterClick);
+neighborhoodFiltersElement?.addEventListener("click", handleLocationFilterClick);
+
+locationFilterClear?.addEventListener("click", () => {
+  activePostcodes.clear();
+  activeNeighborhoods.clear();
+  clearMapArea({ skipRender: true });
+  mapNeedsFit = true;
+  renderMapLocationFilters();
+  renderProperties();
 });
 
 // Remember searched dates so the booking widget can preselect them
@@ -757,6 +844,8 @@ if (resetAvailability) {
     activeFilter = null;
     statusOverride = null;
     quickFilters.clear();
+    activePostcodes.clear();
+    activeNeighborhoods.clear();
     quickButtons.forEach((button) => button.classList.remove("is-active"));
     availabilityFilter?.reset();
     if (availabilityFilter) {
@@ -768,6 +857,7 @@ if (resetAvailability) {
     datePickers.checkOut?.set("minDate", "today");
     clearMapArea({ skipRender: true });
     mapNeedsFit = true;
+    renderMapLocationFilters();
     renderProperties();
   });
 }
@@ -1022,6 +1112,8 @@ if (window.EbrostayBackend) {
   EbrostayBackend.init({
     onPropertiesLoaded: () => {
       mapNeedsFit = true;
+      if (typeof hydrateOwnerPublishedProperties === "function") hydrateOwnerPublishedProperties();
+      renderMapLocationFilters();
       renderProperties();
     },
     onPasswordRecovery: () => {
@@ -1031,6 +1123,7 @@ if (window.EbrostayBackend) {
     },
     onAuthChanged: (user) => {
       updateAuthUI(user);
+      window.EbrostayOwnerComposer?.refreshAuth?.(user);
       // a booking attempt while signed out stores where to return after login
       if (user) {
         try {

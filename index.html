@@ -48,7 +48,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Hanken+Grotesque:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=owner-preview-2">
+    <link rel="stylesheet" href="styles.css?v=owner-publish-5">
     <script defer src="https://cloud.umami.is/script.js" data-website-id="bbc35688-d574-4fed-af9b-a03f37ed9429"></script>
       <script>(function(){try{if(localStorage.getItem("ebrostay-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();</script>
   </head>
@@ -193,6 +193,21 @@
                   referrerpolicy="no-referrer-when-downgrade"
                   hidden
                 ></iframe>
+              </div>
+              <div class="map-filter-drawer" aria-label="Map location filters">
+                <div class="map-filter-head">
+                  <strong data-i18n="mapFilters.title">Filtros del mapa</strong>
+                  <button class="map-filter-clear" type="button" data-location-clear data-i18n="mapFilters.clear">Limpiar zona</button>
+                </div>
+                <details class="map-filter-group" open>
+                  <summary><span data-i18n="mapFilters.postcodes">Codigos postales</span></summary>
+                  <div class="map-filter-options" id="postcodeFilters"></div>
+                </details>
+                <details class="map-filter-group" open>
+                  <summary><span data-i18n="mapFilters.neighborhoods">Barrios</span></summary>
+                  <div class="map-filter-options" id="neighborhoodFilters"></div>
+                </details>
+                <p data-i18n="mapFilters.hint">Puedes combinar codigo postal, barrio y dibujo en el mapa.</p>
               </div>
               <div class="map-copy">
                 <strong data-i18n="map.title">Mapa de viviendas</strong>
@@ -344,42 +359,44 @@
               <p data-i18n="ownerPost.cardCopy">Empieza subiendo fotos en los espacios de cada estancia. Guardamos el borrador, generamos la primera descripcion y te pedimos iniciar sesion sin perder nada.</p>
               <div class="owner-post-actions">
                 <button class="button primary" type="button" data-owner-start data-i18n="ownerPost.photoCta">Crear anuncio con fotos</button>
-                <a class="button ghost" href="account.html" data-i18n="ownerPost.signIn">Iniciar sesion para publicar</a>
+                <button class="button ghost" type="button" data-owner-login data-i18n="ownerPost.signIn">Iniciar sesion para publicar</button>
               </div>
             </article>
             <article class="owner-photo-card" aria-label="Owner listing photo placeholders">
               <div class="owner-photo-grid">
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="living" data-room-label="ownerPost.roomLiving">
+                  <input type="file" accept="image/*" multiple data-owner-photo="living" data-room-label="ownerPost.roomLiving">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomLiving">Salon</span>
                 </label>
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="bedroom" data-room-label="ownerPost.roomBedroom">
+                  <input type="file" accept="image/*" multiple data-owner-photo="bedroom" data-room-label="ownerPost.roomBedroom">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomBedroom">Dormitorio</span>
                 </label>
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="kitchen" data-room-label="ownerPost.roomKitchen">
+                  <input type="file" accept="image/*" multiple data-owner-photo="kitchen" data-room-label="ownerPost.roomKitchen">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomKitchen">Cocina</span>
                 </label>
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="bathroom" data-room-label="ownerPost.roomBathroom">
+                  <input type="file" accept="image/*" multiple data-owner-photo="bathroom" data-room-label="ownerPost.roomBathroom">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomBathroom">Bano</span>
                 </label>
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="entrance" data-room-label="ownerPost.roomEntrance">
+                  <input type="file" accept="image/*" multiple data-owner-photo="entrance" data-room-label="ownerPost.roomEntrance">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomEntrance">Entrada</span>
                 </label>
                 <label class="owner-photo-slot">
-                  <input type="file" accept="image/*" data-owner-photo="floorplan" data-room-label="ownerPost.roomFloorplan">
+                  <input type="file" accept="image/*" multiple data-owner-photo="floorplan" data-room-label="ownerPost.roomFloorplan">
                   <span class="owner-photo-plus" aria-hidden="true">+</span>
                   <span data-i18n="ownerPost.roomFloorplan">Plano</span>
                 </label>
               </div>
+              <p class="owner-photo-guidance" data-i18n="ownerPost.photoGuidance">Recomendamos estas seis fotos para mejorar visibilidad y confianza, pero no bloquean la publicacion. Puedes subir varias fotos por estancia y anadir mas categorias.</p>
+              <button class="details-button owner-add-photo-slot" type="button" data-owner-add-photo data-i18n="ownerPost.addPhotos">Anadir otra categoria</button>
               <div class="owner-ready">
                 <h3 data-i18n="ownerPost.readyTitle">Nuevo piso listo para publicar</h3>
                 <p data-owner-photo-summary data-i18n="ownerPost.readyCopy">Haz clic para completar fotos, servicios, precio y borrador automatico.</p>
@@ -451,6 +468,10 @@
                 <button class="button ghost" type="button" data-owner-regenerate data-i18n="ownerPost.regenerate">Regenerar descripcion</button>
                 <button class="button primary" type="submit" data-i18n="ownerPost.post">Publicar nueva propiedad</button>
               </div>
+            </div>
+            <div class="owner-docs-callout">
+              <button class="details-button" type="button" data-owner-docs data-i18n="ownerPost.docs">Descargar los documentos EbroStay aqui</button>
+              <span data-i18n="ownerPost.docsHint">Al publicar generamos un resumen descargable con la informacion que vera el cliente final.</span>
             </div>
           </form>
         </section>
@@ -628,12 +649,12 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase-config.js?v=design-6"></script>
-    <script src="data.js?v=owner-preview-2"></script>
-    <script src="backend.js?v=design-6"></script>
+    <script src="data.js?v=owner-publish-5"></script>
+    <script src="backend.js?v=owner-publish-5"></script>
     <script src="nav.js?v=design-6"></script>
-    <script src="site.js?v=owner-preview-2"></script>
+    <script src="site.js?v=owner-publish-5"></script>
       <script src="https://unpkg.com/lucide@0.453.0/dist/umd/lucide.min.js"></script>
-    <script src="owner-composer.js?v=owner-post-1"></script>
-    <script src="enhance.js?v=owner-preview-2"></script>
+    <script src="owner-composer.js?v=owner-publish-5"></script>
+    <script src="enhance.js?v=owner-publish-5"></script>
   </body>
 </html>

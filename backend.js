@@ -35,6 +35,9 @@ const EbrostayBackend = (() => {
 
   function mapRowToProperty(row) {
     const key = `db.${row.id}`;
+    const locationFallback = row.address_key === "movera"
+      ? { postcode: "50194", neighborhood: "Movera" }
+      : { postcode: "50009", neighborhood: "Universidad" };
     const set = (suffix, es, en) => {
       translations.es[`${key}.${suffix}`] = es ?? en ?? "";
       translations.en[`${key}.${suffix}`] = en ?? es ?? "";
@@ -52,6 +55,8 @@ const EbrostayBackend = (() => {
       type: row.type,
       address: row.address || null,
       addressKey: row.address_key,
+      postcode: row.postcode || locationFallback.postcode,
+      neighborhood: row.neighborhood || locationFallback.neighborhood || row.area_es || row.area_en || "",
       nameKey: `${key}.name`,
       areaKey: `${key}.area`,
       copyKey: `${key}.copy`,
@@ -209,6 +214,54 @@ const EbrostayBackend = (() => {
     return error;
   }
 
+  async function publishOwnerProperty(property) {
+    const sb = getClient();
+    if (!sb) return { ok: false, code: "not_configured" };
+    if (!user) return { ok: false, code: "not_signed_in" };
+    const priceNumber = Number(property?.priceNumber) || 0;
+    const row = {
+      id: property.id,
+      city: property.city || "zaragoza",
+      type: property.type || "apartment",
+      address_key: property.addressKey || "owner",
+      lat: Number(property.lat) || 41.6516,
+      lng: Number(property.lng) || -0.8809,
+      guests: Number(property.guests) || 1,
+      price_label: property.price || `${priceNumber} EUR`,
+      price_number: priceNumber,
+      rating: property.rating || null,
+      available_from: property.availableFrom || null,
+      is_new: Boolean(property.isNew),
+      checked: Boolean(property.checked),
+      deposit_protected: Boolean(property.depositProtected),
+      bills_included: Boolean(property.billsIncluded),
+      amenities: property.amenities || [],
+      name: property.name || "Owner listing",
+      area_es: property.areaEs || property.area || "",
+      area_en: property.areaEn || property.area || "",
+      copy_es: property.copyEs || property.copy || "",
+      copy_en: property.copyEn || property.copy || "",
+      details_es: property.detailsEs || property.details || "",
+      details_en: property.detailsEn || property.details || "",
+      bedrooms: property.bedrooms || null,
+      bathrooms: property.bathrooms || null,
+      floor_number: property.floorNumber || null,
+      min_stay_months: property.minStayMonths || 1,
+      is_published: true,
+      owner_id: user.id
+    };
+    let { error } = await sb.from("properties").upsert({
+      ...row,
+      postcode: property.postcode || null,
+      neighborhood: property.neighborhood || property.area || null
+    });
+    if (error && /postcode|neighborhood|column/i.test(error.message || "")) {
+      ({ error } = await sb.from("properties").upsert(row));
+    }
+    if (error) console.warn("Owner property publish failed:", error.message);
+    return { ok: !error, code: error ? "server_error" : "saved", error };
+  }
+
   function coverUrl(property) {
     const photos = (property?.property_photos || [])
       .filter((photo) => !photo.is_floorplan)
@@ -270,20 +323,23 @@ const EbrostayBackend = (() => {
     return { ...data, cover: coverUrl(data.properties), guestInfo };
   }
 
-  async function createBookingCheckout(propertyId, startDate, endDate, tenantNames) {
+  // Send a booking request (no online payment). The request-booking Edge
+  // Function computes the fees, records the request and emails Ebrostay; we
+  // review it and mark the property taken manually.
+  async function requestBooking(propertyId, startDate, endDate, tenantNames) {
     const sb = getClient();
     try {
-      const { data, error } = await sb.functions.invoke("create-booking-checkout", {
+      const { data, error } = await sb.functions.invoke("request-booking", {
         body: { propertyId, startDate, endDate, tenantNames: tenantNames || "" }
       });
       if (error) {
         let code = "server_error";
         try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
-        return { url: null, code };
+        return { ok: false, code };
       }
-      return { url: data?.url || null, code: data?.url ? null : "server_error" };
+      return { ok: Boolean(data?.ok), code: data?.ok ? null : "server_error" };
     } catch {
-      return { url: null, code: "server_error" };
+      return { ok: false, code: "server_error" };
     }
   }
 
@@ -450,21 +506,29 @@ const EbrostayBackend = (() => {
     }
   }
 
-  // Stripe Connect onboarding for owners. action: "onboard" returns an
-  // onboarding URL; "status" refreshes whether payouts are enabled.
-  async function ownerConnect(action) {
+  // Admin: pending and historical booking requests (RLS limits reads to admins).
+  async function loadBookingRequests() {
     const sb = getClient();
-    try {
-      const { data, error } = await sb.functions.invoke("owner-connect", { body: { action } });
-      if (error) {
-        let code = "server_error";
-        try { code = (await error.context?.json())?.error || code; } catch { /* keep default */ }
-        return { code };
-      }
-      return data || {};
-    } catch {
-      return { code: "server_error" };
+    if (!sb) return null;
+    const { data, error } = await sb
+      .from("booking_requests")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.warn("Booking requests load failed:", error.message);
+      return null;
     }
+    return data || [];
+  }
+
+  // Admin: move a request through its lifecycle (new → contacted → confirmed
+  // / declined). RLS only lets admins update.
+  async function updateBookingRequestStatus(id, status) {
+    const sb = getClient();
+    if (!sb) return { ok: false };
+    const { error } = await sb.from("booking_requests").update({ status }).eq("id", id);
+    if (error) console.warn("Booking request update failed:", error.message);
+    return { ok: !error };
   }
 
   return {
@@ -479,10 +543,13 @@ const EbrostayBackend = (() => {
     updatePassword,
     getEnabledProviders,
     signInWithProvider,
+    publishOwnerProperty,
     reloadProperties: loadProperties,
     loadMyBookings,
     loadBookingDetail,
-    createBookingCheckout,
+    requestBooking,
+    loadBookingRequests,
+    updateBookingRequestStatus,
     deactivateAccount,
     loadFavorites,
     saveFavorite,

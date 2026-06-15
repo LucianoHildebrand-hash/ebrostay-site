@@ -48,6 +48,11 @@ const translations = {
     "quick.verified": "Verificadas",
     "quick.bills": "Gastos incluidos",
     "quick.deposit": "Fianza reembolsable",
+    "mapFilters.title": "Filtros del mapa",
+    "mapFilters.postcodes": "Codigos postales",
+    "mapFilters.neighborhoods": "Barrios",
+    "mapFilters.clear": "Limpiar zona",
+    "mapFilters.hint": "Puedes combinar codigo postal, barrio y dibujo en el mapa.",
     "status.all": "Mostrando {count} viviendas gestionadas.",
     "status.matches": "{count} viviendas encontradas.",
     "status.one": "1 vivienda encontrada.",
@@ -55,6 +60,7 @@ const translations = {
     "status.invalid": "La fecha de salida debe ser posterior a la entrada.",
     "status.mapMatches": "{count} viviendas dentro del area del mapa.",
     "status.mapNone": "No hay viviendas dentro de esta zona del mapa.",
+    "status.locationMatches": "{count} viviendas con esos filtros de zona.",
     "listing.available": "Disponible",
     "listing.unavailable": "No disponible",
     "listing.capacity": "Hasta {guests} personas",
@@ -336,7 +342,7 @@ const translations = {
     "ownerPost.title": "Tu cartera, en tiempo real.",
     "ownerPost.introKicker": "Gestiona mi piso",
     "ownerPost.cardTitle": "Publica un piso desde fotos, sin llamadas.",
-    "ownerPost.cardCopy": "Empieza subiendo fotos en los espacios de cada estancia. Guardamos el borrador, generamos la primera descripcion y te enviamos a iniciar sesion sin perder nada.",
+    "ownerPost.cardCopy": "Empieza subiendo fotos en los espacios de cada estancia. Guardamos el borrador, generamos la primera descripcion y te pedimos iniciar sesion aqui mismo sin perder nada.",
     "ownerPost.photoCta": "Crear anuncio con fotos",
     "ownerPost.signIn": "Iniciar sesion para publicar",
     "ownerPost.roomLiving": "Salon",
@@ -345,9 +351,12 @@ const translations = {
     "ownerPost.roomBathroom": "Bano",
     "ownerPost.roomEntrance": "Entrada",
     "ownerPost.roomFloorplan": "Plano",
+    "ownerPost.roomExtra": "Fotos adicionales",
     "ownerPost.readyTitle": "Nuevo piso listo para publicar",
     "ownerPost.readyCopy": "Haz clic para completar fotos, servicios, precio y borrador automatico.",
-    "ownerPost.readyWithPhotos": "{count} zonas con foto anadidas: {rooms}. El borrador inferior se actualiza automaticamente.",
+    "ownerPost.readyWithPhotos": "{count} fotos anadidas en: {rooms}. El borrador inferior se actualiza automaticamente.",
+    "ownerPost.photoGuidance": "Recomendamos estas seis fotos para mejorar visibilidad y confianza, pero no bloquean la publicacion. Puedes subir varias fotos por estancia y anadir mas categorias.",
+    "ownerPost.addPhotos": "Anadir otra categoria",
     "ownerPost.formKicker": "Borrador automatico",
     "ownerPost.formTitle": "Campos necesarios para publicar",
     "ownerPost.formCopy": "Estos datos completan el primer borrador del anuncio. Al anadir fotos o editar los campos, la descripcion se actualiza debajo.",
@@ -366,7 +375,16 @@ const translations = {
     "ownerPost.draftHint": "Borrador guardado en este dispositivo hasta que inicies sesion.",
     "ownerPost.regenerate": "Regenerar descripcion",
     "ownerPost.post": "Publicar nueva propiedad",
-    "ownerPost.saved": "Borrador guardado. Inicia sesion para publicarlo desde tu cuenta de propietario.",
+    "ownerPost.saved": "Borrador guardado. Inicia sesion aqui mismo para publicar sin perder los datos.",
+    "ownerPost.aiWorking": "Generando una nueva descripcion con los datos y fotos disponibles...",
+    "ownerPost.aiDone": "Descripcion regenerada.",
+    "ownerPost.aiFallback": "Descripcion regenerada con los datos disponibles.",
+    "ownerPost.loginRequired": "Tu borrador esta guardado. Inicia sesion en esta ventana y continuaremos con la publicacion.",
+    "ownerPost.published": "Propiedad publicada y visible en los resultados de busqueda.",
+    "ownerPost.publishedLocal": "Propiedad publicada en este navegador y visible en los resultados. La copia online necesita permisos de propietario en la base de datos.",
+    "ownerPost.publishError": "No se pudo guardar en la base de datos, pero el borrador sigue guardado aqui.",
+    "ownerPost.docs": "Descargar los documentos EbroStay aqui",
+    "ownerPost.docsHint": "Al publicar generamos un resumen descargable con la informacion que vera el cliente final.",
     "partner.kicker": "Portal de propietarios",
     "partner.title": "Tu cartera, en tiempo real.",
     "partner.signinCopy": "Inicia sesión con la cuenta de propietario que te facilitamos para ver tus viviendas, ingresos y datos de pago.",
@@ -745,6 +763,11 @@ const translations = {
     "quick.verified": "Verified",
     "quick.bills": "Bills included",
     "quick.deposit": "Refundable deposit",
+    "mapFilters.title": "Map filters",
+    "mapFilters.postcodes": "Postcodes",
+    "mapFilters.neighborhoods": "Neighborhoods",
+    "mapFilters.clear": "Clear area",
+    "mapFilters.hint": "You can combine postcode, neighborhood and drawn map area.",
     "status.all": "Showing {count} managed homes.",
     "status.matches": "{count} homes found.",
     "status.one": "1 home found.",
@@ -752,6 +775,7 @@ const translations = {
     "status.invalid": "Move-out must be after move-in.",
     "status.mapMatches": "{count} homes inside the map area.",
     "status.mapNone": "No homes inside this map area.",
+    "status.locationMatches": "{count} homes with those location filters.",
     "listing.available": "Available",
     "listing.unavailable": "Unavailable",
     "listing.capacity": "Up to {guests} people",
@@ -1033,7 +1057,7 @@ const translations = {
     "ownerPost.title": "Your portfolio, in real time.",
     "ownerPost.introKicker": "Manage my flat",
     "ownerPost.cardTitle": "Post a flat from photos, without calls.",
-    "ownerPost.cardCopy": "Start by uploading photos into the listing placeholders. We save the draft, generate the initial description, and send you to sign in without losing anything.",
+    "ownerPost.cardCopy": "Start by uploading photos into the listing placeholders. We save the draft, generate the initial description, and ask you to sign in here without losing anything.",
     "ownerPost.photoCta": "Create listing with photos",
     "ownerPost.signIn": "Sign in to publish",
     "ownerPost.roomLiving": "Living room",
@@ -1042,9 +1066,12 @@ const translations = {
     "ownerPost.roomBathroom": "Bathroom",
     "ownerPost.roomEntrance": "Entrance",
     "ownerPost.roomFloorplan": "Floor plan",
+    "ownerPost.roomExtra": "Additional photos",
     "ownerPost.readyTitle": "New flat ready to publish",
     "ownerPost.readyCopy": "Click to complete photos, services, price and AI draft.",
-    "ownerPost.readyWithPhotos": "{count} photo areas added: {rooms}. The draft below is updating automatically.",
+    "ownerPost.readyWithPhotos": "{count} photos added in: {rooms}. The draft below is updating automatically.",
+    "ownerPost.photoGuidance": "We strongly recommend these six photos because they improve visibility, consistency and trust, but they do not block publishing. You can upload several photos per room and add more categories.",
+    "ownerPost.addPhotos": "Add another category",
     "ownerPost.formKicker": "Automatic draft",
     "ownerPost.formTitle": "Fields needed to publish",
     "ownerPost.formCopy": "These details complete the first listing draft. When you add photos or edit fields, the description updates below.",
@@ -1063,7 +1090,16 @@ const translations = {
     "ownerPost.draftHint": "Draft saved on this device until you sign in.",
     "ownerPost.regenerate": "Regenerate description",
     "ownerPost.post": "Post new property",
-    "ownerPost.saved": "Draft saved. Sign in to publish it from your owner account.",
+    "ownerPost.saved": "Draft saved. Sign in here to publish without losing the details.",
+    "ownerPost.aiWorking": "Generating a new description from the available details and photos...",
+    "ownerPost.aiDone": "Description regenerated.",
+    "ownerPost.aiFallback": "Description regenerated from the available details.",
+    "ownerPost.loginRequired": "Your draft is saved. Sign in in this window and we will continue publishing.",
+    "ownerPost.published": "Property published and visible in search results.",
+    "ownerPost.publishedLocal": "Property published in this browser and visible in search. The online copy needs owner database permissions.",
+    "ownerPost.publishError": "The database save did not finish, but the draft is still saved here.",
+    "ownerPost.docs": "Download the EbroStay docs here",
+    "ownerPost.docsHint": "After publishing we generate a downloadable summary with the information final customers will see.",
     "partner.kicker": "Owner portal",
     "partner.title": "Your portfolio, in real time.",
     "partner.signinCopy": "Sign in with the owner account we set up for you to see your homes, income and payout details.",
@@ -1410,6 +1446,8 @@ const properties = [
     detailsKey: "properties.pedro1.details",
     lat: 41.65393,
     lng: -0.90783,
+    postcode: "50009",
+    neighborhood: "Universidad",
     guests: 4,
     price: "950 EUR",
     priceNumber: 950,
@@ -1434,6 +1472,8 @@ const properties = [
     detailsKey: "properties.pedro2.details",
     lat: 41.65416,
     lng: -0.90756,
+    postcode: "50009",
+    neighborhood: "Universidad",
     guests: 4,
     price: "980 EUR",
     priceNumber: 980,
@@ -1459,6 +1499,8 @@ const properties = [
     priceNoteKey: "properties.movera0.priceNote",
     lat: 41.64929,
     lng: -0.82209,
+    postcode: "50194",
+    neighborhood: "Movera",
     guests: 3,
     price: "1.350 EUR",
     priceNumber: 1350,
@@ -1497,6 +1539,8 @@ const properties = [
     priceNoteKey: "properties.movera1.priceNote",
     lat: 41.64952,
     lng: -0.82182,
+    postcode: "50194",
+    neighborhood: "Movera",
     guests: 3,
     price: "1.350 EUR",
     priceNumber: 1350,
@@ -1523,6 +1567,95 @@ const properties = [
     unavailable: [["2026-06-22", "2026-06-29"], ["2026-08-01", "2026-08-16"]]
   }
 ];
+
+const OWNER_PUBLISHED_PROPERTIES_KEY = "ebrostay-owner-published-properties";
+
+function uniquePhotoList(photos) {
+  return [...new Set((photos || []).filter(Boolean))];
+}
+
+function ownerRecordToProperty(record) {
+  const key = `owner.${record.id}`;
+  const name = record.title || record.name || "Ebrostay owner listing";
+  const area = record.area || record.neighborhood || record.address || "Zaragoza";
+  const copy = record.copy || record.description || "";
+  const details = record.details || record.description || copy;
+
+  translations.es[`${key}.name`] = name;
+  translations.en[`${key}.name`] = name;
+  translations.es[`${key}.area`] = area;
+  translations.en[`${key}.area`] = area;
+  translations.es[`${key}.copy`] = copy;
+  translations.en[`${key}.copy`] = copy;
+  translations.es[`${key}.details`] = details;
+  translations.en[`${key}.details`] = details;
+
+  return {
+    id: record.id,
+    city: record.city || "zaragoza",
+    type: record.type || "apartment",
+    address: record.address || "",
+    addressKey: "owner",
+    nameKey: `${key}.name`,
+    areaKey: `${key}.area`,
+    copyKey: `${key}.copy`,
+    detailsKey: `${key}.details`,
+    lat: Number(record.lat) || 41.6516,
+    lng: Number(record.lng) || -0.8809,
+    postcode: record.postcode || "",
+    neighborhood: record.neighborhood || area,
+    guests: Number(record.guests) || 1,
+    price: `${Number(record.priceNumber) || 0} EUR`,
+    priceNumber: Number(record.priceNumber) || 0,
+    rating: null,
+    bedrooms: Number(record.bedrooms) || null,
+    bathrooms: Number(record.bathrooms) || null,
+    floorNumber: Number(record.floorNumber) || null,
+    availableFrom: record.availableFrom || new Date().toISOString().slice(0, 10),
+    isNew: true,
+    checked: true,
+    depositProtected: Boolean(record.depositProtected),
+    billsIncluded: Boolean(record.billsIncluded),
+    amenities: record.amenities || [],
+    photos: uniquePhotoList(record.photos),
+    floorplans: uniquePhotoList(record.floorplans),
+    unavailable: []
+  };
+}
+
+function upsertOwnerPublishedRecord(record) {
+  if (!record?.id) return null;
+  const property = ownerRecordToProperty(record);
+  const existingIndex = properties.findIndex((item) => item.id === property.id);
+  if (existingIndex >= 0) properties.splice(existingIndex, 1, property);
+  else properties.push(property);
+  return property;
+}
+
+function loadOwnerPublishedRecords() {
+  try {
+    const records = JSON.parse(localStorage.getItem(OWNER_PUBLISHED_PROPERTIES_KEY) || "[]");
+    return Array.isArray(records) ? records : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOwnerPublishedRecord(record) {
+  if (!record?.id) return null;
+  const records = loadOwnerPublishedRecords().filter((item) => item.id !== record.id);
+  records.unshift(record);
+  try {
+    localStorage.setItem(OWNER_PUBLISHED_PROPERTIES_KEY, JSON.stringify(records.slice(0, 20)));
+  } catch {
+    /* Large uploaded images can exceed local storage; search still updates in-memory. */
+  }
+  return upsertOwnerPublishedRecord(record);
+}
+
+function hydrateOwnerPublishedProperties() {
+  loadOwnerPublishedRecords().forEach(upsertOwnerPublishedRecord);
+}
 
 const addressLocations = {
   pedro: { lat: 41.65393, lng: -0.90783 },

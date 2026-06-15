@@ -559,10 +559,14 @@ function setBannerPhoto(url) {
 }
 
 function detailPhotos() {
-  if (property.photos?.length) return property.photos;
-  return property.addressKey === "pedro"
-    ? ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"]
-    : ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
+  if (property.photos?.length) return [...new Set(property.photos.filter(Boolean))];
+  const fallbackSets = {
+    pedro1: ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-hero.webp", "assets/ebrostay-og.jpg"],
+    pedro2: ["assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg", "assets/ebrostay-hero.webp"],
+    movera0: ["assets/movera-second-hero.jpg", "assets/movera-second-bedroom-1.jpg", "assets/movera-second-bathroom.jpg"],
+    movera1: ["assets/movera-first-hero.jpg", "assets/movera-first-bedroom-1.jpg", "assets/movera-first-bathroom.jpg"]
+  };
+  return fallbackSets[property.id] || ["assets/ebrostay-hero.webp", "assets/ebrostay-zaragoza-hero.webp", "assets/ebrostay-og.jpg"];
 }
 
 function updateGalleryActiveState() {
@@ -721,6 +725,10 @@ function applyLanguage(language) {
 async function boot() {
   if (window.EbrostayBackend?.isConfigured()) {
     await EbrostayBackend.init({});
+  }
+
+  if (typeof hydrateOwnerPublishedProperties === "function") {
+    hydrateOwnerPublishedProperties();
   }
 
   property = properties.find((item) => item.id === propertyId);
